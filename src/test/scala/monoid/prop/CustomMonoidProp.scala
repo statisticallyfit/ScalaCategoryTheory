@@ -44,7 +44,6 @@ object CustomMonoidProp extends Properties("Monoid")  {
           }
 
           def rightIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
-               //val monoid = implicitly[Monoid[M]]
 
                property(s"${Util.inspect[M]}.rightIdentity: (x |+| ${M.empty}) === x") = {
                     forAll {(x: M) =>
@@ -52,7 +51,6 @@ object CustomMonoidProp extends Properties("Monoid")  {
                     }
                }
           }
-
      }
 
      object MonoidAxioms {
@@ -60,114 +58,80 @@ object CustomMonoidProp extends Properties("Monoid")  {
                def M: Monoid[M] = ev
           }
      }
-     /*object MonoidAxioms {
 
-          def associativeProperty[M: Monoid : Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
-
-               property(s"${Util.inspect[M]}.associative: ((x |+| y) |+| z) === (x |+| (y |+| z))") = {
-                    forAll {(x: M, y: M, z: M) =>
-                         ((x |+| y) |+| z) === (x |+| (y |+| z))
-                    }
-               }
-          }
-
-          def leftIdentityProperty[M : Monoid: Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
-               val monoid = implicitly[Monoid[M]]
-
-               property(s"${Util.inspect[M]}.leftIdentity: (${monoid.empty} |+| x) === x") = {
-                    forAll {(x: M) =>
-                         (monoid.empty |+| x) === x
-                    }
-               }
-          }
-
-          def rightIdentityProperty[M : Monoid: Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
-               val monoid = implicitly[Monoid[M]]
-
-               property(s"${Util.inspect[M]}.rightIdentity: (x |+| ${monoid.empty}) === x") = {
-                    forAll {(x: M) =>
-                         (x |+| monoid.empty) === x
-                    }
-               }
-          }
-     }*/
 
      //Tests begin
-
 
      MonoidAxioms[Int].associativeProperty
      MonoidAxioms[Int].leftIdentityProperty
      MonoidAxioms[Int].rightIdentityProperty
 
-     /*MonoidAxioms.associativeProperty[Int]
-     MonoidAxioms.leftIdentityProperty[Int]
-     MonoidAxioms.rightIdentityProperty[Int]*/
+     MonoidAxioms[String].associativeProperty
+     MonoidAxioms[String].leftIdentityProperty
+     MonoidAxioms[String].rightIdentityProperty
 
-     /*MonoidAxioms.associativeProperty[String]
-     MonoidAxioms.leftIdentityProperty[String]
-     MonoidAxioms.rightIdentityProperty[String]
+     MonoidAxioms[Set[Int]].associativeProperty
+     MonoidAxioms[Set[Int]].leftIdentityProperty
+     MonoidAxioms[Set[Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Set[Int]]
-     MonoidAxioms.leftIdentityProperty[Set[Int]]
-     MonoidAxioms.rightIdentityProperty[Set[Int]]
+     MonoidAxioms[Trivial].associativeProperty
+     MonoidAxioms[Trivial].leftIdentityProperty
+     MonoidAxioms[Trivial].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Trivial]
-     MonoidAxioms.leftIdentityProperty[Trivial]
-     MonoidAxioms.rightIdentityProperty[Trivial]
+     MonoidAxioms[Conjunction].associativeProperty
+     MonoidAxioms[Conjunction].leftIdentityProperty
+     MonoidAxioms[Conjunction].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Disjunction]
-     MonoidAxioms.leftIdentityProperty[Disjunction]
-     MonoidAxioms.rightIdentityProperty[Disjunction]
+     MonoidAxioms[Disjunction].associativeProperty
+     MonoidAxioms[Disjunction].leftIdentityProperty
+     MonoidAxioms[Disjunction].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Conjunction]
-     MonoidAxioms.leftIdentityProperty[Conjunction]
-     MonoidAxioms.rightIdentityProperty[Conjunction]
+     MonoidAxioms[ExclusiveDisjunction].associativeProperty
+     MonoidAxioms[ExclusiveDisjunction].leftIdentityProperty
+     MonoidAxioms[ExclusiveDisjunction].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[ExclusiveDisjunction]
-     MonoidAxioms.leftIdentityProperty[ExclusiveDisjunction]
-     MonoidAxioms.rightIdentityProperty[ExclusiveDisjunction]
+     MonoidAxioms[ExclusiveNorDisjunction].associativeProperty
+     MonoidAxioms[ExclusiveNorDisjunction].leftIdentityProperty
+     MonoidAxioms[ExclusiveNorDisjunction].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[ExclusiveNorDisjunction]
-     MonoidAxioms.leftIdentityProperty[ExclusiveNorDisjunction]
-     MonoidAxioms.rightIdentityProperty[ExclusiveNorDisjunction]
+     MonoidAxioms[Two[String, Int]].associativeProperty
+     MonoidAxioms[Two[String, Int]].leftIdentityProperty
+     MonoidAxioms[Two[String, Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Two[String, Int]]
-     MonoidAxioms.leftIdentityProperty[Two[String, Int]]
-     MonoidAxioms.rightIdentityProperty[Two[String, Int]]
+     type Fivers = Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]
+     MonoidAxioms[Fivers].associativeProperty
+     MonoidAxioms[Fivers].leftIdentityProperty
+     MonoidAxioms[Fivers].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]]
-     MonoidAxioms.leftIdentityProperty[Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]]
-     MonoidAxioms.rightIdentityProperty[Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]]
+     MonoidAxioms[Option[List[Int]]].associativeProperty
+     MonoidAxioms[Option[List[Int]]].leftIdentityProperty
+     MonoidAxioms[Option[List[Int]]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Option[List[Int]]]
-     MonoidAxioms.leftIdentityProperty[Option[List[Int]]]
-     MonoidAxioms.rightIdentityProperty[Option[List[Int]]]
+     MonoidAxioms[Either[String, Int]].associativeProperty
+     MonoidAxioms[Either[String, Int]].leftIdentityProperty
+     MonoidAxioms[Either[String, Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Either[String, Int]]
-     MonoidAxioms.leftIdentityProperty[Either[String, Int]]
-     MonoidAxioms.rightIdentityProperty[Either[String, Int]]
+     MonoidAxioms[Validated[String, Int]].associativeProperty
+     MonoidAxioms[Validated[String, Int]].leftIdentityProperty
+     MonoidAxioms[Validated[String, Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Validated[String, Int]]
-     MonoidAxioms.leftIdentityProperty[Validated[String, Int]]
-     MonoidAxioms.rightIdentityProperty[Validated[String, Int]]
+     MonoidAxioms[AccumulateRight[String, Int]].associativeProperty
+     MonoidAxioms[AccumulateRight[String, Int]].leftIdentityProperty
+     MonoidAxioms[AccumulateRight[String, Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[AccumulateRight[String, Int]]
-     MonoidAxioms.leftIdentityProperty[AccumulateRight[String, Int]]
-     MonoidAxioms.rightIdentityProperty[AccumulateRight[String, Int]]
-
-     MonoidAxioms.associativeProperty[AccumulateBoth[String, List[String]]]
-     MonoidAxioms.leftIdentityProperty[AccumulateBoth[String, List[String]]]
-     MonoidAxioms.rightIdentityProperty[AccumulateBoth[String, List[String]]]
-
+     MonoidAxioms[AccumulateBoth[String, List[String]]].associativeProperty
+     MonoidAxioms[AccumulateBoth[String, List[String]]].leftIdentityProperty
+     MonoidAxioms[AccumulateBoth[String, List[String]]].rightIdentityProperty
 
      import monoid.data.Combine._
      import monoid.data.FunctionEq._
 
-     MonoidAxioms.associativeProperty[Combine[String, Int]]
-     MonoidAxioms.leftIdentityProperty[Combine[String, Int]]
-     MonoidAxioms.rightIdentityProperty[Combine[String, Int]]
+     MonoidAxioms[Combine[String, Int]].associativeProperty
+     MonoidAxioms[Combine[String, Int]].leftIdentityProperty
+     MonoidAxioms[Combine[String, Int]].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[Memory[List[String], Int]]
-     MonoidAxioms.leftIdentityProperty[Memory[List[String], Int]]
-     MonoidAxioms.rightIdentityProperty[Memory[List[String], Int]]*/
+     MonoidAxioms[Memory[List[String], Int]].associativeProperty
+     MonoidAxioms[Memory[List[String], Int]].leftIdentityProperty
+     MonoidAxioms[Memory[List[String], Int]].rightIdentityProperty
+
 }
