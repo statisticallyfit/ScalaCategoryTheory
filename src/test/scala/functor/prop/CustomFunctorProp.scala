@@ -7,6 +7,7 @@ import Util.Util
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._
+import scala.language.higherKinds
 
 import cats.data.Validated
 import cats.{Eq, Monoid, Functor}
@@ -36,7 +37,7 @@ object CustomFunctorProp  extends Properties("Functor")  {
 
                val typeName = s"${Util.inspect[F[A]]}"
 
-               property(s"$typeName.identity: fa.map(${identity[A]}) === fa") ={
+               property(s"$typeName.identity: fa.map(identity) === fa") ={
                     forAll {(fa: F[A]) =>
                          fa.map(identity) === fa
                     }
@@ -68,6 +69,12 @@ object CustomFunctorProp  extends Properties("Functor")  {
      //Tests begin:
 
      FunctorAxioms[Identity].identityProperty[Int]
-     FunctorAxioms[Identity].compositionProperty[Int]
+     FunctorAxioms[Identity].compositionProperty[Int, Int, Int]
+     FunctorAxioms[Identity].compositionProperty[Int, String, List[Int]]
+
+     FunctorAxioms[Pair].identityProperty[String]
+     FunctorAxioms[Pair].compositionProperty[Int, Int, Int]
+     FunctorAxioms[Pair].compositionProperty[Int, Int, String]
+
 
 }

@@ -21,4 +21,13 @@ object ArbitraryADTs {
      }
 
 
+     implicit def arbPair[A: Arbitrary]: Arbitrary[Pair[A]] = {
+
+          val genPair: Gen[Pair[A]] = for {
+               a1 <- Arbitrary.arbitrary[A]
+               a2 <- Arbitrary.arbitrary[A]
+          }  yield Pair(a1, a2)
+
+          Arbitrary(genPair)
+     }
 }
