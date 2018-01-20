@@ -7,12 +7,9 @@ import Util.Util
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._
-
 import cats.data.Validated
 import cats.{Eq, Monoid}
 import cats.implicits._
-
-
 import org.scalacheck.Prop.forAll
 import org.scalacheck._
 
@@ -28,7 +25,7 @@ object CustomMonoidProp extends Properties("Monoid")  {
      trait MonoidAxioms[M] {
           implicit def M: Monoid[M]
 
-          def associativeProperty[M: Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
+          def associativeProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
 
                property(s"${Util.inspect[M]}.associative: ((x |+| y) |+| z) === (x |+| (y |+| z))") = {
                     forAll {(x: M, y: M, z: M) =>
@@ -37,22 +34,21 @@ object CustomMonoidProp extends Properties("Monoid")  {
                }
           }
 
-          def leftIdentityProperty[M : Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
-               //val monoid = implicitly[Monoid[M]]
+          def leftIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
 
-               property(s"${Util.inspect[M]}.leftIdentity: (${empty} |+| x) === x") = {
+               property(s"${Util.inspect[M]}.leftIdentity: (${M.empty} |+| x) === x") = {
                     forAll {(x: M) =>
-                         (empty |+| x) === x
+                         (M.empty |+| x) === x
                     }
                }
           }
 
-          def rightIdentityProperty[M : Eq : Arbitrary](implicit t: TypeTag[M], c: ClassTag[M]) ={
+          def rightIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
                //val monoid = implicitly[Monoid[M]]
 
-               property(s"${Util.inspect[M]}.rightIdentity: (x |+| ${empty}) === x") = {
+               property(s"${Util.inspect[M]}.rightIdentity: (x |+| ${M.empty}) === x") = {
                     forAll {(x: M) =>
-                         (x |+| empty) === x
+                         (x |+| M.empty) === x
                     }
                }
           }
@@ -99,11 +95,15 @@ object CustomMonoidProp extends Properties("Monoid")  {
      //Tests begin
 
 
-     MonoidAxioms.associativeProperty[Int]
-     MonoidAxioms.leftIdentityProperty[Int]
-     MonoidAxioms.rightIdentityProperty[Int]
+     MonoidAxioms[Int].associativeProperty
+     MonoidAxioms[Int].leftIdentityProperty
+     MonoidAxioms[Int].rightIdentityProperty
 
-     MonoidAxioms.associativeProperty[String]
+     /*MonoidAxioms.associativeProperty[Int]
+     MonoidAxioms.leftIdentityProperty[Int]
+     MonoidAxioms.rightIdentityProperty[Int]*/
+
+     /*MonoidAxioms.associativeProperty[String]
      MonoidAxioms.leftIdentityProperty[String]
      MonoidAxioms.rightIdentityProperty[String]
 
@@ -169,5 +169,5 @@ object CustomMonoidProp extends Properties("Monoid")  {
 
      MonoidAxioms.associativeProperty[Memory[List[String], Int]]
      MonoidAxioms.leftIdentityProperty[Memory[List[String], Int]]
-     MonoidAxioms.rightIdentityProperty[Memory[List[String], Int]]
+     MonoidAxioms.rightIdentityProperty[Memory[List[String], Int]]*/
 }
