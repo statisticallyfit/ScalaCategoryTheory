@@ -1,7 +1,9 @@
 package functor.data
 
 
-import cats.{Eq, Monoid, Functor}
+import cats.data.Validated
+import cats.data.Validated.Invalid
+import cats.{Eq, Functor, Monoid}
 
 
 
@@ -41,15 +43,61 @@ object Pair {
 
 // ------------------------------------------------------------------------------------------
 
-case class Two[A, B](aValue: A, bValue: B)
+/*case class Two[A, B](aValue: A, bValue: B)
 
 object Two {
+     //type Temp[A] = Two[A, B]
+     implicit def functorTwo[ B]: Functor[Two[?,B]] = new Functor[Two[?,B]] {
 
-     implicit def functorTwo[A] = new Functor[Two[A, ?]] {
-
-          def map[C, B](fab: Two[A, B])(f: B => C): Two[A, C] = Two( fab.aValue, f(fab.bValue) )
+          def map[A,_](fa: Two[A, B])(f: A => B): Two[A, B] = Two( fa.aValue, f(fa.aValue))
      }
-}
+}*/
 
 
 // ------------------------------------------------------------------------------------------
+
+/*class Sum[B, A]
+
+object Sum {
+
+     case class First[A](first: A) extends Sum[Nothing, A]
+     case class Second[B](second: B) extends Sum[B, Nothing]
+
+     implicit def sumFunctor[A] = new Functor[Sum[?, A]] {
+          def map[_, B](fa: Sum[B, A])(f: A => B): Sum[B, B] ={
+               fa match {
+                    case First(a) => First(f(a))
+                    case Second(b) => Second(b)
+               }
+          }
+     }
+}*/
+
+
+// ------------------------------------------------------------------------------------------
+
+class Quant[A, B]
+object Quant {
+
+     /*
+     implicit def catsStdInstancesForEither[A]: MonadError[Either[A, ?], A] with Traverse[Either[A, ?]] =
+    new MonadError[Either[A, ?], A] with Traverse[Either[A, ?]] {
+      def pure[B](b: B): Either[A, B] = Right(b)
+
+      def flatMap[B, C](fa: Either[A, B])(f: B => Either[A, C]): Either[A, C] =
+        fa.right.flatMap(f)
+     */
+     case class Finance()
+     case class Desk[A](desk: A) extends Quant[A, Nothing]
+     case class Bloor[B](bloor: B) extends Quant[Nothing, B]
+
+     implicit def quantFunctor[B] = new Functor[Quant[?, B]] {
+          def map[A, _](fa: Quant[A, B])(f: A => B) ={
+               fa match {
+                    case Finance() => Finance()
+                    case Desk(a) => Desk(a)
+                    case Bloor(b) => Bloor(f(b))
+               }
+          }
+     }
+}
