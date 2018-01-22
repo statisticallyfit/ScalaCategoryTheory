@@ -43,40 +43,42 @@ object Pair {
 
 // ------------------------------------------------------------------------------------------
 
-/*case class Two[A, B](aValue: A, bValue: B)
+case class Two[A, B](aValue: A, bValue: B)
 
 object Two {
-     //type Temp[A] = Two[A, B]
-     implicit def functorTwo[ B]: Functor[Two[?,B]] = new Functor[Two[?,B]] {
+     
+     implicit def functorTwo[A]: Functor[Two[A, ?]] = new Functor[Two[A, ?]] {
 
-          def map[A,_](fa: Two[A, B])(f: A => B): Two[A, B] = Two( fa.aValue, f(fa.aValue))
+          def map[B, C](fa: Two[A, B])(f: B => C): Two[A, C] = Two(fa.aValue, f(fa.bValue))
      }
-}*/
+}
 
 
 // ------------------------------------------------------------------------------------------
 
-/*class Sum[B, A]
+class Sum[+B, +A]
 
 object Sum {
 
-     case class First[A](first: A) extends Sum[Nothing, A]
-     case class Second[B](second: B) extends Sum[B, Nothing]
+     case class First[+A](first: A) extends Sum[Nothing, A]
+     case class Second[+B](second: B) extends Sum[B, Nothing]
 
-     implicit def sumFunctor[A] = new Functor[Sum[?, A]] {
-          def map[_, B](fa: Sum[B, A])(f: A => B): Sum[B, B] ={
+     implicit def sumFunctor[B] = new Functor[Sum[B, ?]] {
+
+          def map[A, C](fa: Sum[B, A])(f: A => C): Sum[B, C] ={
                fa match {
                     case First(a) => First(f(a))
                     case Second(b) => Second(b)
                }
           }
      }
-}*/
+}
 
 
 // ------------------------------------------------------------------------------------------
 
-class Quant[A, B]
+class Quant[+A, +B]
+
 object Quant {
 
      /*
@@ -87,12 +89,13 @@ object Quant {
       def flatMap[B, C](fa: Either[A, B])(f: B => Either[A, C]): Either[A, C] =
         fa.right.flatMap(f)
      */
-     case class Finance()
-     case class Desk[A](desk: A) extends Quant[A, Nothing]
-     case class Bloor[B](bloor: B) extends Quant[Nothing, B]
+     case class Finance() extends Quant[Nothing, Nothing]
+     case class Desk[+A](desk: A) extends Quant[A, Nothing]
+     case class Bloor[+B](bloor: B) extends Quant[Nothing, B]
 
-     implicit def quantFunctor[B] = new Functor[Quant[?, B]] {
-          def map[A, _](fa: Quant[A, B])(f: A => B) ={
+     implicit def quantFunctor[A] = new Functor[Quant[A, ?]] {
+
+          def map[B, C](fa: Quant[A, B])(f: B => C): Quant[A, C] ={
                fa match {
                     case Finance() => Finance()
                     case Desk(a) => Desk(a)
