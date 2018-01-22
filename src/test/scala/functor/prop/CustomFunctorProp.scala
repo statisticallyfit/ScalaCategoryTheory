@@ -24,8 +24,8 @@ import scala.collection.mutable.ListBuffer
   * A specification to test how different structures adhere to Functor typeclass laws.
   *
   */
-object CustomFunctorProp extends Properties("Functor")  {
 
+class Definitions extends Properties("Functor") {
 
      trait FunctorAxioms[F[_]] {
 
@@ -46,8 +46,8 @@ object CustomFunctorProp extends Properties("Functor")  {
           }
 
           def compositionProperty[A :Eq:Arbitrary, B :Eq:Arbitrary, C :Eq:Arbitrary]
-               (implicit tf: TypeTag[F[A]], cf: ClassTag[F[A]], eqFC: Eq[F[C]], arbFA: Arbitrary[F[A]],
-                arbAtoB: Arbitrary[A => B], arbBtoC: Arbitrary[B => C]) = {
+          (implicit tf: TypeTag[F[A]], cf: ClassTag[F[A]], eqFC: Eq[F[C]], arbFA: Arbitrary[F[A]],
+           arbAtoB: Arbitrary[A => B], arbBtoC: Arbitrary[B => C]) = {
 
                val typeName = s"${Util.inspect[F[A]]}"
 
@@ -61,42 +61,46 @@ object CustomFunctorProp extends Properties("Functor")  {
 
      object FunctorAxioms {
           def apply[F[_]](implicit ev: Functor[F]): FunctorAxioms[F] = new FunctorAxioms[F] {
-                    def F: Functor[F] = ev
+               def F: Functor[F] = ev
           }
      }
 }
 
-object ImplicitChecker {
-     implicit class ListBufferOps(val list: ListBuffer[(String, Prop)]) {
-          def verify(): Boolean = {
-               println(list)
-               true
-          }
-     }
-}
 
-class CustomFunctorProp extends Specification with ScalaCheck {
+object CustomFunctorProp extends Definitions {
 
-     import CustomFunctorProp.FunctorAxioms
-     import ImplicitChecker._ 
+     FunctorAxioms[Identity].identityProperty[Int]
+     FunctorAxioms[Identity].compositionProperty[Int, Int, Int]
+     FunctorAxioms[Identity].compositionProperty[Int, String, List[Int]]
 
-     //Tests begin:
-
-     "The Identity functor" should {
-          "-> satisfy the identity law" in {
-               FunctorAxioms[Identity].identityProperty[Int].verify shouldEqual true
-          }
-          /*"-> satisfy the composition law" in {
-
-               FunctorAxioms[Identity].compositionProperty[Int, Int, Int].verify shouldEqual true
-               FunctorAxioms[Identity].compositionProperty[Int, String, List[Int]].verify shouldEqual true
-          }*/
-     }
-
-     /*FunctorAxioms[Pair].identityProperty[String]
-     FunctorAxioms[Pair].compositionProperty[Int, Int, Int]
-     FunctorAxioms[Pair].compositionProperty[Int, Int, String]
+     FunctorAxioms[Pair].identityProperty[String]
+     FunctorAxioms[Pair].compositionProperty[String, Int, Int]
+     FunctorAxioms[Pair].compositionProperty[String, Option[Int], String]
 
      FunctorAxioms[Two[String, ?]].identityProperty[Int]
-     FunctorAxioms[Two[String, ?]].compositionProperty[Int, String, Option[Int]]*/
+     FunctorAxioms[Two[String, ?]].compositionProperty[Int, String, Either[String, Int]]
+
+     FunctorAxioms[Three[Int, String, ?]].identityProperty[Int]
+     FunctorAxioms[Three[Int, String, ?]].compositionProperty[Int, Option[Int], Boolean]
+
+     FunctorAxioms[Sum[Identity[Int], ?]].identityProperty[String]
+     FunctorAxioms[Sum[Identity[Int], ?]].compositionProperty[String, List[Int], Int]
+
+     FunctorAxioms[Quant[Double, ?]].identityProperty[Int]
+     FunctorAxioms[Quant[Double, ?]].compositionProperty[Int, Boolean, Int]
+
+     FunctorAxioms[Maybe].identityProperty[String]
+     FunctorAxioms[Maybe].compositionProperty[String, Option[String], String]
+
+     FunctorAxioms[Company[Int, String, ?]].identityProperty[Double]
+     FunctorAxioms[Company[Int, String, ?]].compositionProperty[Double, Int, Double]
+
+     FunctorAxioms[Choice[(Int, Int), ?]].identityProperty[Int]
+     FunctorAxioms[Choice[(Int, Int), ?]].compositionProperty[Int, String, List[Int]]
+
+     FunctorAxioms[TalkToMe].identityProperty[Int]
+     FunctorAxioms[TalkToMe].compositionProperty[Int, String, String]
+
 }
+
+

@@ -19,34 +19,34 @@ import org.scalacheck._
   * A specification to test how different structures adhere to Monoid typeclass laws.
   *
   */
-object CustomMonoidProp extends Properties("Monoid")  {
+class Definitions extends Properties("Monoid") {
 
 
      trait MonoidAxioms[M] {
           implicit def M: Monoid[M]
 
-          def associativeProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
+          def associativeProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) = {
 
                property(s"${Util.inspect[M]}.associative: ((x |+| y) |+| z) === (x |+| (y |+| z))") = {
-                    forAll {(x: M, y: M, z: M) =>
+                    forAll { (x: M, y: M, z: M) =>
                          ((x |+| y) |+| z) === (x |+| (y |+| z))
                     }
                }
           }
 
-          def leftIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
+          def leftIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) = {
 
                property(s"${Util.inspect[M]}.leftIdentity: (${M.empty} |+| x) === x") = {
-                    forAll {(x: M) =>
+                    forAll { (x: M) =>
                          (M.empty |+| x) === x
                     }
                }
           }
 
-          def rightIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) ={
+          def rightIdentityProperty(implicit t: TypeTag[M], c: ClassTag[M], e: Eq[M], a: Arbitrary[M]) = {
 
                property(s"${Util.inspect[M]}.rightIdentity: (x |+| ${M.empty}) === x") = {
-                    forAll {(x: M) =>
+                    forAll { (x: M) =>
                          (x |+| M.empty) === x
                     }
                }
@@ -59,8 +59,9 @@ object CustomMonoidProp extends Properties("Monoid")  {
           }
      }
 
+}
 
-     //Tests begin
+object CustomMonoidProp extends Definitions {
 
      MonoidAxioms[Int].associativeProperty
      MonoidAxioms[Int].leftIdentityProperty
@@ -73,6 +74,10 @@ object CustomMonoidProp extends Properties("Monoid")  {
      MonoidAxioms[Set[Int]].associativeProperty
      MonoidAxioms[Set[Int]].leftIdentityProperty
      MonoidAxioms[Set[Int]].rightIdentityProperty
+
+     MonoidAxioms[Option[List[Int]]].associativeProperty
+     MonoidAxioms[Option[List[Int]]].leftIdentityProperty
+     MonoidAxioms[Option[List[Int]]].rightIdentityProperty
 
      MonoidAxioms[Trivial].associativeProperty
      MonoidAxioms[Trivial].leftIdentityProperty
@@ -102,18 +107,6 @@ object CustomMonoidProp extends Properties("Monoid")  {
      MonoidAxioms[Fivers].associativeProperty
      MonoidAxioms[Fivers].leftIdentityProperty
      MonoidAxioms[Fivers].rightIdentityProperty
-
-     MonoidAxioms[Option[List[Int]]].associativeProperty
-     MonoidAxioms[Option[List[Int]]].leftIdentityProperty
-     MonoidAxioms[Option[List[Int]]].rightIdentityProperty
-
-     MonoidAxioms[Either[String, Int]].associativeProperty
-     MonoidAxioms[Either[String, Int]].leftIdentityProperty
-     MonoidAxioms[Either[String, Int]].rightIdentityProperty
-
-     MonoidAxioms[Validated[String, Int]].associativeProperty
-     MonoidAxioms[Validated[String, Int]].leftIdentityProperty
-     MonoidAxioms[Validated[String, Int]].rightIdentityProperty
 
      MonoidAxioms[AccumulateRight[String, Int]].associativeProperty
      MonoidAxioms[AccumulateRight[String, Int]].leftIdentityProperty
