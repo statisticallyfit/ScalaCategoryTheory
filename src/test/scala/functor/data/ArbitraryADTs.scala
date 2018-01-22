@@ -164,26 +164,45 @@ object ArbitraryADTs {
      }
 
 
-     implicit def arbTree[A: Arbitrary]: Arbitrary[Tree[A]] ={
+     implicit def arbTree[A: Arbitrary]: Arbitrary[BinaryTree[A]] ={
 
-          import functor.data.Tree._
+          import functor.data.BinaryTree._
 
           val genLeaf: Gen[Leaf[A]] = for {
                a <- Arbitrary.arbitrary[A]
           } yield Leaf(a)
 
-          def genBranch(sz: Int): Gen[Tree[A]] = for {
-               n <- Gen.choose(sz/3, sz/2) //min, max
-               
-          }
-          /*val genBranch: Gen[Branch[A]] = for {
+          def genBranch: Gen[Branch[A]] = for {
                a <- Arbitrary.arbitrary[A]
-               left <- genTree
-               right <- genTree
+               left <- Gen.oneOf(genLeaf, genBranch)
+               right <- Gen.oneOf(genLeaf, genBranch)
           } yield Branch(left, a, right)
 
-          val genTree: Gen[Tree[A]] = Gen.oneOf(genLeaf, genBranch)*/
+          val genTree: Gen[BinaryTree[A]] = Gen.oneOf(genLeaf, genBranch)
 
-          Arbitrary
+          Arbitrary(genTree)
+     }
+
+
+     implicit def arbConstant[A: Arbitrary, B]: Arbitrary[Konstant[A, B]] ={
+
+          import functor.data.Konstant._
+
+          val genConst: Gen[Const[A]] = for {
+               a <- Arbitrary.arbitrary[A]
+          } yield Const(a)
+
+          Arbitrary(genConst)
+     }
+
+     implicit def arbOtherConstant[A, B: Arbitrary]: Arbitrary[OtherKonstant[A, B]] ={
+
+          import functor.data.OtherKonstant._
+
+          val genConst: Gen[Const[B]] = for {
+               b <- Arbitrary.arbitrary[B]
+          } yield Const(b)
+
+          Arbitrary(genConst)
      }
 }

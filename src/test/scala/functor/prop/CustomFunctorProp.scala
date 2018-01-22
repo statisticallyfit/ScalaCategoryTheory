@@ -101,6 +101,15 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[TalkToMe].identityProperty[Int]
      FunctorAxioms[TalkToMe].compositionProperty[Int, String, String]
 
+     FunctorAxioms[BinaryTree].identityProperty[Int]
+     FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int]
+
+     FunctorAxioms[Konstant[Double, ?]].identityProperty[Int]
+     FunctorAxioms[Konstant[Double, ?]].compositionProperty[Int, Double, Int]
+
+     FunctorAxioms[OtherKonstant[Double, ?]].identityProperty[Int]
+     FunctorAxioms[OtherKonstant[Double, ?]].compositionProperty[Int, Double, Int]
+
 }
 
 

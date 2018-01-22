@@ -329,36 +329,155 @@ object TalkToMe {
 // ------------------------------------------------------------------------------------------
 
 
-class Tree[+A]
+class BinaryTree[+A]
 
-object Tree {
-     final case class Branch[+A](left: Tree[A], mid: A, right: Tree[A]) extends Tree[A]
-     final case class Leaf[+A](value: A) extends Tree[A]
+object BinaryTree {
+     import cats.syntax._
+
+     final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
+     final case class Leaf[+A](value: A) extends BinaryTree[A]
 
 
-     implicit def treeFunctor = new Functor[Tree] {
+     implicit def treeFunctor = new Functor[BinaryTree] {
 
-          def map[A, B](fa: Tree[A])(f: A => B): Tree[B] ={
+          def map[A, B](fa: BinaryTree[A])(f: A => B): BinaryTree[B] ={
 
                fa match {
                     case Leaf(a) => Leaf(f(a))
                     case Branch(left, mid, right) =>
-                         Branch(Functor[Tree[A]].map(left)(f), f(mid), Functor[Tree[A]].map(right)(f))
+                         Branch(map(left)(f), f(mid), map(right)(f))
                }
           }
      }
 
-     implicit def treeEq[A: Eq] = new Eq[Tree[A]] {
+     implicit def treeEq[A: Eq] = new Eq[BinaryTree[A]] {
 
-          def eqv(tree1: Tree[A], tree2: Tree[A]): Boolean ={
+          def eqv(tree1: BinaryTree[A], tree2: BinaryTree[A]): Boolean ={
+
+               //val eqTree = implicitly[Eq[BinaryTree[A]]]
 
                (tree1, tree2) match {
                     case (Leaf(a1), Leaf(a2)) => Eq[A].eqv(a1, a2)
 
                     case (Branch(l1, m1, r1), Branch(l2, m2, r2)) =>
-                         Eq[Tree[A]].eqv(l1, l2) && Eq[A].eqv(m1, m2) && Eq[Tree[A]].eqv(r1, r2)
+                         eqv(l1, l2) && Eq[A].eqv(m1, m2) && eqv(r1, r2)
 
                     case _ => false
+               }
+          }
+     }
+}
+
+// ------------------------------------------------------------------------------------------
+
+//note the source is:
+// https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise2.hs
+
+class Konstant[+A, +B]
+
+object Konstant {
+
+     final case class Const[+A](a: A) extends Konstant[A, Nothing]
+
+
+     implicit def constantFunctor[A] = new Functor[Konstant[A, ?]] {
+
+          //note: weird: must say end type is A, C when I don't even apply the function !
+          def map[B, C](fa: Konstant[A, B])(f: B => C): Konstant[A, C] ={
+
+               fa match {
+                    case Const(a) => Const(a)
+               }
+          }
+     }
+
+     implicit def constantEq[A: Eq, B] = new Eq[Konstant[A, B]] {
+          def eqv(c1: Konstant[A, B], c2: Konstant[A, B]): Boolean ={
+
+               (c1, c2) match {
+                    case (Const(a1), Const(a2)) => Eq[A].eqv(a1, a2)
+               }
+          }
+     }
+}
+
+
+// ------------------------------------------------------------------------------------------
+//todo here need help
+
+//class Flip[F, +A, +B]
+//
+//object Flip {
+//     final case class Flipper[F, +B, +A](f: F, b: B, a: A) extends Flip[F, A, B]
+//
+//
+//     implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
+//
+//          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
+//
+//               import Konstant._
+//               fa match {
+//                    case Flipper(Const(a1), b, a2) => Flipper(Const(f(a1)), b, f(a2))
+//               }
+//          }
+//     }
+//
+//     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
+//
+//          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
+//
+//               import Konstant._
+//               fa match {
+//                    case Flipper(Const(a1), b, a2) => Flipper(Const(f(a1)), b, f(a2))
+//               }
+//          }
+//     }*/
+//}
+
+// ------------------------------------------------------------------------------------------
+
+class OtherKonstant[+A, +B]
+
+object OtherKonstant {
+     final case class Const[+B](b: B) extends OtherKonstant[Nothing, B]
+
+
+     implicit def otherKonstFunctor[A] = new Functor[OtherKonstant[A, ?]] {
+
+          def map[B, C](fa: OtherKonstant[A, B])(f: B => C): OtherKonstant[A, C] ={
+
+               fa match {
+                    case Const(b) => Const(f(b))
+               }
+          }
+     }
+
+     implicit def otherKonstEq[A, B: Eq] = new Eq[OtherKonstant[A, B]]{
+
+          def eqv(o1: OtherKonstant[A, B], o2: OtherKonstant[A, B]): Boolean ={
+
+               (o1, o2) match {
+                    case (Const(b1), Const(b2)) => Eq[B].eqv(b1, b2)
+               }
+          }
+     }
+}
+
+// ------------------------------------------------------------------------------------------
+
+class LiftItOut[F, +A]
+
+object LiftItOut {
+
+     final case class Lift[F, +A](f: F, a: A) extends LiftItOut[F, A]
+
+
+     implicit def liftFunctor[F: Functor] = new Functor[LiftItOut[F, ?]]{
+
+          def map[A, B](fa: LiftItOut[F, A])(f: A => B): LiftItOut[F, B] ={
+
+               fa match {
+                    case Lift()
                }
           }
      }
