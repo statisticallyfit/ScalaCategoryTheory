@@ -30,4 +30,14 @@ object ArbitraryADTs {
 
           Arbitrary(genPair)
      }
+
+     implicit def arbTwo[A: Arbitrary, B: Arbitrary]: Arbitrary[Two[A, B]] ={
+
+          val genTwo: Gen[Two[A, B]] = for {
+               a <- Arbitrary.arbitrary[A]
+               b <- Arbitrary.arbitrary[B]
+          } yield Two(a, b)
+
+          Arbitrary(genTwo)
+     }
 }

@@ -46,10 +46,16 @@ object Pair {
 case class Two[A, B](aValue: A, bValue: B)
 
 object Two {
-     
+
      implicit def functorTwo[A]: Functor[Two[A, ?]] = new Functor[Two[A, ?]] {
 
           def map[B, C](fa: Two[A, B])(f: B => C): Two[A, C] = Two(fa.aValue, f(fa.bValue))
+     }
+
+     implicit def eqTwo[A: Eq, B: Eq] = new Eq[Two[A, B]] {
+
+          def eqv(two1: Two[A, B], two2: Two[A, B]): Boolean =
+               Eq[A].eqv(two1.aValue, two2.aValue) && Eq[B].eqv(two1.bValue, two2.bValue)
      }
 }
 
