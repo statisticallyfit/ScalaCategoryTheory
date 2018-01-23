@@ -48,6 +48,11 @@ class FunctorSpec extends Specification {
                     liftCountLength(List("merry","king","of","the","bush")) shouldEqual List(5,4,2,3,4)
                }
 
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+                    Functor[List].fproduct(List(8,1,2))(_ + 4) shouldEqual List((8,12), (1,5), (2,6))
+                    List(8,1,2).fproduct(_ + 4) shouldEqual List((8,12), (1,5), (2,6))
+               }
+
                ".   -> laws" in {
 
                     val anyList = Arbitrary.arbitrary[List[Int]].sample.get
@@ -108,6 +113,14 @@ class FunctorSpec extends Specification {
                     liftTimesTwelve(None) shouldEqual None
                }
 
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+                    Functor[Option].fproduct(Some(8))(_ + 9) shouldEqual Some((8, 17))
+                    Option(8).fproduct(_ + 9) shouldEqual Some((8, 17))
+
+                    Functor[Option].fproduct(None)((x:Int) => x + 9) shouldEqual None
+                    None.fproduct((x:Int) => x + 9) shouldEqual None
+               }
+
                ".   -> laws" in {
                     val f = (_:Int) * 3
                     val g = (_:Int) + 1
@@ -136,5 +149,8 @@ class FunctorSpec extends Specification {
           //future
           //then compose types: list with option, tree with option, sum with list, etc ...
           //then some of my types: Tree ,...
+
+          //note: we write only stuff like Functor[Option] compose Functor[List] at the END and not for each
+          // note individual type in order to avoid repetition!
      }
 }
