@@ -262,9 +262,62 @@ class FunctorSpec extends Specification {
 
                          Pair(23, 1).map(g compose f) shouldEqual Pair(23, 1).map(f).map(g)
 
-                         val composeValueRight = Functor[Pair].map(Pair(23, 1))(g compose f)
-                         val mapSequentiallyValueRight = Functor[Pair].map(Pair(23, 1))(f).map(g)
-                         composeValueRight shouldEqual mapSequentiallyValueRight
+                         val composeValue = Functor[Pair].map(Pair(23, 1))(g compose f)
+                         val mapSequentiallyValue = Functor[Pair].map(Pair(23, 1))(f).map(g)
+                         composeValue shouldEqual mapSequentiallyValue
+                    }
+               }
+          }
+
+          // ---------------------------------------------------------------------------
+
+          "-> Three is a functor" in {
+
+               ".   -> mapping: we can map a function" in {
+
+                    Three("word", 2, Option(4)).map(op => op.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
+
+                    Functor[Three[String, Int, ?]].map(Three("word", 2, Option(4)))(op => op.map(_ + 1)) shouldEqual
+                         Three("word", 2, Some(5))
+               }
+
+               ".   -> composition: we can compose several functions" in {
+
+                    Three(1,1, 2).map(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Three(1,1, -4)
+                    Functor[Three[Int, Int, ?]].map(Three(1,1, 2))(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Three(1,1,
+                         -4)
+               }
+
+               ".   -> lifting: we can apply/lift a function to a value" in {
+
+                    val liftTimesTwelve = Functor[Three[Int, Int, ?]].lift((x: Int) => x * 12)
+
+                    liftTimesTwelve(Three(1,1, 2)) shouldEqual Three(1,1, 24)
+               }
+
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+
+                    //todo Three(1,1, 2).fproduct(_ + 7) shouldEqual Three(1,1, (2, 9))
+                    Functor[Three[Int, Int, ?]].fproduct(Three(1,1, 2))(_ + 7) shouldEqual Three(1, 1, (2, 9))
+               }
+
+               ".   -> laws" in {
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+                         //todo Three(1,1, 2).map(identity) shouldEqual Three(1,1, 2)
+                         Functor[Three[Int, Int, ?]].map(Three(1,1, 2))(identity) shouldEqual Three(1,1, 2)
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         //todo Three(1,1, 2).map(g compose f) shouldEqual Three(1,1, 2).map(f).map(g)
+
+                         val composeValue = Functor[Three[Int, Int, ?]].map(Three(1,1, 2))(g compose f)
+                         val mapSequentiallyValue = Functor[Three[Int, Int, ?]].map(Three(1,1, 2))(f).map(g)
+                         composeValue shouldEqual mapSequentiallyValue
                     }
                }
           }

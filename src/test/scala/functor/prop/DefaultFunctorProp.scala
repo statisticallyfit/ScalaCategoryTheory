@@ -29,7 +29,6 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Identity[Int]", FunctorTests[Identity].functor[Int, Int, String])
 
-     //todo
      checkAll("Pair[Int]", FunctorTests[Pair].functor[Int, Int, String])
 
      checkAll("Two[String, Int]", FunctorTests[Two[String, ?]].functor[Int, Double, String])
