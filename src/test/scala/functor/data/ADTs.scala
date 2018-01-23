@@ -403,24 +403,32 @@ object Konstant {
 
 
 // ------------------------------------------------------------------------------------------
-//todo here need help
+//todo here need help https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise3.hs
 
-//class Flip[F, +A, +B]
+//class Flip[+A, +B]
 //
 //object Flip {
-//     final case class Flipper[F, +B, +A](f: F, b: B, a: A) extends Flip[F, A, B]
+//     final case class Flp[+B, +A](flip: A => B, b: B, a: A) extends Flip[A, B]
 //
 //
-//     implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
+//     implicit def flipFunctor[B] = new Functor[Flip[?, B]] {
+//
+//          def map[A, C](fa: Flip[A, B])(f: A => C): Flip[C, B] = {
+//               fa match {
+//                    case Flp(flipAB, b, a) =>
+//               }
+//          }
+//     }
+//     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
 //
 //          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
 //
 //               import Konstant._
 //               fa match {
-//                    case Flipper(Const(a1), b, a2) => Flipper(Const(f(a1)), b, f(a2))
+//                    case Flp(Const(a1), b, a2) => Flp(Const(f(a1)), b, f(a2))
 //               }
 //          }
-//     }
+//     }*/
 //
 //     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
 //
@@ -465,19 +473,37 @@ object OtherKonstant {
 
 // ------------------------------------------------------------------------------------------
 
-class LiftItOut[F, +A]
+//todo
+//class LiftItOut[+B, +A]
+//
+//object LiftItOut {
+//
+//     final case class Lift[B, +A](lifter: A => B, a: A) extends LiftItOut[B, A]
+//
+//
+//     implicit def liftFunctor[B] = new Functor[LiftItOut[B, ?]]{
+//
+//          def map[A, C](fa: LiftItOut[B, A])(f: B => C): LiftItOut[C, A] ={
+//
+//               fa match {
+//                    case Lift(ab, a) => Lift(f.compose(ab), a)
+//               }
+//          }
+//     }
+//}
 
-object LiftItOut {
+// ------------------------------------------------------------------------------------------
 
-     final case class Lift[F, +A](f: F, a: A) extends LiftItOut[F, A]
+class Together[+A, +B]
 
+object Together {
+     final case class Tog[+A, +B](ff: A => B, gg: A => B) extends Together[A, B]
 
-     implicit def liftFunctor[F: Functor] = new Functor[LiftItOut[F, ?]]{
+     implicit def togetherFunctor[A]/*(implicit functor: Functor[A => B])*/ = new Functor[Together[A, ?]]{
 
-          def map[A, B](fa: LiftItOut[F, A])(f: A => B): LiftItOut[F, B] ={
-
+          def map[B, C](fa: Together[A, B])(f: B => C): Together[A, C] ={
                fa match {
-                    case Lift()
+                    case Tog(fab, gab) => Tog(f.compose(fab), f.compose(gab))
                }
           }
      }
