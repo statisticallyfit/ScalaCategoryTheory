@@ -29,10 +29,12 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Identity[Int]", FunctorTests[Identity].functor[Int, Int, String])
 
+     //todo
      checkAll("Pair[Int]", FunctorTests[Pair].functor[Int, Int, String])
 
      checkAll("Two[String, Int]", FunctorTests[Two[String, ?]].functor[Int, Double, String])
 
+     //todo
      checkAll("Three[Int, String, Double]", FunctorTests[Three[Int, String, ?]].functor[Double, Int, Int])
 
      checkAll("Sum[Identity[Int], String]", FunctorTests[Sum[Identity[Int], ?]].functor[String, Int, Int])
@@ -45,9 +47,10 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("TalkToMe[Int]", FunctorTests[TalkToMe].functor[Int, Int, Int])
 
+     //todo
      checkAll("BinaryTree[Int]", FunctorTests[BinaryTree].functor[Int, Int, Int])
 
-     checkAll("Train", FunctorTests[Train].functor[Double, Double, Double])
+     checkAll("Train[Double]", FunctorTests[Train].functor[Double, Double, Double])
 
      checkAll("Konstant[Double, Int]", FunctorTests[Konstant[Double, ?]].functor[Int, Int, Int])
 
@@ -59,6 +62,7 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Separate[Int, Int, Int, Int]", FunctorTests[Separate[Int, Int, Int, ?]].functor[Int, Int, Int])
 
+     //todo
      checkAll("Notorious[Int, Double, String, Int, Int, ?]",
           FunctorTests[Notorious[Int, Double, String, Int, Int, ?]].functor[Int, Int, Int])
 

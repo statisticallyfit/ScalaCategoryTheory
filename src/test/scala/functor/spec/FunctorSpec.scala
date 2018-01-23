@@ -180,11 +180,11 @@ class FunctorSpec extends Specification {
                     import cats.instances.either._
 
                     //Right(2).fproduct(_ + 7) shouldEqual Right((2, 14))
-                    Either.right(2).fproduct(_ + 7) shouldEqual Right((2, 9))
+                    //todo Either.right(2).fproduct(_ + 7) shouldEqual Right((2, 9))
                     Functor[Either[String, ?]].fproduct(Right(2))(_ + 7) shouldEqual Right((2, 9))
 
                     //Left("eeck").fproduct((s:String) => s.length) shouldEqual Left("eeck")
-                    Either.left("eeck").fproduct((s: String) => s.length) shouldEqual Left("eeck")
+                    //todo Either.left("eeck").fproduct((s: String) => s.length) shouldEqual Left("eeck")
                     Functor[Either[String, ?]].fproduct(Left("eeck"))((s:String) => s.length) shouldEqual Left("eeck")
                }
 
@@ -218,6 +218,57 @@ class FunctorSpec extends Specification {
                     }
                }
           }
+
+          // ---------------------------------------------------------------------------
+
+          "-> Pair is a functor" in {
+
+               ".   -> mapping: we can map a function" in {
+
+                    Pair(1, 2).map(_ + 4) shouldEqual Pair(5, 6)
+                    Functor[Pair].map(Pair(1,2))(_ + 4) shouldEqual Pair(5, 6)
+               }
+
+               ".   -> composition: we can compose several functions" in {
+
+                    Pair(3, 7).map(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Pair(-2, 6)
+                    Functor[Pair].map(Pair(3, 7))(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Pair(-2, 6)
+               }
+
+               ".   -> lifting: we can apply/lift a function to a value" in {
+
+                    val liftTimesTwelve = Functor[Pair].lift((x: Int) => x * 12)
+
+                    liftTimesTwelve(Pair(1, 3)) shouldEqual Pair(12, 36)
+               }
+
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+
+                    Pair(11, -8).fproduct(_ + 7) shouldEqual Pair((11, 18), (-8, -1))
+                    Functor[Pair].fproduct(Pair(11, -8))(_ + 7) shouldEqual Pair((11, 18), (-8, -1))
+               }
+
+               ".   -> laws" in {
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+                         Pair(23, 1).map(identity) shouldEqual Pair(23, 1)
+                         Functor[Pair].map(Pair(23, 1))(identity) shouldEqual Pair(23, 1)
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         Pair(23, 1).map(g compose f) shouldEqual Pair(23, 1).map(f).map(g)
+
+                         val composeValueRight = Functor[Pair].map(Pair(23, 1))(g compose f)
+                         val mapSequentiallyValueRight = Functor[Pair].map(Pair(23, 1))(f).map(g)
+                         composeValueRight shouldEqual mapSequentiallyValueRight
+                    }
+               }
+          }
+
           //future
           //then compose types: list with option, tree with option, sum with list, etc ...
           //then some of my types: Tree ,...
