@@ -145,7 +145,79 @@ class FunctorSpec extends Specification {
                     }
                }
           }
-          //either next
+
+          // ---------------------------------------------------------------------------
+
+          "-> Either is a functor" in {
+
+               ".   -> mapping: we can map a function" in {
+
+                    Right(6).map(_ * 3) shouldEqual Right(18)
+                    Functor[Either[String, ?]].map(Right(6))(_ * 3) shouldEqual Right(18)
+
+                    Left("hi").map((s: String) => s + " there") shouldEqual Left("hi")
+                    Functor[Either[String, ?]].map(Left("hi"))((s:String) => s.length) shouldEqual Left("hi")
+               }
+
+               ".   -> composition: we can compose several functions" in {
+
+                    Right(30).map(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Right(52)
+                    Functor[Either[String, ?]].map(Right(30))(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Right(52)
+
+                    Left("ice").map((s: String) => s + " cream") shouldEqual Left("ice")
+                    Functor[Either[String, ?]].map(Left("ice"))((s: String) => s + " cream") shouldEqual Left("ice")
+               }
+
+               ".   -> lifting: we can apply/lift a function to a value" in {
+
+                    val liftTimesTwelve = Functor[Either[String, ?]].lift((x: Int) => x * 12)
+
+                    liftTimesTwelve(Right(45)) shouldEqual Right(540)
+                    liftTimesTwelve(Left("blahblahblah")) shouldEqual Left("blahblahblah")
+               }
+
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+                    import cats.instances.either._
+
+                    //Right(2).fproduct(_ + 7) shouldEqual Right((2, 14))
+                    Either.right(2).fproduct(_ + 7) shouldEqual Right((2, 9))
+                    Functor[Either[String, ?]].fproduct(Right(2))(_ + 7) shouldEqual Right((2, 9))
+
+                    //Left("eeck").fproduct((s:String) => s.length) shouldEqual Left("eeck")
+                    Either.left("eeck").fproduct((s: String) => s.length) shouldEqual Left("eeck")
+                    Functor[Either[String, ?]].fproduct(Left("eeck"))((s:String) => s.length) shouldEqual Left("eeck")
+               }
+
+               ".   -> laws" in {
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+                         Right(23).map(identity) shouldEqual Right(23)
+                         Functor[Either[String, ?]].map(Right(23))(identity) shouldEqual Right(23)
+
+                         Left("nothing").map(identity) shouldEqual Left("nothing")
+                         Functor[Either[String, ?]].map(Left("nothing"))(identity) shouldEqual Left("nothing")
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         Right(23).map(g compose f) shouldEqual Right(23).map(f).map(g)
+
+                         val composeValueRight = Functor[Either[String, ?]].map(Right(23))(g compose f)
+                         val mapSequentiallyValueRight = Functor[Either[String, ?]].map(Right(23))(f).map(g)
+                         composeValueRight shouldEqual mapSequentiallyValueRight
+
+                         //---
+                         Left("nothing").map(g compose f) shouldEqual Left("nothing").map(f).map(g)
+
+                         val composeValueLeft = Functor[Either[String, ?]].map(Left("nothing"))(g compose f)
+                         val mapSequentiallyValueLeft = Functor[Either[String, ?]].map(Left("nothing"))(f).map(g)
+                         composeValueLeft shouldEqual mapSequentiallyValueLeft
+                    }
+               }
+          }
           //future
           //then compose types: list with option, tree with option, sum with list, etc ...
           //then some of my types: Tree ,...
