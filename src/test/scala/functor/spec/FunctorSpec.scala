@@ -20,7 +20,7 @@ class FunctorSpec extends Specification {
 
           "-> List is a functor" in  {
 
-               "-----> mapping" in {
+               ".   -> mapping: we can map a function" in {
                     val list = List(1,2,3,4,5)
 
                     Functor[List].map(list)(_ * 12) shouldEqual List(12, 24, 36, 48, 60)
@@ -32,7 +32,7 @@ class FunctorSpec extends Specification {
                     List(2,4,9,11).map(x => x % 2 == 0) shouldEqual List(true, true, false, false)
                }
 
-               "-----> composition" in {
+               ".   -> composition: we can compose several functions" in {
 
                     List(1,2,3).map(_ * 8) shouldEqual List(8, 16, 24)
 
@@ -40,32 +40,40 @@ class FunctorSpec extends Specification {
 
                     Functor[List].map(List(1,2,3))(_ * 2).map(_ + 4).map(_ + 1) shouldEqual List(7,9,11)
                     List(1,2,3).map(_ * 2).map(_ + 4).map(_ + 1) shouldEqual List(7, 9, 11)
-
-
-                    // -- more general case
-                    val f = (_: Int) * 3
-                    val g = (_: Int) + 1
-
-                    val anyList:List[Int] = Arbitrary.arbitrary[List[Int]].sample.get
-
-                    val firstMapping = anyList.map(g.compose(f))
-                    val secondMapping = anyList.map(f).map(g)
-
-                    firstMapping shouldEqual secondMapping
                }
 
-               "-----> lifting" in {
+               ".   -> lifting: we can apply/lift a function to a value" in {
                     val liftCountLength = Functor[List].lift((s: String) => s.length)
 
                     liftCountLength(List("merry","king","of","the","bush")) shouldEqual List(5,4,2,3,4)
                }
+
+               ".   -> laws" in {
+
+                    val anyList = Arbitrary.arbitrary[List[Int]].sample.get
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+                         anyList.map(identity) shouldEqual anyList
+                         Functor[List].map(anyList)(identity) shouldEqual anyList
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         anyList.map(g compose f) shouldEqual anyList.map(f).map(g)
+                         Functor[List].map(anyList)(g compose f) shouldEqual Functor[List].map(anyList)(f).map(g)
+                         //Functor[List].map(anyList)(f map g) shouldEqual Functor[List].map(anyList)(f).map(g)
+                    }
+               }
           }
-          
+
           // ---------------------------------------------------------------------------
 
           "-> Option is a functor" in {
 
-               "-----> mapping" in {
+               ".   -> mapping: we can map a function" in {
 
                     Option(1).map(_ * 9) shouldEqual Some(9)
                     Functor[Option].map(Option(1))(_ * 9) shouldEqual Some(9)
@@ -80,7 +88,7 @@ class FunctorSpec extends Specification {
                     Functor[Option].map(None)(_.toString) shouldEqual None
                }
 
-               "-----> composition" in {
+               ".   -> composition: we can compose several functions" in {
 
                     Some(3).map(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Some(-2)
                     Functor[Option].map(Some(3))(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Some(-2)
@@ -92,7 +100,7 @@ class FunctorSpec extends Specification {
                     Functor[Option].map(None)((x: String) => x.length) shouldEqual None
                }
 
-               "-----> lifting" in {
+               ".   -> lifting: we can apply/lift a function to a value" in {
 
                     val liftTimesTwelve = Functor[Option].lift((x: Int) => x * 12)
 
@@ -100,6 +108,29 @@ class FunctorSpec extends Specification {
                     liftTimesTwelve(None) shouldEqual None
                }
 
+               ".   -> laws" in {
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+                         Some(23).map(identity) shouldEqual Some(23)
+                         Functor[Option].map(Some(23))(identity) shouldEqual Some(23)
+
+                         None.map(identity) shouldEqual None
+                         Functor[Option].map(None)(identity) shouldEqual None
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         Some(23).map(g compose f) shouldEqual Some(23).map(f).map(g)
+                         Functor[Option].map(Some(23))(g compose f) shouldEqual Functor[Option].map(Some(23))(f).map(g)
+
+                         None.map(g compose f) shouldEqual None.map(f).map(g)
+                         Functor[Option].map(None)(g compose f) shouldEqual Functor[Option].map(None)(f).map(g)
+                         //Functor[List].map(anyList)(f map g) shouldEqual Functor[List].map(anyList)(f).map(g)
+                    }
+               }
           }
           //either next
           //future
