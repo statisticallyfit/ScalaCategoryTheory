@@ -377,7 +377,7 @@ class Konstant[+A, +B]
 
 object Konstant {
 
-     final case class Const[+A](a: A) extends Konstant[A, Nothing]
+     final case class Konst[+A](a: A) extends Konstant[A, Nothing]
 
 
      implicit def constantFunctor[A] = new Functor[Konstant[A, ?]] {
@@ -386,7 +386,7 @@ object Konstant {
           def map[B, C](fa: Konstant[A, B])(f: B => C): Konstant[A, C] ={
 
                fa match {
-                    case Const(a) => Const(a)
+                    case Konst(a) => Konst(a)
                }
           }
      }
@@ -395,7 +395,7 @@ object Konstant {
           def eqv(c1: Konstant[A, B], c2: Konstant[A, B]): Boolean ={
 
                (c1, c2) match {
-                    case (Const(a1), Const(a2)) => Eq[A].eqv(a1, a2)
+                    case (Konst(a1), Konst(a2)) => Eq[A].eqv(a1, a2)
                }
           }
      }
@@ -405,20 +405,30 @@ object Konstant {
 // ------------------------------------------------------------------------------------------
 //todo here need help https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise3.hs
 
-//class Flip[+A, +B]
+//case class Flip[A, B, C](flip: A => B => C)
 //
 //object Flip {
-//     final case class Flp[+B, +A](flip: A => B, b: B, a: A) extends Flip[A, B]
+//     import cats.syntax.functor._
 //
+//     import functor.data.Konstant._
 //
-//     implicit def flipFunctor[B] = new Functor[Flip[?, B]] {
+//     implicit def flipFunctor[A, B] = new Functor[Flip[A, B, ?]] {
+//
+//          def map[C, D](fa: Flip[A, B, C])(f: C => D): Flip[A, B, D] ={
+//
+//               fa match {
+//                    case Flip(abc) => Flip(f.compose(abc.compose(Konst(_))))
+//               }
+//          }
+//     }
+//     /*implicit def flipFunctor[B] = new Functor[Flip[?, B]] {
 //
 //          def map[A, C](fa: Flip[A, B])(f: A => C): Flip[C, B] = {
 //               fa match {
 //                    case Flp(flipAB, b, a) =>
 //               }
 //          }
-//     }
+//     }*/
 //     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
 //
 //          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
@@ -474,37 +484,87 @@ object OtherKonstant {
 // ------------------------------------------------------------------------------------------
 
 //todo
-//class LiftItOut[+B, +A]
-//
-//object LiftItOut {
-//
-//     final case class Lift[B, +A](lifter: A => B, a: A) extends LiftItOut[B, A]
-//
-//
-//     implicit def liftFunctor[B] = new Functor[LiftItOut[B, ?]]{
-//
-//          def map[A, C](fa: LiftItOut[B, A])(f: B => C): LiftItOut[C, A] ={
-//
-//               fa match {
-//                    case Lift(ab, a) => Lift(f.compose(ab), a)
-//               }
-//          }
-//     }
-//}
+case class LiftItOut[A, B](lifter: A => B)
+
+//final case class Lift[+A, +B](lifter: A => B) extends LiftItOut[A, B]
+object LiftItOut {
+
+     implicit def liftFunctor[A] = new Functor[LiftItOut[A, ?]]{
+
+          def map[B, C](fa: LiftItOut[A, B])(f: B => C): LiftItOut[A, C] ={
+
+               fa match {
+                    case LiftItOut(ab) => LiftItOut(f.compose(ab))
+               }
+          }
+     }
+
+     implicit def liftEq[A, B] = new Eq[LiftItOut[A, B]] {
+          def eqv(l1: LiftItOut[A, B], l2: LiftItOut[A, B]): Boolean = true //todo superficial def
+     }
+}
 
 // ------------------------------------------------------------------------------------------
 
-class Together[+A, +B]
+case class Together[A, B](ab: A => B)
 
 object Together {
-     final case class Tog[+A, +B](ff: A => B, gg: A => B) extends Together[A, B]
+     //final case class Tog[+A, +B](ff: A => B, gg: A => B) extends Together[A, B]
 
-     implicit def togetherFunctor[A]/*(implicit functor: Functor[A => B])*/ = new Functor[Together[A, ?]]{
+     implicit def togetherFunctor[A] = new Functor[Together[A, ?]]{
 
           def map[B, C](fa: Together[A, B])(f: B => C): Together[A, C] ={
                fa match {
-                    case Tog(fab, gab) => Tog(f.compose(fab), f.compose(gab))
+                    case Together(ab) => Together(f.compose(ab))
                }
           }
+     }
+
+     implicit def togetherEq[A, B] = new Eq[Together[A, B]] {
+          def eqv(t1: Together[A, B], t2: Together[A, B]): Boolean = true //todo superficial def
+     }
+}
+
+// ------------------------------------------------------------------------------------------
+
+
+//note - structure is like IgnoreOne in set3 functor exercises of chris allen haskell
+case class Separate[A, C, B, D](ff: A => C, gg: B => D)
+
+object Separate {
+
+     implicit def separateFunctor[A, C, B] = new Functor[Separate[A, C, B, ?]]{
+
+          def map[D, E](fa: Separate[A,C,B,D])(f: D => E): Separate[A, C, B, E] ={
+
+               fa match {
+                    case Separate(ffa, ggb) => Separate(ffa, f.compose(ggb))
+               }
+          }
+     }
+
+     implicit def separateEq[A, C, B, D] = new Eq[Separate[A, C, B, D]]{
+          def eqv(sep1: Separate[A,C,B,D], sep2: Separate[A,C,B,D]): Boolean = true //todo superficial def
+     }
+}
+
+// ------------------------------------------------------------------------------------------
+
+case class Notorious[O1,O2, A1,A2, T1,T2](go: O1 => O2, ga: A1 => A2, gt: T1 => T2)
+
+object Notorious {
+
+     implicit def notoriousFunctor[O1, O2, A1, A2, T1] = new Functor[Notorious[O1, O2, A1, A2, T1, ?]] {
+
+          def map[T2, Z](fa: Notorious[O1,O2, A1,A2, T1,T2])(f: T2 => Z): Notorious[O1,O2, A1,A2, T1,Z] ={
+               fa match {
+                    case Notorious(go, ga, gt) => Notorious(go, ga, f.compose(gt))
+               }
+          }
+     }
+
+     implicit def notoriousEq[O1, O2, A1, A2, T1, T2] = new Eq[Notorious[O1, O2, A1, A2, T1, T2]]{
+          def eqv(not1: Notorious[O1, O2, A1, A2, T1, T2], not2: Notorious[O1, O2, A1, A2, T1, T2]): Boolean = true
+          //todo superficial definition
      }
 }

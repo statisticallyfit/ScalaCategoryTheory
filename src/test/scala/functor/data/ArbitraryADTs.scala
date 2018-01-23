@@ -188,9 +188,9 @@ object ArbitraryADTs {
 
           import functor.data.Konstant._
 
-          val genConst: Gen[Const[A]] = for {
+          val genConst: Gen[Konst[A]] = for {
                a <- Arbitrary.arbitrary[A]
-          } yield Const(a)
+          } yield Konst(a)
 
           Arbitrary(genConst)
      }
@@ -204,5 +204,52 @@ object ArbitraryADTs {
           } yield Const(b)
 
           Arbitrary(genConst)
+     }
+
+     implicit def arbLiftItOut[A: Arbitrary, B: Arbitrary]: Arbitrary[LiftItOut[A, B]] ={
+
+          val genLiftItOut: Gen[LiftItOut[A, B]] = for {
+               a <- Arbitrary.arbitrary[A]
+               b <- Arbitrary.arbitrary[B]
+          } yield LiftItOut(a => b)
+
+          Arbitrary(genLiftItOut)
+     }
+
+     implicit def arbTogether[A: Arbitrary, B: Arbitrary]: Arbitrary[Together[A, B]] ={
+
+          val genTogether: Gen[Together[A, B]] = for {
+               a <- Arbitrary.arbitrary[A]
+               b <- Arbitrary.arbitrary[B]
+          } yield Together(a => b)
+
+          Arbitrary(genTogether)
+     }
+
+     implicit def arbSeparate[A: Arbitrary, B: Arbitrary, C: Arbitrary, D: Arbitrary]: Arbitrary[Separate[A,C,B,D]] ={
+
+          val genSeparate: Gen[Separate[A,C,B,D]] = for {
+               a <- Arbitrary.arbitrary[A]
+               c <- Arbitrary.arbitrary[C]
+               b <- Arbitrary.arbitrary[B]
+               d <- Arbitrary.arbitrary[D]
+          } yield Separate(a => c, b => d)
+
+          Arbitrary(genSeparate)
+     }
+
+     implicit def arbNotorious[O1: Arbitrary, O2: Arbitrary, A1: Arbitrary, A2: Arbitrary, T1: Arbitrary, T2:
+     Arbitrary]: Arbitrary[Notorious[O1,O2,A1,A2,T1,T2]] ={
+
+          val genNotorious: Gen[Notorious[O1,O2,A1,A2,T1,T2]] = for {
+               o1 <- Arbitrary.arbitrary[O1]
+               o2 <- Arbitrary.arbitrary[O2]
+               a1 <- Arbitrary.arbitrary[A1]
+               a2 <- Arbitrary.arbitrary[A2]
+               t1 <- Arbitrary.arbitrary[T1]
+               t2 <- Arbitrary.arbitrary[T2]
+          } yield Notorious(o1 => o2, a1 => a2, t1 => t2)
+
+          Arbitrary(genNotorious)
      }
 }

@@ -110,6 +110,17 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[OtherKonstant[Double, ?]].identityProperty[Int]
      FunctorAxioms[OtherKonstant[Double, ?]].compositionProperty[Int, Double, Int]
 
+     FunctorAxioms[LiftItOut[Int, ?]].identityProperty[Int]
+     FunctorAxioms[LiftItOut[Int, ?]].compositionProperty[Int, Double, Int]
+
+     FunctorAxioms[Together[Int, ?]].identityProperty[Int]
+     FunctorAxioms[Together[Int, ?]].compositionProperty[Int, Double, Int]
+
+     FunctorAxioms[Separate[Int, String, Double, ?]].identityProperty[Int]
+     FunctorAxioms[Separate[Int, String, Double, ?]].compositionProperty[Int, Double, Int]
+
+     FunctorAxioms[Notorious[Int, Double, String, Int, Int, ?]].identityProperty[Int]
+     FunctorAxioms[Notorious[Int, Double, String, Int, Int, ?]].compositionProperty[Int, Double, Int]
 }
 
 
