@@ -337,13 +337,12 @@ object BinaryTree {
      final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
      final case class Leaf[+A](value: A) extends BinaryTree[A]
 
-
      implicit def treeFunctor = new Functor[BinaryTree] {
 
           def map[A, B](fa: BinaryTree[A])(f: A => B): BinaryTree[B] ={
-
                fa match {
                     case Leaf(a) => Leaf(f(a))
+
                     case Branch(left, mid, right) =>
                          Branch(map(left)(f), f(mid), map(right)(f))
                }
@@ -353,15 +352,42 @@ object BinaryTree {
      implicit def treeEq[A: Eq] = new Eq[BinaryTree[A]] {
 
           def eqv(tree1: BinaryTree[A], tree2: BinaryTree[A]): Boolean ={
-
-               //val eqTree = implicitly[Eq[BinaryTree[A]]]
-
                (tree1, tree2) match {
                     case (Leaf(a1), Leaf(a2)) => Eq[A].eqv(a1, a2)
 
                     case (Branch(l1, m1, r1), Branch(l2, m2, r2)) =>
                          eqv(l1, l2) && Eq[A].eqv(m1, m2) && eqv(r1, r2)
 
+                    case _ => false
+               }
+          }
+     }
+}
+// ------------------------------------------------------------------------------------------
+
+//another name for List type
+class Train[+T]
+
+object Train {
+     final case class End() extends Train[Nothing]
+     final case class Wagon[+T](passenger: T, train: Train[T]) extends Train[T]
+
+     implicit def trainFunctor = new Functor[Train]{
+
+          def map[T, U](fa: Train[T])(f: T => U): Train[U] ={
+               fa match {
+                    case End() => End()
+                    case Wagon(passenger, restOfTrain) => Wagon(f(passenger), map(restOfTrain)(f))
+               }
+          }
+     }
+
+     implicit def trainEq[T: Eq] = new Eq[Train[T]] {
+          def eqv(train1: Train[T], train2: Train[T]): Boolean ={
+
+               (train1, train2) match {
+                    case (End(), End()) => true
+                    case (Wagon(p1, t1), Wagon(p2, t2)) => Eq[T].eqv(p1,p2) && eqv(t1, t2)
                     case _ => false
                }
           }

@@ -104,6 +104,9 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[BinaryTree].identityProperty[Int]
      FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int]
 
+     FunctorAxioms[Train].identityProperty[Double]
+     FunctorAxioms[Train].compositionProperty[Double, Double, Double]
+
      FunctorAxioms[Konstant[Double, ?]].identityProperty[Int]
      FunctorAxioms[Konstant[Double, ?]].compositionProperty[Int, Double, Int]
 

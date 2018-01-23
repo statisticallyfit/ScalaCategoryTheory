@@ -184,6 +184,20 @@ object ArbitraryADTs {
      }
 
 
+     implicit def arbTrain[T: Arbitrary]: Arbitrary[Train[T]] ={
+          import functor.data.Train._
+
+          val genEnd: Gen[End] = End()
+
+          def genWagon: Gen[Wagon[T]] = for {
+               person <- Arbitrary.arbitrary[T]
+               leftoverTrain <- Gen.oneOf(genEnd, genWagon)
+          } yield Wagon(person, leftoverTrain)
+
+          Arbitrary(Gen.oneOf(genEnd, genWagon))
+     }
+
+
      implicit def arbConstant[A: Arbitrary, B]: Arbitrary[Konstant[A, B]] ={
 
           import functor.data.Konstant._
