@@ -82,12 +82,10 @@ object Three {
 // ------------------------------------------------------------------------------------------
 
 class Sum[+B, +A]
+final case class First[+A](first: A) extends Sum[Nothing, A]
+final case class Second[+B](second: B) extends Sum[B, Nothing]
 
 object Sum {
-     //note: figured out this construction by looking at cats.Validated
-
-     final case class First[+A](first: A) extends Sum[Nothing, A]
-     final case class Second[+B](second: B) extends Sum[B, Nothing]
 
      implicit def sumFunctor[B] = new Functor[Sum[B, ?]] {
 
@@ -116,12 +114,11 @@ object Sum {
 // ------------------------------------------------------------------------------------------
 
 class Quant[+A, +B]
+final case class Finance() extends Quant[Nothing, Nothing]
+final case class Desk[+A](desk: A) extends Quant[A, Nothing]
+final case class Bloor[+B](bloor: B) extends Quant[Nothing, B]
 
 object Quant {
-
-     final case class Finance() extends Quant[Nothing, Nothing]
-     final case class Desk[+A](desk: A) extends Quant[A, Nothing]
-     final case class Bloor[+B](bloor: B) extends Quant[Nothing, B]
 
      implicit def quantFunctor[A] = new Functor[Quant[A, ?]] {
 
@@ -164,12 +161,10 @@ object Quant {
 // ------------------------------------------------------------------------------------------
 
 class Company[+A, +C, +B]
+final case class DeepBlue[+A, +C](a: A, c: C) extends Company[A, C, Nothing]
+final case class Something[+B](b: B) extends Company[Nothing, Nothing, B]
 
 object Company {
-
-     final case class DeepBlue[+A, +C](a: A, c: C) extends Company[A, C, Nothing]
-     final case class Something[+B](b: B) extends Company[Nothing, Nothing, B]
-
 
      implicit def companyFunctor[A, C] = new Functor[Company[A, C, ?]] {
 
@@ -201,13 +196,10 @@ object Company {
 // ------------------------------------------------------------------------------------------
 
 class Maybe[+A]
+final case class Nought() extends Maybe[Nothing]
+final case class Just[+A](a: A) extends Maybe[A]
 
 object Maybe {
-
-     final case class Nought() extends Maybe[Nothing]
-     final case class Just[+A](a: A) extends Maybe[A]
-
-
      implicit def maybeFunctor = new Functor[Maybe] {
 
           def map[A, B](fa: Maybe[A])(f: A => B): Maybe[B] ={
@@ -237,19 +229,16 @@ object Maybe {
 //https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set2_flipArguments/ex3.hs
 
 class Choice[+B, +A]
+final case class Wrong[+A, +B](a1: A, b: B, a2: A) extends Choice[B, A]
+final case class Correct[+B, +A](b1: B, a: A, b2: B) extends Choice[B, A]
 
 object Choice {
-
-     final case class Wrong[+A, +B](a1: A, b: B, a2: A) extends Choice[B, A]
-     final case class Right[+B, +A](b1: B, a: A, b2: B) extends Choice[B, A]
-
-
      implicit def choiceFunctor[B] = new Functor[Choice[B, ?]] {
 
           def map[A, C](fa: Choice[B, A])(f: A => C): Choice[B, C] ={
                fa match {
                     case Wrong(a1, b, a2) => Wrong(f(a1), b, f(a2))
-                    case Right(b1, a, b2) => Right(b1, f(a), b2)
+                    case Correct(b1, a, b2) => Correct(b1, f(a), b2)
                }
           }
      }
@@ -263,12 +252,12 @@ object Choice {
                     case (Wrong(a1, b, a2), Wrong(a1_, b_, a2_)) =>
                          Eq[A].eqv(a1, a1_) && Eq[A].eqv(a2, a2_) && Eq[B].eqv(b, b_)
 
-                    case (Right(b1, a, b2), Right(b1_, a_, b2_)) =>
+                    case (Correct(b1, a, b2), Correct(b1_, a_, b2_)) =>
                          Eq[B].eqv(b1, b1_) && Eq[B].eqv(b2, b2_) && Eq[A].eqv(a, a_)
 
-                    case (Right(_,_,_), _) => false
+                    case (Correct(_,_,_), _) => false
 
-                    case (_, Right(_,_,_)) => false
+                    case (_, Correct(_,_,_)) => false
                }
           }
      }
@@ -277,14 +266,11 @@ object Choice {
 // ------------------------------------------------------------------------------------------
 
 class TalkToMe[+A]
+final case class Halt() extends TalkToMe[Nothing]
+final case class Print[+A](string: String, a: A) extends TalkToMe[A]
+final case class Read[+A](reader: String => A) extends TalkToMe[A]
 
 object TalkToMe {
-
-     final case class Halt() extends TalkToMe[Nothing]
-     final case class Print[+A](string: String, a: A) extends TalkToMe[A]
-     final case class Read[+A](reader: String => A) extends TalkToMe[A]
-
-
      implicit def talkToMeFunctor = new Functor[TalkToMe] {
 
           def map[A, B](fa: TalkToMe[A])(f: A => B): TalkToMe[B] ={
@@ -330,13 +316,10 @@ object TalkToMe {
 
 
 class BinaryTree[+A]
+final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
+final case class Leaf[+A](value: A) extends BinaryTree[A]
 
 object BinaryTree {
-     import cats.syntax._
-
-     final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
-     final case class Leaf[+A](value: A) extends BinaryTree[A]
-
      implicit def treeFunctor = new Functor[BinaryTree] {
 
           def map[A, B](fa: BinaryTree[A])(f: A => B): BinaryTree[B] ={
@@ -367,10 +350,10 @@ object BinaryTree {
 
 //another name for List type
 class Train[+T]
+final case class End() extends Train[Nothing]
+final case class Wagon[+T](passenger: T, train: Train[T]) extends Train[T]
 
 object Train {
-     final case class End() extends Train[Nothing]
-     final case class Wagon[+T](passenger: T, train: Train[T]) extends Train[T]
 
      implicit def trainFunctor = new Functor[Train]{
 
@@ -399,29 +382,24 @@ object Train {
 //note the source is:
 // https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise2.hs
 
-class Konstant[+A, +B]
+case class ConstA[A, B](a: A)
 
-object Konstant {
+object ConstA {
+     implicit def constantFunctor[A] = new Functor[ConstA[A, ?]] {
 
-     final case class Konst[+A](a: A) extends Konstant[A, Nothing]
-
-
-     implicit def constantFunctor[A] = new Functor[Konstant[A, ?]] {
-
-          //note: weird: must say end type is A, C when I don't even apply the function !
-          def map[B, C](fa: Konstant[A, B])(f: B => C): Konstant[A, C] ={
+          def map[B, C](fa: ConstA[A, B])(f: B => C): ConstA[A, C] ={
 
                fa match {
-                    case Konst(a) => Konst(a)
+                    case ConstA(a) => ConstA(a)
                }
           }
      }
 
-     implicit def constantEq[A: Eq, B] = new Eq[Konstant[A, B]] {
-          def eqv(c1: Konstant[A, B], c2: Konstant[A, B]): Boolean ={
+     implicit def constantEq[A: Eq, B] = new Eq[ConstA[A, B]] {
+          def eqv(c1: ConstA[A, B], c2: ConstA[A, B]): Boolean ={
 
                (c1, c2) match {
-                    case (Konst(a1), Konst(a2)) => Eq[A].eqv(a1, a2)
+                    case (ConstA(a1), ConstA(a2)) => Eq[A].eqv(a1, a2)
                }
           }
      }
@@ -480,28 +458,25 @@ object Konstant {
 
 // ------------------------------------------------------------------------------------------
 
-class OtherKonstant[+A, +B]
+case class ConstB[A, B](b: B)
 
-object OtherKonstant {
-     final case class Const[+B](b: B) extends OtherKonstant[Nothing, B]
+object ConstB {
+     implicit def otherKonstFunctor[A] = new Functor[ConstB[A, ?]] {
 
-
-     implicit def otherKonstFunctor[A] = new Functor[OtherKonstant[A, ?]] {
-
-          def map[B, C](fa: OtherKonstant[A, B])(f: B => C): OtherKonstant[A, C] ={
+          def map[B, C](fa: ConstB[A, B])(f: B => C): ConstB[A, C] ={
 
                fa match {
-                    case Const(b) => Const(f(b))
+                    case ConstB(b) => ConstB(f(b))
                }
           }
      }
 
-     implicit def otherKonstEq[A, B: Eq] = new Eq[OtherKonstant[A, B]]{
+     implicit def otherKonstEq[A, B: Eq] = new Eq[ConstB[A, B]]{
 
-          def eqv(o1: OtherKonstant[A, B], o2: OtherKonstant[A, B]): Boolean ={
+          def eqv(o1: ConstB[A, B], o2: ConstB[A, B]): Boolean ={
 
                (o1, o2) match {
-                    case (Const(b1), Const(b2)) => Eq[B].eqv(b1, b2)
+                    case (ConstB(b1), ConstB(b2)) => Eq[B].eqv(b1, b2)
                }
           }
      }

@@ -54,7 +54,6 @@ object ArbitraryADTs {
      }
 
      implicit def arbSum[B: Arbitrary, A: Arbitrary]: Arbitrary[Sum[B, A]] ={
-          import functor.data.Sum._
 
           val genFirst: Gen[First[A]] = for {
                a <- Arbitrary.arbitrary[A]
@@ -70,9 +69,6 @@ object ArbitraryADTs {
      }
 
      implicit def arbQuant[A: Arbitrary, B: Arbitrary]: Arbitrary[Quant[A, B]] ={
-          import functor.data.Quant._
-          /*val arbA = implicitly[Arbitrary[A]]
-          val arbB = implicitly[Arbitrary[B]]*/
 
           val genFinance: Gen[Finance] = Finance()
 
@@ -94,7 +90,6 @@ object ArbitraryADTs {
 
 
      implicit def arbMaybe[A: Arbitrary]: Arbitrary[Maybe[A]] ={
-          import functor.data.Maybe._
 
           val genNothing: Gen[Nought] = Nought()
 
@@ -107,8 +102,6 @@ object ArbitraryADTs {
 
 
      implicit def arbCompany[A: Arbitrary, C: Arbitrary, B: Arbitrary]: Arbitrary[Company[A, C, B]] ={
-
-          import functor.data.Company._
 
           val genDeepBlue: Gen[DeepBlue[A, C]] = for {
                a <- Arbitrary.arbitrary[A]
@@ -124,27 +117,23 @@ object ArbitraryADTs {
 
      implicit def arbChoice[A: Arbitrary, B: Arbitrary]: Arbitrary[Choice[B, A]] ={
 
-          import functor.data.Choice._
-
           val genWrong: Gen[Wrong[A, B]] = for {
                a1 <- Arbitrary.arbitrary[A]
                a2 <- Arbitrary.arbitrary[A]
                b <- Arbitrary.arbitrary[B]
           } yield Wrong(a1, b, a2)
 
-          val genRight: Gen[Right[B, A]] = for {
+          val genRight: Gen[Correct[B, A]] = for {
                b1 <- Arbitrary.arbitrary[B]
                b2 <- Arbitrary.arbitrary[B]
                a <- Arbitrary.arbitrary[A]
-          } yield Right(b1, a, b2)
+          } yield Correct(b1, a, b2)
 
           Arbitrary(Gen.oneOf(genWrong, genRight))
      }
 
 
      implicit def arbTalk[A: Arbitrary]: Arbitrary[TalkToMe[A]] ={
-
-          import functor.data.TalkToMe._
 
           val genHalt: Gen[Halt] = Halt()
 
@@ -166,8 +155,6 @@ object ArbitraryADTs {
 
      implicit def arbTree[A: Arbitrary]: Arbitrary[BinaryTree[A]] ={
 
-          import functor.data.BinaryTree._
-
           val genLeaf: Gen[Leaf[A]] = for {
                a <- Arbitrary.arbitrary[A]
           } yield Leaf(a)
@@ -185,7 +172,6 @@ object ArbitraryADTs {
 
 
      implicit def arbTrain[T: Arbitrary]: Arbitrary[Train[T]] ={
-          import functor.data.Train._
 
           val genEnd: Gen[End] = End()
 
@@ -198,24 +184,18 @@ object ArbitraryADTs {
      }
 
 
-     implicit def arbConstant[A: Arbitrary, B]: Arbitrary[Konstant[A, B]] ={
-
-          import functor.data.Konstant._
-
-          val genConst: Gen[Konst[A]] = for {
+     implicit def arbConstant[A: Arbitrary, B]: Arbitrary[ConstA[A, B]] ={
+          val genConst: Gen[ConstA[A, B]] = for {
                a <- Arbitrary.arbitrary[A]
-          } yield Konst(a)
+          } yield ConstA(a)
 
           Arbitrary(genConst)
      }
 
-     implicit def arbOtherConstant[A, B: Arbitrary]: Arbitrary[OtherKonstant[A, B]] ={
-
-          import functor.data.OtherKonstant._
-
-          val genConst: Gen[Const[B]] = for {
+     implicit def arbOtherConstant[A, B: Arbitrary]: Arbitrary[ConstB[A, B]] ={
+          val genConst: Gen[ConstB[A, B]] = for {
                b <- Arbitrary.arbitrary[B]
-          } yield Const(b)
+          } yield ConstB(b)
 
           Arbitrary(genConst)
      }

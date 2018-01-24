@@ -33,7 +33,6 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Two[String, Int]", FunctorTests[Two[String, ?]].functor[Int, Double, String])
 
-     //todo
      checkAll("Three[Int, String, Double]", FunctorTests[Three[Int, String, ?]].functor[Double, Int, Int])
 
      checkAll("Sum[Identity[Int], String]", FunctorTests[Sum[Identity[Int], ?]].functor[String, Int, Int])
@@ -51,9 +50,9 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Train[Double]", FunctorTests[Train].functor[Double, Double, Double])
 
-     checkAll("Konstant[Double, Int]", FunctorTests[Konstant[Double, ?]].functor[Int, Int, Int])
+     checkAll("ConstA[Double, Int]", FunctorTests[ConstA[Double, ?]].functor[Int, Int, Int])
 
-     checkAll("OtherKonstant[Double, Int]", FunctorTests[OtherKonstant[Double, ?]].functor[Int, Int, Int])
+     checkAll("ConstB[Double, Int]", FunctorTests[ConstB[Double, ?]].functor[Int, Int, Int])
 
      checkAll("LiftItOut[Int, Int]", FunctorTests[LiftItOut[Int, ?]].functor[Int, Int, Int])
 
