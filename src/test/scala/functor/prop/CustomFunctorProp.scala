@@ -102,7 +102,7 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[TalkToMe].compositionProperty[Int, String, String]
 
      FunctorAxioms[BinaryTree].identityProperty[Int]
-     FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int]
+     FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int] //todo not working
 
      FunctorAxioms[Train].identityProperty[Double]
      FunctorAxioms[Train].compositionProperty[Double, Double, Double]
