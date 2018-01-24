@@ -39,7 +39,7 @@ libraryDependencies ++= Seq(
      "org.specs2" %% "specs2-core" % "4.0.2" % Test,
      "org.specs2" %% "specs2-scalacheck" % "4.0.2" % Test,
      //Discipline
-     "org.typelevel" %% "discipline" % "0.8",
+     "org.typelevel" %% "discipline" % "0.8", //todo was 0.8 - evictions
      //Spire
      "org.typelevel" %% "spire" % "0.14.1",
      "org.typelevel" %% "spire-laws" % "0.14.1",
@@ -52,7 +52,7 @@ libraryDependencies ++= Seq(
      //"org.typelevel"   %% "cats"           % "1.0.1",
      "org.typelevel"   %% "cats-core"           % "1.0.1",
      "org.typelevel"   %% "cats-macros"           % "1.0.1",
-     "org.typelevel"   %% "cats-kernel"           % "1.0.1",
+     "org.typelevel"   %% "cats-kernel"           % "1.0.1", //todo was 1.0.1 - evictions
      "org.typelevel"   %% "cats-laws"           % "1.0.1",
      "org.typelevel"   %% "cats-free"           % "1.0.1",
      "org.typelevel"   %% "cats-testkit"           % "1.0.1",

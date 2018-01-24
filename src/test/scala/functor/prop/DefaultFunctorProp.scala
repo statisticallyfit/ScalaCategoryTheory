@@ -9,6 +9,7 @@ import cats.data.Validated
 import cats.instances.AllInstances
 import cats.syntax.AllSyntax
 import cats.laws.discipline.FunctorTests
+import cats.laws.discipline.arbitrary._ //note - for validated arbitrary instance.
 
 import org.specs2.SpecificationLike
 import org.specs2.mutable._
@@ -23,9 +24,9 @@ trait CatsSpec extends Specification with Discipline with SpecificationLike with
 
 class DefaultFunctorProp extends CatsSpec {
 
-     checkAll("Either[Int, Int]",  FunctorTests[Either[Int, ?]].functor[Int, Int, Int])
+     /*checkAll("Either[Int, Int]",  FunctorTests[Either[Int, ?]].functor[Int, Int, Int])
 
-     //checkAll("Validated[String, Int]", FunctorTests[Validated[String, ?]].functor[Int, Double, String])
+     checkAll("Validated[String, Int]", FunctorTests[Validated[String, ?]].functor[Int, Double, String])
 
      checkAll("Identity[Int]", FunctorTests[Identity].functor[Int, Int, String])
 
@@ -39,22 +40,24 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Quant[Double, String]", FunctorTests[Quant[Double, ?]].functor[String, Double, String])
 
+     //todo
      checkAll("Maybe[Int]", FunctorTests[Maybe].functor[Int, Int, Int])
 
      checkAll("Company[Int, String, Int]", FunctorTests[Company[Int, String, ?]].functor[Int, Int, Int])
 
-     checkAll("TalkToMe[Int]", FunctorTests[TalkToMe].functor[Int, Int, Int])
+     checkAll("TalkToMe[Int]", FunctorTests[TalkToMe].functor[Int, Int, Int])*/
 
-     //todo
-     checkAll("BinaryTree[Int]", FunctorTests[BinaryTree].functor[Int, Int, Int])
+     //todo here ---
+     //checkAll("BinaryTree[Int]", FunctorTests[BinaryTree].functor[Int, Int, Int])
+     checkAll("BinaryTree2[Int]", FunctorTests[BinaryTree2].functor[Int, Int, Int])
 
-     checkAll("Train[Double]", FunctorTests[Train].functor[Double, Double, Double])
+     //checkAll("Train[Int]", FunctorTests[Train].functor[Int, Int, Int])
 
-     //todo not passing the functor tests! need to define this another way.
-     //checkAll("ConstA[Double, Int]", FunctorTests[ConstA[Double, ?]].functor[Int, Int, Int])
+     /*checkAll("ConstA[Double, Int]", FunctorTests[ConstA[Double, ?]].functor[Int, Int, Int])
 
      checkAll("ConstB[Double, Int]", FunctorTests[ConstB[Double, ?]].functor[Int, Int, Int])
 
+     //todo
      checkAll("LiftItOut[Int, Int]", FunctorTests[LiftItOut[Int, ?]].functor[Int, Int, Int])
 
      checkAll("Together[Int, Int]", FunctorTests[Together[Int, ?]].functor[Int, Int, Int])
@@ -63,6 +66,6 @@ class DefaultFunctorProp extends CatsSpec {
 
      //todo
      checkAll("Notorious[Int, Double, String, Int, Int, ?]",
-          FunctorTests[Notorious[Int, Double, String, Int, Int, ?]].functor[Int, Int, Int])
+          FunctorTests[Notorious[Int, Double, String, Int, Int, ?]].functor[Int, Int, Int])*/
 
 }

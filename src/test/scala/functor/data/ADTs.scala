@@ -81,7 +81,7 @@ object Three {
 
 // ------------------------------------------------------------------------------------------
 
-class Sum[+B, +A]
+sealed abstract class Sum[+B, +A]
 final case class First[+A](first: A) extends Sum[Nothing, A]
 final case class Second[+B](second: B) extends Sum[B, Nothing]
 
@@ -113,7 +113,7 @@ object Sum {
 
 // ------------------------------------------------------------------------------------------
 
-class Quant[+A, +B]
+sealed abstract class Quant[+A, +B]
 final case class Finance() extends Quant[Nothing, Nothing]
 final case class Desk[+A](desk: A) extends Quant[A, Nothing]
 final case class Bloor[+B](bloor: B) extends Quant[Nothing, B]
@@ -160,7 +160,7 @@ object Quant {
 
 // ------------------------------------------------------------------------------------------
 
-class Company[+A, +C, +B]
+sealed abstract class Company[+A, +C, +B]
 final case class DeepBlue[+A, +C](a: A, c: C) extends Company[A, C, Nothing]
 final case class Something[+B](b: B) extends Company[Nothing, Nothing, B]
 
@@ -195,7 +195,7 @@ object Company {
 
 // ------------------------------------------------------------------------------------------
 
-class Maybe[+A]
+sealed abstract class Maybe[+A]
 final case class Nought() extends Maybe[Nothing]
 final case class Just[+A](a: A) extends Maybe[A]
 
@@ -228,14 +228,14 @@ object Maybe {
 //note: based off this one:
 //https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set2_flipArguments/ex3.hs
 
-class Choice[+B, +A]
-final case class Wrong[+A, +B](a1: A, b: B, a2: A) extends Choice[B, A]
-final case class Correct[+B, +A](b1: B, a: A, b2: B) extends Choice[B, A]
+sealed abstract class Decision[+B, +A]
+final case class Wrong[+A, +B](a1: A, b: B, a2: A) extends Decision[B, A]
+final case class Correct[+B, +A](b1: B, a: A, b2: B) extends Decision[B, A]
 
-object Choice {
-     implicit def choiceFunctor[B] = new Functor[Choice[B, ?]] {
+object Decision {
+     implicit def choiceFunctor[B] = new Functor[Decision[B, ?]] {
 
-          def map[A, C](fa: Choice[B, A])(f: A => C): Choice[B, C] ={
+          def map[A, C](fa: Decision[B, A])(f: A => C): Decision[B, C] ={
                fa match {
                     case Wrong(a1, b, a2) => Wrong(f(a1), b, f(a2))
                     case Correct(b1, a, b2) => Correct(b1, f(a), b2)
@@ -244,9 +244,9 @@ object Choice {
      }
 
 
-     implicit def choiceEq[A: Eq, B: Eq] = new Eq[Choice[B, A]] {
+     implicit def choiceEq[A: Eq, B: Eq] = new Eq[Decision[B, A]] {
 
-          def eqv(c1: Choice[B, A], c2: Choice[B, A]): Boolean ={
+          def eqv(c1: Decision[B, A], c2: Decision[B, A]): Boolean ={
 
                (c1, c2) match {
                     case (Wrong(a1, b, a2), Wrong(a1_, b_, a2_)) =>
@@ -265,7 +265,7 @@ object Choice {
 
 // ------------------------------------------------------------------------------------------
 
-class TalkToMe[+A]
+sealed abstract class TalkToMe[+A]
 final case class Halt() extends TalkToMe[Nothing]
 final case class Print[+A](string: String, a: A) extends TalkToMe[A]
 final case class Read[+A](reader: String => A) extends TalkToMe[A]
@@ -315,9 +315,12 @@ object TalkToMe {
 // ------------------------------------------------------------------------------------------
 
 
-class BinaryTree[+A]
-final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
+sealed abstract class BinaryTree[+A]
 final case class Leaf[+A](value: A) extends BinaryTree[A]
+final case class Branch[+A](left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A]
+//final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
+
+//note changing this def since functor composition not working with previous def.
 
 object BinaryTree {
      implicit def treeFunctor = new Functor[BinaryTree] {
@@ -326,8 +329,8 @@ object BinaryTree {
                fa match {
                     case Leaf(a) => Leaf(f(a))
 
-                    case Branch(left, mid, right) =>
-                         Branch(map(left)(f), f(mid), map(right)(f))
+                    case Branch(left, right) =>
+                         Branch(map(left)(f), map(right)(f))
                }
           }
      }
@@ -337,19 +340,58 @@ object BinaryTree {
           def eqv(tree1: BinaryTree[A], tree2: BinaryTree[A]): Boolean ={
                (tree1, tree2) match {
                     case (Leaf(a1), Leaf(a2)) => Eq[A].eqv(a1, a2)
-
-                    case (Branch(l1, m1, r1), Branch(l2, m2, r2)) =>
-                         eqv(l1, l2) && Eq[A].eqv(m1, m2) && eqv(r1, r2)
-
+                    case (Branch(l1, r1), Branch(l2, r2)) => eqv(l1, l2) && eqv(r1, r2)
                     case _ => false
                }
           }
      }
 }
+
+
+
+
+
+
+sealed abstract class BinaryTree2[+A]
+case object Leaf2 extends BinaryTree2[Nothing]
+//final case class Leaf2[+A](value: A) extends BinaryTree2[A] //note functor composition not working with this
+// definition why?? todoo wfind out why
+final case class Branch2[+A](left: BinaryTree2[A], mid: A, right: BinaryTree2[A]) extends BinaryTree2[A]
+
+//note changing this def since functor composition not working with previous def.
+
+object BinaryTree2 {
+     implicit def treeFunctor2 = new Functor[BinaryTree2] {
+
+          def map[A, B](fa: BinaryTree2[A])(f: A => B): BinaryTree2[B] ={
+               fa match {
+                    case Leaf2 => Leaf2
+                    case Branch2(left, mid, right) =>
+                         Branch2(map(left)(f), f(mid), map(right)(f))
+               }
+          }
+     }
+
+     implicit def treeEq2[A: Eq] = new Eq[BinaryTree2[A]] {
+
+          def eqv(tree1: BinaryTree2[A], tree2: BinaryTree2[A]): Boolean ={
+               (tree1, tree2) match {
+                    case (Leaf2, Leaf2) => true //Eq[A].eqv(a1, a2)
+                    case (Branch2(l1, m1, r1), Branch2(l2, m2, r2)) => eqv(l1, l2) && eqv(r1, r2) && Eq[A].eqv(m1,m2)
+                    case _ => false
+               }
+          }
+     }
+}
+
+
+
+//TODO class RoseTree (or Rose or Flower)
+//class Stem(stems: T*) extends Rose.      .. class Petal(_) extends Rose ...
 // ------------------------------------------------------------------------------------------
 
 //another name for List type
-class Train[+T]
+sealed abstract class Train[+T]
 final case class End() extends Train[Nothing]
 final case class Wagon[+T](passenger: T, train: Train[T]) extends Train[T]
 
