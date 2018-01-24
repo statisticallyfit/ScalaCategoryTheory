@@ -160,9 +160,9 @@ object ArbitraryADTs {
           } yield Leaf(a)
 
           def genBranch: Gen[Branch[A]] = for {
-               a <- Arbitrary.arbitrary[A]
-               left <- Gen.oneOf(genLeaf, genBranch)
-               right <- Gen.oneOf(genLeaf, genBranch)
+               a <- Arbitrary.arbitrary[A] suchThat (_ != null)
+               left <- Gen.oneOf(genLeaf, genBranch) suchThat (_ != null)
+               right <- Gen.oneOf(genLeaf, genBranch) suchThat (_ != null)
           } yield Branch(left, a, right)
 
           val genTree: Gen[BinaryTree[A]] = Gen.oneOf(genLeaf, genBranch)
