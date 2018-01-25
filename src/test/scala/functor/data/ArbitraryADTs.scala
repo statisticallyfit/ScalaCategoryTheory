@@ -172,7 +172,24 @@ object ArbitraryADTs {
 
      implicit def arbTree2[A: Arbitrary]: Arbitrary[BinaryTree2[A]] ={
 
-          val genLeaf2: Gen[Leaf2.type] = Gen.const(Leaf2) suchThat (_ != null)
+          val genLeaf2 = Gen.const(Leaf2)
+
+          def genBranch2: Gen[Branch2[A]] = for {
+               a <- Arbitrary.arbitrary[A] suchThat (_ != null)
+               left <- Gen.sized(h => Gen.resize(h/2, genTree2)) suchThat (_ != null)
+               right <- Gen.sized(h => Gen.resize(h/2, genTree2)) suchThat (_ != null)
+          } yield Branch2(left, a, right)
+
+          def genTree2: Gen[BinaryTree2[A]] = Gen.sized { height =>
+               if(height <= 0) {
+                    genLeaf2
+               } else {
+                    Gen.oneOf(genLeaf2, genBranch2)
+               }
+          }
+
+          Arbitrary(genTree2)
+          /*val genLeaf2: Gen[Leaf2.type] = Gen.const(Leaf2) suchThat (_ != null)
 
           def genBranch2: Gen[Branch2[A]] = for {
                a <- Arbitrary.arbitrary[A] suchThat (_ != null)
@@ -181,7 +198,7 @@ object ArbitraryADTs {
           } yield Branch2(left, a, right)
 
 
-          Arbitrary(Gen.oneOf(genLeaf2, genBranch2))
+          Arbitrary(Gen.oneOf(genLeaf2, genBranch2))*/
      }
 
 
