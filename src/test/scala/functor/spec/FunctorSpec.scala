@@ -292,7 +292,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
                     val result: Three[Int,Int,Int] = Three(1,1, -4)
 
                     //todo ((triple.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
-                    ((Functor[Three[Int,Int,?]].map(triple)((x:Int) => x + 1)).map((x:Int) => x - 5)).map((x:Int) => x * 2) shouldEqual result
+                    Functor[Three[Int,Int,?]].map(triple)((x:Int) => x + 1).map((x:Int) => x - 5).map((x:Int) => x * 2) shouldEqual result
                }
 
                ".   -> lifting: we can apply/lift a function to a value" in {
@@ -417,11 +417,11 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
           // ---------------------------------------------------------------------------
 
-          "-> LiftItOut[A, B] is a functor" in {
+          /*"-> LiftItOut[A, B] is a functor" in {
 
                import functor.data.LiftItOut._
 
-               def lft(a: String): Int = a.length
+               val lft = (_: String).length
                def timesTwo(x: Int): Int = x * 2
                val str: String = "dolphin"
 
@@ -431,7 +431,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
                     Functor[LiftItOut[String, ?]].map(lft)((x:Int) => x * 2).lifter(str) shouldEqual 14
                }
 
-               /*".   -> composition: we can compose several functions" in {
+               ".   -> composition: we can compose several functions" in {
 
                     LiftItOut(lft).map(_ + 1).map(_ - 5).map(_ * 2).lifter(str) shouldEqual result
                     Functor[BinaryTree].map(tree)(_ + 1).map(_ - 5).map(_ * 2) shouldEqual result
@@ -484,9 +484,9 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
                          //---
                          anyTree.map(g compose f) shouldEqual (anyTree.map(f).map(g))
                     }
-               }*/
-          }
-          //future
+               }
+          }*/
+          
           //then compose types: list with option, tree with option, sum with list, etc ...
           //then some of my types: Tree ,...
 
