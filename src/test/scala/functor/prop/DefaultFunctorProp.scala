@@ -6,8 +6,9 @@ import functor.data._
 import functor.data.ArbitraryADTs._
 
 import cats.data.Validated
-import cats.instances.AllInstances
-import cats.syntax.AllSyntax
+import cats.implicits._
+import cats.instances._
+import cats.syntax._
 import cats.laws.discipline.FunctorTests
 import cats.laws.discipline.arbitrary._ //note - for validated arbitrary instance.
 
@@ -20,7 +21,7 @@ import org.typelevel.discipline.specs2.Discipline
   *
   */
 
-trait CatsSpec extends Specification with Discipline with SpecificationLike with AllInstances with AllSyntax
+trait CatsSpec extends Specification with Discipline with SpecificationLike /*with AllInstances with AllSyntax*/
 
 class DefaultFunctorProp extends CatsSpec {
 

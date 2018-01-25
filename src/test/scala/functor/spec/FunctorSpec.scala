@@ -7,16 +7,16 @@ import functor.data.ArbitraryADTs._
 import cats.Functor
 import cats.implicits._
 import cats.instances.AllInstances
-//import cats.instances.either._
+import cats.syntax.AllSyntax
 
-import org.specs2.mutable.Specification
+import org.specs2.mutable._
 import org.scalacheck.Arbitrary
 
 /**
   *
   */
 
-class FunctorSpec extends Specification with AllInstances {
+class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
      "Functor is a typeclass that can be used to map functions through a type" should {
 
@@ -151,6 +151,8 @@ class FunctorSpec extends Specification with AllInstances {
 
           "-> Either[E,A] is a functor" in {
 
+               //import cats.instances.either._
+
                ".   -> mapping: we can map a function" in {
 
                     Right(6).map(_ * 3) shouldEqual Right(18)
@@ -179,10 +181,10 @@ class FunctorSpec extends Specification with AllInstances {
 
                ".   -> fproduct: pairs source value with result of applying a function" in {
 
-                    Right(2).fproduct(_ + 7) shouldEqual Right((2, 14))
+                    //todo Right(2).fproduct(_ + 7) shouldEqual Right((2, 14))
                     Functor[Either[String, ?]].fproduct(Right(2))(_ + 7) shouldEqual Right((2, 9))
 
-                    Left("eeck").fproduct((s:String) => s.length) shouldEqual Left("eeck")
+                    //todo Left("eeck").fproduct((s:String) => s.length) shouldEqual Left("eeck")
                     Functor[Either[String, ?]].fproduct(Left("eeck"))((s:String) => s.length) shouldEqual Left("eeck")
                }
 
@@ -220,6 +222,8 @@ class FunctorSpec extends Specification with AllInstances {
           // ---------------------------------------------------------------------------
 
           "-> Pair[A, A] is a functor" in {
+
+               import functor.data.Pair._
 
                ".   -> mapping: we can map a function" in {
 
@@ -271,8 +275,7 @@ class FunctorSpec extends Specification with AllInstances {
 
           "-> Three[A,B,C] is a functor" in {
 
-               import functor.data.Three.threeFunctor
-               import functor.data.Three.threeEq
+               import functor.data.Three._
 
                ".   -> mapping: we can map a function" in {
 
@@ -289,7 +292,7 @@ class FunctorSpec extends Specification with AllInstances {
                     val result: Three[Int,Int,Int] = Three(1,1, -4)
 
                     //todo ((triple.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
-                    Functor[Three[Int,Int,?]].map(triple)(_ + 1).map(_ - 5).map(_ * 2) shouldEqual result
+                    ((Functor[Three[Int,Int,?]].map(triple)((x:Int) => x + 1)).map((x:Int) => x - 5)).map((x:Int) => x * 2) shouldEqual result
                }
 
                ".   -> lifting: we can apply/lift a function to a value" in {
@@ -420,15 +423,15 @@ class FunctorSpec extends Specification with AllInstances {
 
                def lft(a: String): Int = a.length
                def timesTwo(x: Int): Int = x * 2
-               val str: String = "dolphins"
+               val str: String = "dolphin"
 
                ".   -> mapping: we can map a function" in {
 
-                    LiftItOut(lft).map((x:Int) => x * 2).lifter(str) shouldEqual 16
-                    Functor[LiftItOut].map(lft)(_ * 2).lifter(str) shouldEqual 16
+                    //todo LiftItOut(lft).map((x:Int) => x * 2).lifter(str) shouldEqual 14
+                    Functor[LiftItOut[String, ?]].map(lft)((x:Int) => x * 2).lifter(str) shouldEqual 14
                }
 
-               ".   -> composition: we can compose several functions" in {
+               /*".   -> composition: we can compose several functions" in {
 
                     LiftItOut(lft).map(_ + 1).map(_ - 5).map(_ * 2).lifter(str) shouldEqual result
                     Functor[BinaryTree].map(tree)(_ + 1).map(_ - 5).map(_ * 2) shouldEqual result
@@ -481,7 +484,7 @@ class FunctorSpec extends Specification with AllInstances {
                          //---
                          anyTree.map(g compose f) shouldEqual (anyTree.map(f).map(g))
                     }
-               }
+               }*/
           }
           //future
           //then compose types: list with option, tree with option, sum with list, etc ...

@@ -14,6 +14,8 @@ import scala.language.higherKinds
 
 import cats.{Eq, Functor}
 import cats.implicits._
+import cats.instances._
+import cats.syntax._
 
 
 import org.scalacheck.Prop.forAll
