@@ -1,9 +1,9 @@
 package functor.data
 
 
-import cats.data.Validated
-import cats.data.Validated.Invalid
-import cats.{Eq, Functor, Monoid}
+import cats.{Eq, Functor}
+import cats.implicits._
+import cats.instances._
 
 
 
@@ -317,8 +317,7 @@ object TalkToMe {
 
 sealed abstract class BinaryTree[+A]
 final case class Leaf[+A](value: A) extends BinaryTree[A]
-final case class Branch[+A](left: BinaryTree[A], right: BinaryTree[A]) extends BinaryTree[A]
-//final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
+final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) extends BinaryTree[A]
 
 //note changing this def since functor composition not working with previous def.
 
@@ -328,9 +327,8 @@ object BinaryTree {
           def map[A, B](fa: BinaryTree[A])(f: A => B): BinaryTree[B] ={
                fa match {
                     case Leaf(a) => Leaf(f(a))
-
-                    case Branch(left, right) =>
-                         Branch(map(left)(f), map(right)(f))
+                    case Branch(left, mid, right) =>
+                         Branch(map(left)(f), f(mid), map(right)(f))
                }
           }
      }
@@ -340,44 +338,7 @@ object BinaryTree {
           def eqv(tree1: BinaryTree[A], tree2: BinaryTree[A]): Boolean ={
                (tree1, tree2) match {
                     case (Leaf(a1), Leaf(a2)) => Eq[A].eqv(a1, a2)
-                    case (Branch(l1, r1), Branch(l2, r2)) => eqv(l1, l2) && eqv(r1, r2)
-                    case _ => false
-               }
-          }
-     }
-}
-
-
-
-
-
-
-sealed abstract class BinaryTree2[+A]
-case object Leaf2 extends BinaryTree2[Nothing]
-//final case class Leaf2[+A](value: A) extends BinaryTree2[A] //note functor composition not working with this
-// definition why?? todoo wfind out why
-final case class Branch2[+A](left: BinaryTree2[A], mid: A, right: BinaryTree2[A]) extends BinaryTree2[A]
-
-//note changing this def since functor composition not working with previous def.
-
-object BinaryTree2 {
-     implicit def treeFunctor2 = new Functor[BinaryTree2] {
-
-          def map[A, B](fa: BinaryTree2[A])(f: A => B): BinaryTree2[B] ={
-               fa match {
-                    case Leaf2 => Leaf2
-                    case Branch2(left, mid, right) =>
-                         Branch2(map(left)(f), f(mid), map(right)(f))
-               }
-          }
-     }
-
-     implicit def treeEq2[A: Eq] = new Eq[BinaryTree2[A]] {
-
-          def eqv(tree1: BinaryTree2[A], tree2: BinaryTree2[A]): Boolean ={
-               (tree1, tree2) match {
-                    case (Leaf2, Leaf2) => true //Eq[A].eqv(a1, a2)
-                    case (Branch2(l1, m1, r1), Branch2(l2, m2, r2)) => eqv(l1, l2) && eqv(r1, r2) && Eq[A].eqv(m1,m2)
+                    case (Branch(l1, m1, r1), Branch(l2, m2, r2)) => eqv(l1, l2) && eqv(r1, r2) && Eq[A].eqv(m1,m2)
                     case _ => false
                }
           }

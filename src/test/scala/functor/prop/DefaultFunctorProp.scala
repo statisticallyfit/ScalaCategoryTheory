@@ -24,7 +24,7 @@ trait CatsSpec extends Specification with Discipline with SpecificationLike with
 
 class DefaultFunctorProp extends CatsSpec {
 
-     /*checkAll("Either[Int, Int]",  FunctorTests[Either[Int, ?]].functor[Int, Int, Int])
+     checkAll("Either[Int, Int]",  FunctorTests[Either[Int, ?]].functor[Int, Int, Int])
 
      checkAll("Validated[String, Int]", FunctorTests[Validated[String, ?]].functor[Int, Double, String])
 
@@ -40,20 +40,19 @@ class DefaultFunctorProp extends CatsSpec {
 
      checkAll("Quant[Double, String]", FunctorTests[Quant[Double, ?]].functor[String, Double, String])
 
-     //todo
      checkAll("Maybe[Int]", FunctorTests[Maybe].functor[Int, Int, Int])
 
      checkAll("Company[Int, String, Int]", FunctorTests[Company[Int, String, ?]].functor[Int, Int, Int])
 
-     checkAll("TalkToMe[Int]", FunctorTests[TalkToMe].functor[Int, Int, Int])*/
+     checkAll("Decision[String, Int]", FunctorTests[Decision[String, ?]].functor[Int, String, Double])
 
-     //todo here ---
-     //checkAll("BinaryTree[Int]", FunctorTests[BinaryTree].functor[Int, Int, Int])
-     checkAll("BinaryTree2[Int]", FunctorTests[BinaryTree2].functor[Int, Int, Int])
+     checkAll("TalkToMe[Int]", FunctorTests[TalkToMe].functor[Int, Int, Int])
 
-     //checkAll("Train[Int]", FunctorTests[Train].functor[Int, Int, Int])
+     checkAll("BinaryTree[Int]", FunctorTests[BinaryTree].functor[Int, Int, Int])
 
-     /*checkAll("ConstA[Double, Int]", FunctorTests[ConstA[Double, ?]].functor[Int, Int, Int])
+     checkAll("Train[Int]", FunctorTests[Train].functor[Int, Int, Int])
+
+     checkAll("ConstA[Double, Int]", FunctorTests[ConstA[Double, ?]].functor[Int, Int, Int])
 
      checkAll("ConstB[Double, Int]", FunctorTests[ConstB[Double, ?]].functor[Int, Int, Int])
 
@@ -66,6 +65,6 @@ class DefaultFunctorProp extends CatsSpec {
 
      //todo
      checkAll("Notorious[Int, Double, String, Int, Int, ?]",
-          FunctorTests[Notorious[Int, Double, String, Int, Int, ?]].functor[Int, Int, Int])*/
+          FunctorTests[Notorious[Int, Double, String, Int, Int, ?]].functor[Int, Int, Int])
 
 }

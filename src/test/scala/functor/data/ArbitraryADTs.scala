@@ -156,49 +156,24 @@ object ArbitraryADTs {
      implicit def arbTree[A: Arbitrary]: Arbitrary[BinaryTree[A]] ={
 
           val genLeaf: Gen[Leaf[A]] = for {
-               a <- Arbitrary.arbitrary[A] suchThat (_ != null)
+               a <- Arbitrary.arbitrary[A]
           } yield Leaf(a)
 
           def genBranch: Gen[Branch[A]] = for {
-               //a <- Arbitrary.arbitrary[A] suchThat (_ != null)
-               left <- Gen.oneOf(genLeaf, genBranch) suchThat (_ != null)
-               right <- Gen.oneOf(genLeaf, genBranch) suchThat (_ != null)
-          } yield Branch(left, /*a,*/ right)
-
-          val genTree: Gen[BinaryTree[A]] = Gen.oneOf(genLeaf, genBranch)
-
-          Arbitrary(genTree)
-     }
-
-     implicit def arbTree2[A: Arbitrary]: Arbitrary[BinaryTree2[A]] ={
-
-          val genLeaf2 = Gen.const(Leaf2)
-
-          def genBranch2: Gen[Branch2[A]] = for {
                a <- Arbitrary.arbitrary[A] suchThat (_ != null)
-               left <- Gen.sized(h => Gen.resize(h/2, genTree2)) suchThat (_ != null)
-               right <- Gen.sized(h => Gen.resize(h/2, genTree2)) suchThat (_ != null)
-          } yield Branch2(left, a, right)
+               left <- Gen.sized(h => Gen.resize(h/2, genTree)) suchThat (_ != null)
+               right <- Gen.sized(h => Gen.resize(h/2, genTree)) suchThat (_ != null)
+          } yield Branch(left, a, right)
 
-          def genTree2: Gen[BinaryTree2[A]] = Gen.sized { height =>
+          def genTree: Gen[BinaryTree[A]] = Gen.sized { height =>
                if(height <= 0) {
-                    genLeaf2
+                    genLeaf
                } else {
-                    Gen.oneOf(genLeaf2, genBranch2)
+                    Gen.oneOf(genLeaf, genBranch)
                }
           }
 
-          Arbitrary(genTree2)
-          /*val genLeaf2: Gen[Leaf2.type] = Gen.const(Leaf2) suchThat (_ != null)
-
-          def genBranch2: Gen[Branch2[A]] = for {
-               a <- Arbitrary.arbitrary[A] suchThat (_ != null)
-               left <- Gen.oneOf(genLeaf2, genBranch2) suchThat (_ != null)
-               right <- Gen.oneOf(genLeaf2, genBranch2) suchThat (_ != null)
-          } yield Branch2(left, a, right)
-
-
-          Arbitrary(Gen.oneOf(genLeaf2, genBranch2))*/
+          Arbitrary(genTree)
      }
 
 
@@ -207,11 +182,20 @@ object ArbitraryADTs {
           val genEnd: Gen[End] = End()
 
           def genWagon: Gen[Wagon[T]] = for {
-               person <- Arbitrary.arbitrary[T] suchThat (_ != null)
-               leftoverTrain <- Gen.oneOf(genEnd, genWagon) suchThat (_ != null)
-          } yield Wagon(person, leftoverTrain)
+               passenger <- Arbitrary.arbitrary[T] suchThat (_ != null)
+               restOfTrain <- Gen.sized(h => Gen.resize(h/2, genTrain)) suchThat (_ != null)
+               right <- Gen.sized(h => Gen.resize(h/2, genTrain)) suchThat (_ != null)
+          } yield Wagon(passenger, restOfTrain)
 
-          Arbitrary(Gen.oneOf(genEnd, genWagon))
+          def genTrain: Gen[Train[T]] = Gen.sized { height =>
+               if(height <= 0) {
+                    genEnd
+               } else {
+                    Gen.oneOf(genEnd, genWagon)
+               }
+          }
+
+          Arbitrary(genTrain)
      }
 
 

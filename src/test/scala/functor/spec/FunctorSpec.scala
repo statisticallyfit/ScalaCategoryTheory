@@ -5,7 +5,6 @@ import functor.data._
 import functor.data.ArbitraryADTs._
 
 import cats.Functor
-import cats.Functor._
 import cats.implicits._
 import cats.instances.AllInstances
 //import cats.instances.either._
@@ -21,7 +20,7 @@ class FunctorSpec extends Specification with AllInstances {
 
      "Functor is a typeclass that can be used to map functions through a type" should {
 
-          "-> List is a functor" in  {
+          "-> List[A] is a functor" in  {
 
                ".   -> mapping: we can map a function" in {
                     val list = List(1,2,3,4,5)
@@ -79,7 +78,7 @@ class FunctorSpec extends Specification with AllInstances {
 
           // ---------------------------------------------------------------------------
 
-          "-> Option is a functor" in {
+          "-> Option[A] is a functor" in {
 
                ".   -> mapping: we can map a function" in {
 
@@ -151,7 +150,7 @@ class FunctorSpec extends Specification with AllInstances {
 
           // ---------------------------------------------------------------------------
 
-          "-> Either is a functor" in {
+          "-> Either[E,A] is a functor" in {
 
                ".   -> mapping: we can map a function" in {
 
@@ -223,7 +222,7 @@ class FunctorSpec extends Specification with AllInstances {
 
           // ---------------------------------------------------------------------------
 
-          "-> Pair is a functor" in {
+          "-> Pair[A, A] is a functor" in {
 
                ".   -> mapping: we can map a function" in {
 
@@ -273,64 +272,65 @@ class FunctorSpec extends Specification with AllInstances {
 
           // ---------------------------------------------------------------------------
 
-          "-> Three is a functor" in {
+          "-> Three[A,B,C] is a functor" in {
 
                import functor.data.Three._
 
                ".   -> mapping: we can map a function" in {
 
-                    val three: Three[String, Int, Option[Int]] = Three("word", 2, Option(4))
+                    val triple = Three("word", 2, Some(4))
+                    val result = Three("word", 2, Some(5))
 
-                    three.map(_.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
-                    Functor[Three[String, Int, ?]].map(three)(_.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
+                    triple..map(_.map(_ + 1)) shouldEqual result
+                    Functor[Three[String, Int, ?]].map(triple)(_.map(_ + 1)) shouldEqual result
                }
 
                ".   -> composition: we can compose several functions" in {
 
-                    val three: Three[Int,Int,Int] = Three(1,1, 2)
+                    val triple: Three[Int,Int,Int] = Three(1,1, 2)
                     val result: Three[Int,Int,Int] = Three(1,1, -4)
 
-                    ((three.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
-                    ((Functor[Three[Int,Int,?]].map(three)(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
+                    ((triple.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
+                    Functor[Three[Int,Int,?]].map(triple)(_ + 1).map(_ - 5).map(_ * 2) shouldEqual result
                }
 
                ".   -> lifting: we can apply/lift a function to a value" in {
 
-                    val three: Three[Int,Int,Int] = Three(1,1, 2)
+                    val triple: Three[Int,Int,Int] = Three(1,1, 2)
                     val result: Three[Int,Int,Int] = Three(1,1, 24)
                     val liftTimesTwelve = Functor[Three[Int, Int, ?]].lift((x: Int) => x * 12)
 
-                    liftTimesTwelve(three) shouldEqual result
+                    liftTimesTwelve(triple) shouldEqual result
                }
 
                ".   -> fproduct: pairs source value with result of applying a function" in {
 
-                    val three: Three[Int,Int,Int] = Three(1,1, 2)
+                    val triple: Three[Int,Int,Int] = Three(1,1, 2)
                     val result: Three[Int,Int,(Int,Int)] = Three(1,1, (2, 9))
 
-                    three.fproduct(_ + 7) shouldEqual result
-                    Functor[Three[Int, Int, ?]].fproduct(three)(_ + 7) shouldEqual result
+                    triple.fproduct(_ + 7) shouldEqual result
+                    Functor[Three[Int, Int, ?]].fproduct(triple)(_ + 7) shouldEqual result
                }
 
                ".   -> laws" in {
                     val f = (_:Int) * 3
                     val g = (_:Int) + 1
 
-                    val three: Three[Int,Int,Int] = Three(1,1, 2)
+                    val triple: Three[Int,Int,Int] = Three(1,1, 2)
 
                     ".     -> law 1: identity: mapping the identity function should give the original value" in {
 
-                         three.map(identity) shouldEqual three
-                         Functor[Three[Int, Int, ?]].map(three)(identity) shouldEqual three
+                         triple.map(identity) shouldEqual triple
+                         Functor[Three[Int, Int, ?]].map(triple)(identity) shouldEqual triple
                     }
 
                     ".     -> law 2: composition: mapping a composed function on a functor is the " +
                          "same as mapping the functions one by one" in {
 
-                         three.map(g compose f) shouldEqual (three.map(f)).map(g)
+                         triple.map(g compose f) shouldEqual triple.map(f).map(g)
 
-                         val composeValue = Functor[Three[Int, Int, ?]].map(three)(g compose f)
-                         val mapSequentiallyValue = (Functor[Three[Int, Int, ?]].map(three)(f)).map(g)
+                         val composeValue = Functor[Three[Int, Int, ?]].map(triple)(g compose f)
+                         val mapSequentiallyValue = Functor[Three[Int, Int, ?]].map(triple)(f).map(g)
 
                          composeValue shouldEqual mapSequentiallyValue
                     }
@@ -339,7 +339,7 @@ class FunctorSpec extends Specification with AllInstances {
 
           // ---------------------------------------------------------------------------
 
-          /*"-> BinaryTree is a functor" in {
+          "-> BinaryTree[T] is a functor" in {
 
                import functor.data.BinaryTree._
 
@@ -387,10 +387,15 @@ class FunctorSpec extends Specification with AllInstances {
                     val f = (_:Int) * 3
                     val g = (_:Int) + 1
 
+                    val anyTree = Arbitrary.arbitrary[BinaryTree[Int]].sample.get
+
                     ".     -> law 1: identity: mapping the identity function should give the original value" in {
 
                          tree.map(identity) shouldEqual tree
                          Functor[BinaryTree].map(tree)(identity) shouldEqual tree
+
+                         anyTree.map(identity) shouldEqual anyTree
+                         Functor[BinaryTree].map(anyTree)(identity) shouldEqual anyTree
                     }
 
                     ".     -> law 2: composition: mapping a composed function on a functor is the " +
@@ -402,11 +407,84 @@ class FunctorSpec extends Specification with AllInstances {
                          val mapSequentiallyValue = (Functor[BinaryTree].map(tree)(f)).map(g)
 
                          composeValue shouldEqual mapSequentiallyValue
+
+                         //---
+                         anyTree.map(g compose f) shouldEqual (anyTree.map(f).map(g))
                     }
                }
-          }*/
+          }
 
+          // ---------------------------------------------------------------------------
 
+          "-> LiftItOut[A, B] is a functor" in {
+
+               import functor.data.LiftItOut._
+
+               def lft(a: String): Int = a.length
+               def timesTwo(x: Int): Int = x * 2
+               val str: String = "dolphins"
+
+               ".   -> mapping: we can map a function" in {
+
+                    LiftItOut(lft).map((x:Int) => x * 2).lifter(str) shouldEqual 16
+                    Functor[LiftItOut].map(lft)(_ * 2).lifter(str) shouldEqual 16
+               }
+
+               ".   -> composition: we can compose several functions" in {
+
+                    LiftItOut(lft).map(_ + 1).map(_ - 5).map(_ * 2).lifter(str) shouldEqual result
+                    Functor[BinaryTree].map(tree)(_ + 1).map(_ - 5).map(_ * 2) shouldEqual result
+               }
+
+               ".   -> lifting: we can apply/lift a function to a value" in {
+
+                    val liftTimesTwelve = Functor[BinaryTree].lift((x: Int) => x * 12)
+
+                    val result: BinaryTree[Int] = Branch(Branch(Leaf(12), 48, Leaf(60)), 276,
+                         Branch(Branch(Leaf(24), 60, Leaf(24)), 12, Leaf(108)))
+
+                    liftTimesTwelve(tree) shouldEqual result
+               }
+
+               ".   -> fproduct: pairs source value with result of applying a function" in {
+
+                    val result: BinaryTree[(Int,Int)] = Branch(Branch(Leaf((1,8)), (4,11), Leaf((5,12))), (23,30),
+                         Branch(Branch(Leaf((2,9)), (5,12), Leaf((2,9))), (1,8), Leaf((9,16))))
+
+                    tree.fproduct(_ + 7) shouldEqual result
+                    Functor[BinaryTree].fproduct(tree)(_ + 7) shouldEqual result
+               }
+
+               ".   -> laws" in {
+                    val f = (_:Int) * 3
+                    val g = (_:Int) + 1
+
+                    val anyTree = Arbitrary.arbitrary[BinaryTree[Int]].sample.get
+
+                    ".     -> law 1: identity: mapping the identity function should give the original value" in {
+
+                         tree.map(identity) shouldEqual tree
+                         Functor[BinaryTree].map(tree)(identity) shouldEqual tree
+
+                         anyTree.map(identity) shouldEqual anyTree
+                         Functor[BinaryTree].map(anyTree)(identity) shouldEqual anyTree
+                    }
+
+                    ".     -> law 2: composition: mapping a composed function on a functor is the " +
+                         "same as mapping the functions one by one" in {
+
+                         tree.map(g compose f) shouldEqual (tree.map(f).map(g))
+
+                         val composeValue = Functor[BinaryTree].map(tree)(g compose f)
+                         val mapSequentiallyValue = (Functor[BinaryTree].map(tree)(f)).map(g)
+
+                         composeValue shouldEqual mapSequentiallyValue
+
+                         //---
+                         anyTree.map(g compose f) shouldEqual (anyTree.map(f).map(g))
+                    }
+               }
+          }
           //future
           //then compose types: list with option, tree with option, sum with list, etc ...
           //then some of my types: Tree ,...

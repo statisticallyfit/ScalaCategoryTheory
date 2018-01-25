@@ -71,7 +71,7 @@ class Definitions extends Properties("Functor") {
 
 object CustomFunctorProp extends Definitions {
 
-     /*FunctorAxioms[Identity].identityProperty[Int]
+     FunctorAxioms[Identity].identityProperty[Int]
      FunctorAxioms[Identity].compositionProperty[Int, Int, Int]
      FunctorAxioms[Identity].compositionProperty[Int, String, List[Int]]
 
@@ -97,23 +97,16 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[Company[Int, String, ?]].identityProperty[Double]
      FunctorAxioms[Company[Int, String, ?]].compositionProperty[Double, Int, Double]
 
-     FunctorAxioms[Choice[(Int, Int), ?]].identityProperty[Int]
-     FunctorAxioms[Choice[(Int, Int), ?]].compositionProperty[Int, String, List[Int]]
+     FunctorAxioms[Decision[(Int, Int), ?]].identityProperty[Int]
+     FunctorAxioms[Decision[(Int, Int), ?]].compositionProperty[Int, String, List[Int]]
 
      FunctorAxioms[TalkToMe].identityProperty[Int]
-     FunctorAxioms[TalkToMe].compositionProperty[Int, String, String]*/
+     FunctorAxioms[TalkToMe].compositionProperty[Int, String, String]
 
+     FunctorAxioms[BinaryTree].identityProperty[Int]
+     FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int]
 
-     //--- todo here
-     //FunctorAxioms[BinaryTree].identityProperty[Int]
-     //FunctorAxioms[BinaryTree].compositionProperty[Int, Int, Int]
-
-     FunctorAxioms[BinaryTree2].identityProperty[Int]
-     FunctorAxioms[BinaryTree2].compositionProperty[Int, Int, Int] //todo not working
-
-
-
-     /*FunctorAxioms[Train].identityProperty[Double]
+     FunctorAxioms[Train].identityProperty[Double]
      FunctorAxioms[Train].compositionProperty[Double, Double, Double]
 
      FunctorAxioms[ConstA[Double, ?]].identityProperty[Int]
@@ -132,7 +125,7 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[Separate[Int, String, Double, ?]].compositionProperty[Int, Double, Int]
 
      FunctorAxioms[Notorious[Int, Double, String, Int, Int, ?]].identityProperty[Int]
-     FunctorAxioms[Notorious[Int, Double, String, Int, Int, ?]].compositionProperty[Int, Double, Int]*/
+     FunctorAxioms[Notorious[Int, Double, String, Int, Int, ?]].compositionProperty[Int, Double, Int]
 }
 
 
