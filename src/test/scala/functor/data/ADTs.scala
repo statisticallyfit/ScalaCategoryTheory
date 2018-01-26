@@ -65,12 +65,13 @@ case class Three[A, B, C](a: A, b: B, c: C)
 
 object Three {
 
-     implicit def threeFunctor[A, B] = new Functor[Three[A, B, ?]] {
+     implicit def threeFunctor[A, B]: Functor[Three[A, B, ?]] = new Functor[Three[A, B, ?]] {
           def map[C, D](fa: Three[A, B, C])(f: C => D): Three[A, B, D] =
                Three(fa.a, fa.b, f(fa.c))
+
      }
 
-     implicit def threeEq[A: Eq, B: Eq, C: Eq] = new Eq[Three[A, B, C]] {
+     implicit def threeEq[A: Eq, B: Eq, C: Eq]: Eq[Three[A, B, C]] = new Eq[Three[A, B, C]] {
 
           def eqv(three1: Three[A,B,C], three2: Three[A,B,C]): Boolean =
                Eq[A].eqv(three1.a, three2.a) &&
