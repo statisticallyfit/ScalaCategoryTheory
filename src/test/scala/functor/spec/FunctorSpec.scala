@@ -282,10 +282,10 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
                ".   -> mapping: we can map a function" in {
 
-                    val triple: Three[String,Int,Option[Int]] = Three("word", 2, Some(4))
+                    val triple: Three[String,Int,Int] = Three("word", 2, 4)
                     val result: Three[String,Int,Option[Int]] = Three("word", 2, Some(5))
 
-                    //todo triple.map(_.map(_ + 1)) shouldEqual result
+                    triple.map(_ + 1) shouldEqual result
                     Functor[Three[String, Int, ?]].map(triple)(_.map(_ + 1)) shouldEqual result
                }
 
@@ -294,12 +294,8 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
                     val triple: Three[Int,Int,Int] = Three(1,1, 2)
                     val result: Three[Int,Int,Int] = Three(1,1, -4)
 
-                    //todo ((triple.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
-
-                    val t1: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(Three(1,1, 2))(_ + 1).map(_ - 5).map(_ * 2)
-                    //val t2: Three[Int,Int,Int] = t1.map(_ - 5).map(_ * 2)
-
-                    t1 shouldEqual Three(1,1, -4)
+                    ((triple.map(_ + 1)).map(_ - 5)).map(_ * 2) shouldEqual result
+                    Functor[Three[Int,Int,?]].map(Three(1,1, 2))(_ + 1).map(_ - 5).map(_ * 2) shouldEqual Three(1,1, -4)
                }
 
                ".   -> lifting: we can apply/lift a function to a value" in {
@@ -316,7 +312,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
                     val triple: Three[Int,Int,Int] = Three(1,1, 2)
                     val result: Three[Int,Int,(Int,Int)] = Three(1,1, (2, 9))
 
-                    //todo triple.fproduct(_ + 7) shouldEqual result
+                    triple.fproduct(_ + 7) shouldEqual result
                     Functor[Three[Int, Int, ?]].fproduct(triple)(_ + 7) shouldEqual result
                }
 
@@ -328,14 +324,14 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
                     ".     -> law 1: identity: mapping the identity function should give the original value" in {
 
-                         //todo triple.map(identity) shouldEqual triple
+                         triple.map(identity) shouldEqual triple
                          Functor[Three[Int, Int, ?]].map(triple)(identity) shouldEqual triple
                     }
 
                     ".     -> law 2: composition: mapping a composed function on a functor is the " +
                          "same as mapping the functions one by one" in {
 
-                         //todo triple.map(g compose f) shouldEqual triple.map(f).map(g)
+                         triple.map(g compose f) shouldEqual triple.map(f).map(g)
 
                          val composeValue = Functor[Three[Int, Int, ?]].map(triple)(g compose f)
                          val mapSequentiallyValue = Functor[Three[Int, Int, ?]].map(triple)(f).map(g)
