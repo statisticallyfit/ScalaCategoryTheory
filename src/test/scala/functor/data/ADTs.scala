@@ -65,7 +65,7 @@ case class Three[A, B, C](a: A, b: B, c: C)
 
 object Three {
 
-     implicit def threeFunctor[A, B]: Functor[Three[A, B, ?]] = new Functor[Three[A, B, ?]] {
+     implicit def threeFunctor[A, B]/*: Functor[Three[A, B, ?]]*/ = new Functor[Three[A, B, ?]] {
           def map[C, D](fa: Three[A, B, C])(f: C => D): Three[A, B, D] =
                Three(fa.a, fa.b, f(fa.c))
 

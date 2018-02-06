@@ -285,7 +285,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
                     Three("word", 2, Some(4)).map(_.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
 
-                    Functor[Three[String, Int, ?]].map(triple)(_.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
+                    Functor[Three[String, Int, ?]].map(Three("word", 2, Some(4)))(_.map(_ + 1)) shouldEqual Three("word", 2, Some(5))
                }
 
                ".   -> composition: we can compose several functions" in {
