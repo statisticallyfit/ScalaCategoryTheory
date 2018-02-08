@@ -31,6 +31,7 @@ addCompilerPlugin("org.spire-math" %% "kind-projector" % "0.9.4")
 
 
 libraryDependencies ++= Seq(
+     "org.apache.commons" % "commons-lang3" % "3.6",
      //Scala Reflections
      "org.scala-lang" % "scala-reflect" % "2.11.11",
      //ScalaCheck
