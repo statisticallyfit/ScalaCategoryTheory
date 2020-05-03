@@ -83,13 +83,38 @@ object ArbitraryADTs {
           Arbitrary(genAccumulateBoth)
      }
 
+     //Very similar to Choice in Functor ADTs
+     implicit def arbMyValidated[E: Arbitrary, A: Arbitrary]: Arbitrary[MyValidated[E, A]] = {
+
+          val genNotValid: Gen[NotValid[E]] = for {
+               error <- Arbitrary.arbitrary[E]
+          } yield NotValid(error)
+
+          val genIsValid: Gen[IsValid[A]] = for {
+               accept <- Arbitrary.arbitrary[A]
+          } yield IsValid(accept)
+
+          Arbitrary(Gen.oneOf(genNotValid, genIsValid))
+     }
+
+
+     implicit def arbFunction[A: Arbitrary, B:Arbitrary]: Arbitrary[MyFunction[A, B]] = {
+
+          val genFunction: Gen[MyFunction[A, B]] = for {
+               a <- Arbitrary.arbitrary[A]
+               b <- Arbitrary.arbitrary[B]
+          } yield MyFunction((a:A) => b)
+
+          Arbitrary(genFunction)
+     }
+
 
      implicit def arbCombine[A: Arbitrary, B: Arbitrary]: Arbitrary[Combine[A, B]] ={
 
           val genCombine: Gen[Combine[A, B]] = for {
                a <- Arbitrary.arbitrary[A] //uncombine <- Arbitrary.arbitrary[A => B] /*arbFunction[A, B]*/
                b <- Arbitrary.arbitrary[B]
-          } yield Combine(a => b)
+          } yield Combine((a:A) => b)
 
           Arbitrary(genCombine)
      }
@@ -100,7 +125,7 @@ object ArbitraryADTs {
           val genMemory: Gen[Memory[S, A]] = for {
                s <- Arbitrary.arbitrary[S]
                a <- Arbitrary.arbitrary[A]
-          } yield Memory(s => (a, s))
+          } yield Memory((s:S) => (a, s))
 
           Arbitrary(genMemory)
      }

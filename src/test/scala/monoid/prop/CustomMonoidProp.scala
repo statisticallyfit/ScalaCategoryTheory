@@ -117,7 +117,7 @@ object CustomMonoidProp extends Definitions {
      MonoidAxioms[AccumulateBoth[String, List[String]]].rightIdentityProperty
 
      import monoid.data.Combine._
-     import monoid.data.FunctionEq._
+     import monoid.data.UnderlyingFunctionEq._
 
      MonoidAxioms[Combine[String, Int]].associativeProperty
      MonoidAxioms[Combine[String, Int]].leftIdentityProperty

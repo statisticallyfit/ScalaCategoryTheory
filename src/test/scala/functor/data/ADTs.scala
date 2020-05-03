@@ -196,6 +196,8 @@ object Company {
 
 // ------------------------------------------------------------------------------------------
 
+//TODO test what happens when removing the + sign from both types +A here:
+
 sealed abstract class Maybe[+A]
 final case class Nought() extends Maybe[Nothing]
 final case class Just[+A](a: A) extends Maybe[A]

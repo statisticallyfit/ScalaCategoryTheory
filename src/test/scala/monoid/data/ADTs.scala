@@ -27,7 +27,8 @@ object Trivial {
 case class Two[A, B](a: A, b: B)
 
 object Two {
-     implicit def twoMonoid[A, B](implicit monoidA: Monoid[A], monoidB: Monoid[B]) = new Monoid[Two[A, B]]{
+     implicit def twoMonoid[A, B](implicit monoidA: Monoid[A], monoidB: Monoid[B]) =
+          new Monoid[Two[A, B]]{
 
           def combine(t1: Two[A, B], t2: Two[A, B]): Two[A, B] =
                Two(monoidA.combine(t1.a, t2.a), monoidB.combine(t1.b, t2.b))
@@ -166,29 +167,45 @@ object SetUnionMonoid {
 //note: not necessary
 //todo how is this implicit instance found? cats.implicits or cats.data or cats.instances?
 
-/*object ValidatedMonoid {
+//TODO test what happens without the +A and +E signs, and without the sealed and final keywords (separately then
+// combinations)
 
-     implicit def validatedMonoid[E : Monoid, A : Monoid] = new Monoid[Validated[E, A]]{
+sealed abstract class MyValidated[+E, +A]
 
-          def combine(v1: Validated[E, A], v2: Validated[E, A]): Validated[E, A] ={
-               (v1, v2) match {
-                    case (Invalid(e1), Invalid(e2)) => Invalid(Monoid[E].combine(e1, e2))
-                    case (i @ Invalid(_), Valid(_)) => i
-                    case (Valid(_), i @ Invalid(_)) => i
-                    case (Valid(a1), Valid(a2)) => Valid(Monoid[A].combine(a1, a2))
+final case class IsValid[+A](a: A) extends MyValidated[Nothing, A]
+final case class NotValid[+E](e: E) extends MyValidated[E, Nothing]
+
+object MyValidated {
+
+     implicit def validatedMonoid[E : Monoid, A : Monoid]: Monoid[MyValidated[E, A]] = new Monoid[MyValidated[E, A]]{
+
+          def combine(valid1: MyValidated[E, A], valid2: MyValidated[E, A]): MyValidated[E, A] ={
+
+               (valid1, valid2) match {
+                    case (NotValid(e1), NotValid(e2)) => NotValid(Monoid[E].combine(e1, e2))
+                    case (i @ NotValid(_), IsValid(_)) => i
+                    case (IsValid(_), i @ NotValid(_)) => i
+                    case (IsValid(a1), IsValid(a2)) => IsValid(Monoid[A].combine(a1, a2))
                }
           }
 
-          def empty: Validated[E, A] = Valid(Monoid[A].empty)
+          def empty: MyValidated[E, A] = IsValid(Monoid[A].empty)
      }
 
 
-     /*implicit def validatedEq = new Eq[ValidatedMonoid]{
+     implicit def validatedEq[E: Eq, A: Eq]: Eq[MyValidated[E, A]] = new Eq[MyValidated[E, A]] {
 
-          def eqv(val1: ValidatedMonoid, val2: ValidatedMonoid): Boolean =
-               Eq
-     }*/
-}*/
+          def eqv(valid1: MyValidated[E, A], valid2: MyValidated[E, A]): Boolean = {
+
+               (valid1, valid2) match {
+                    case (NotValid(e1), NotValid(e2)) => Eq[E].eqv(e1, e2)
+                    case (NotValid(_), IsValid(_)) => false
+                    case (IsValid(_), NotValid(_)) => false
+                    case (IsValid(a1), IsValid(a2)) => Eq[A].eqv(a1, a2)
+               }
+          }
+     }
+}
 
 
 // ------------------------------------------------------------------------------------------
@@ -250,7 +267,9 @@ object AccumulateBoth {
      }
 
 
-     implicit def accBothEq[E: Eq, A: Eq] = new Eq[AccumulateBoth[E, A]]{
+     implicit def accBothEq[E: Eq, A: Eq] =
+          new Eq[AccumulateBoth[E, A]]{
+
           def eqv(acc1: AccumulateBoth[E, A], acc2: AccumulateBoth[E, A]): Boolean =
                Eq[Validated[E, A]].eqv(acc1.validated, acc2.validated)
      }
@@ -260,20 +279,36 @@ object AccumulateBoth {
 
 // ------------------------------------------------------------------------------------------
 
+case class MyFunction[A, B](f: A => B)
 
 //note - useful for other instances like Combine
-object FunctionMonoid {
-     implicit def functionCompositionMonoid[A: Monoid, B: Monoid]: Monoid[A => B] = new Monoid[A => B] {
+object MyFunction {
+     implicit def functionMonoid[A, B: Monoid](implicit ev: Monoid[A => B]) =
+          new Monoid[MyFunction[A, B]] {
 
-          def combine(f: (A => B), g: (A => B)): (A => B) = (a: A) => Monoid[B].combine(f(a), g(a))
-          val empty: (A => B) = Function.const(Monoid[B].empty)
+          //def combine(f: (A => B), g: (A => B)): (A => B) = (a: A) => Monoid[B].combine(f(a), g(a))
+          def combine(myFunc1: MyFunction[A, B], myFunc2: MyFunction[A, B]): MyFunction[A, B] ={
+               (myFunc1, myFunc2) match {
+                    case (MyFunction(f), MyFunction(g)) => MyFunction(Monoid[A => B].combine(f, g))
+               }
+          }
+          //val empty: (A => B) = Function.const(Monoid[B].empty)
+          def empty: MyFunction[A, B] = MyFunction(Monoid[A => B].empty)
+     }
+
+     // todo need to fix this???
+     implicit def functionEq[A: Eq, B: Eq](implicit ev: Eq[A => B]) =
+          new Eq[MyFunction[A,B]] { //new Eq[A => B] {
+
+          def eqv(myFunc1: MyFunction[A,B], myFunc2: MyFunction[A,B]): Boolean = //true // => Eq[B].eqv(f(a), g(a))
+               Eq[A => B].eqv(myFunc1.f, myFunc2.f)
      }
 }
 
-object FunctionEq {
+object UnderlyingFunctionEq {
      //just a whimsical function -- say two functions are equal by default.
      // todo need to fix this???
-     implicit def functionEq[A, B]: Eq[A => B] = new Eq[A => B] {
+     implicit def functionEq[A: Eq, B: Eq]: Eq[A => B] = new Eq[A => B] {
           def eqv(f: A => B, g: A => B): Boolean = true //Eq[B].eqv(f(a), g(a))
      }
 }
@@ -287,7 +322,8 @@ object Combine {
      /*import FunctionMonoid._
      import FunctionEq._*/
 
-     implicit def combinerMonoid[A, B: Monoid](implicit ev: Monoid[A => B]) = new Monoid[Combine[A, B]]{
+     implicit def combinerMonoid[A, B: Monoid](implicit ev: Monoid[A => B]) =
+          new Monoid[Combine[A, B]]{
 
           def combine(com1: Combine[A, B], com2: Combine[A, B]): Combine[A, B] ={
                (com1, com2) match {
@@ -299,9 +335,12 @@ object Combine {
           def empty: Combine[A, B] = Combine(Monoid[A => B].empty)
      }
 
-     implicit def combineEq[A: Eq, B: Eq](implicit func: Eq[A => B]) = new Eq[Combine[A, B]] {
 
-          def eqv(com1: Combine[A, B], com2: Combine[A, B]): Boolean = Eq[A => B].eqv(com1.unCombine, com2.unCombine)
+     implicit def combineEq[A: Eq, B: Eq](implicit func: Eq[A => B]) =
+          new Eq[Combine[A, B]] {
+
+          def eqv(com1: Combine[A, B], com2: Combine[A, B]): Boolean =
+               Eq[A => B].eqv(com1.unCombine, com2.unCombine)
      }
 }
 
@@ -313,17 +352,18 @@ case class Memory[S, A](runMem: S => (A, S))
 
 object Memory {
 
-     implicit def memoryMonoid[S, A: Monoid] = new Monoid[Memory[S, A]] {
+     implicit def memoryMonoid[S, A: Monoid] =
+          new Monoid[Memory[S, A]] {
 
           def combine(mem1: Memory[S, A], mem2: Memory[S, A]): Memory[S, A] = {
 
                (mem1, mem2) match {
                     case (Memory(f), Memory(g)) => Memory { (s: S) =>
 
-                         val (a, b): (A, S) = g(s)
-                         val (c, d): (A, S) = f(b)
+                         val (a1, s1): (A, S) = g(s)
+                         val (a2, s2): (A, S) = f(s1)
 
-                         (Monoid[A].combine(a, c), d)
+                         (Monoid[A].combine(a1, a2), s2)
                     }
                }
           }
