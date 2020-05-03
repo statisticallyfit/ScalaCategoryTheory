@@ -1,0 +1,10 @@
+INFO  time: initialize in 0.98s
+WARN  Skipping build import for unsupported sbt version <unknown>
+WARN  no build target: /development/projects/statisticallyfit/github/learningmathstat/ScalaCategoryTheory/src/main/scala/Driver.scala
+INFO  shutting down Metals
+INFO  time: initialize in 1.29s
+WARN  Skipping build import for unsupported sbt version <unknown>
+WARN  no build target: /development/projects/statisticallyfit/github/learningmathstat/ScalaCategoryTheory/src/test/scala/monoid/data/ArbitraryADTs.scala
+INFO  no build target: using presentation compiler with only scala-library
+WARN  code navigation does not work for the file '/development/projects/statisticallyfit/github/learningmathstat/ScalaCategoryTheory/src/test/scala/monoid/data/ArbitraryADTs.scala' because it doesn't belong to a build target.
+INFO  shutting down Metals

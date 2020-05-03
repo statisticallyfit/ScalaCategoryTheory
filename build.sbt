@@ -12,7 +12,7 @@ logLevel := Level.Info
 showTiming := false
 
 //added here when suggested by sbt in command line
-ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
+//ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) }
 
 // disable printing a message indicating the success or failure of running a task
 showSuccess := false

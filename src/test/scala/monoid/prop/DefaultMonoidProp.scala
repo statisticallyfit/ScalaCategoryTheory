@@ -3,14 +3,12 @@ package monoid.prop
 
 import monoid.data._
 import monoid.data.ArbitraryADTs._
-
 import cats.data.Validated
 import cats.instances.AllInstances
 import cats.syntax.AllSyntax
-import cats.kernel.laws.discipline.MonoidTests
+import cats.kernel.laws.discipline.{EqTests, MonoidTests}
 import cats.kernel.laws.MonoidLaws
 import spire.laws.GroupLaws
-
 import org.specs2.SpecificationLike
 import org.specs2.mutable.Specification
 import org.typelevel.discipline.specs2.Discipline
@@ -20,14 +18,16 @@ import org.typelevel.discipline.specs2.Discipline
   */
 
 
-trait CatsSpec extends Specification with Discipline with SpecificationLike with AllInstances with AllSyntax
+trait CatsSpecMonoid extends Specification with Discipline with SpecificationLike with AllInstances with AllSyntax
 
 //todo - how to separate the output ? No titles or anything ...
 
-class DefaultMonoidProp extends CatsSpec {
+
+class DefaultMonoidProp extends CatsSpecMonoid {
 
      checkAll("Monoid[Int]", GroupLaws[Int].monoid)
      //checkAll("Monoid[Int]", MonoidTests[Int].monoid)
+
 
      checkAll("Monoid[String]", GroupLaws[String].monoid) //using spire laws
      //checkAll("Monoid[String]", MonoidTests[String].monoid) //using cats kernel laws
@@ -42,13 +42,15 @@ class DefaultMonoidProp extends CatsSpec {
      checkAll("Monoid[Disjunction]", MonoidTests[Disjunction].monoid)
 
      checkAll("Monoid[Conjunction]", GroupLaws[Conjunction].monoid)
-     //checkAll("Monoid[Conjunction]", MonoidTests[Conjunction].monoid)
+     checkAll("Monoid[Conjunction]", MonoidTests[Conjunction].monoid)
 
      checkAll("Monoid[ExclusiveDisjunction]", GroupLaws[ExclusiveDisjunction].monoid)
      //checkAll("Monoid[ExclusiveDisjunction]", MonoidTests[ExclusiveDisjunction].monoid)
 
      checkAll("Monoid[ExclusiveNorDisjunction]", GroupLaws[ExclusiveNorDisjunction].monoid)
      //checkAll("Monoid[ExclusiveNorDisjunction]", MonoidTests[ExclusiveNorDisjunction].monoid)
+
+
 
      checkAll("Monoid[Two[String, Int]]", GroupLaws[Two[String, Int]].monoid)
      //checkAll("Monoid[Two[String, Int]]", MonoidTests[Two[String, Int]].monoid)
@@ -87,5 +89,6 @@ class DefaultMonoidProp extends CatsSpec {
 
      checkAll("Monoid[Memory[List[String], Int]]", GroupLaws[Memory[List[String], Int]].monoid)
      //checkAll("Monoid[Memory[List[String], Int]]", MonoidTests[Memory[List[String], Int]].monoid)
+
 
 }

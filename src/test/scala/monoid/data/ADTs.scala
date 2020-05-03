@@ -166,7 +166,8 @@ object SetUnionMonoid {
 //note: not necessary
 //todo how is this implicit instance found? cats.implicits or cats.data or cats.instances?
 
-object ValidatedMonoid {
+/*object ValidatedMonoid {
+
      implicit def validatedMonoid[E : Monoid, A : Monoid] = new Monoid[Validated[E, A]]{
 
           def combine(v1: Validated[E, A], v2: Validated[E, A]): Validated[E, A] ={
@@ -180,7 +181,14 @@ object ValidatedMonoid {
 
           def empty: Validated[E, A] = Valid(Monoid[A].empty)
      }
-}
+
+
+     /*implicit def validatedEq = new Eq[ValidatedMonoid]{
+
+          def eqv(val1: ValidatedMonoid, val2: ValidatedMonoid): Boolean =
+               Eq
+     }*/
+}*/
 
 
 // ------------------------------------------------------------------------------------------
@@ -222,7 +230,7 @@ case class AccumulateBoth[E, A](validated: Validated[E, A])
 
 object AccumulateBoth {
 
-     implicit def accBothMonoid[E: Monoid, A: Monoid] = new Monoid[AccumulateBoth[E, A]]{
+     implicit def accBothMonoid[E: Monoid, A: Monoid]: Monoid[AccumulateBoth[E, A]] = new Monoid[AccumulateBoth[E, A]]{
 
           def combine(acc1: AccumulateBoth[E, A], acc2: AccumulateBoth[E, A]): AccumulateBoth[E, A] ={
                (acc1, acc2) match {
