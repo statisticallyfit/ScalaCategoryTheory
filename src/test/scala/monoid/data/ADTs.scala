@@ -214,7 +214,7 @@ case class AccumulateRight[E, A](validated : Validated[E, A])
 
 object AccumulateRight {
 
-     implicit def accRightMonoid[E: Monoid, A: Monoid] = new Monoid[AccumulateRight[E, A]]{
+     implicit def accRightMonoid[E: Monoid, A: Monoid]: Monoid[AccumulateRight[E, A]] = new Monoid[AccumulateRight[E, A]]{
 
           def combine(acc1: AccumulateRight[E, A], acc2: AccumulateRight[E, A]): AccumulateRight[E, A] ={
 

@@ -83,6 +83,15 @@ object CustomMonoidProp extends Definitions {
      MonoidAxioms[Trivial].leftIdentityProperty
      MonoidAxioms[Trivial].rightIdentityProperty
 
+     MonoidAxioms[Two[String, Int]].associativeProperty
+     MonoidAxioms[Two[String, Int]].leftIdentityProperty
+     MonoidAxioms[Two[String, Int]].rightIdentityProperty
+
+     type Fivers = Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]
+     MonoidAxioms[Fivers].associativeProperty
+     MonoidAxioms[Fivers].leftIdentityProperty
+     MonoidAxioms[Fivers].rightIdentityProperty
+
      MonoidAxioms[Conjunction].associativeProperty
      MonoidAxioms[Conjunction].leftIdentityProperty
      MonoidAxioms[Conjunction].rightIdentityProperty
@@ -99,14 +108,13 @@ object CustomMonoidProp extends Definitions {
      MonoidAxioms[ExclusiveNorDisjunction].leftIdentityProperty
      MonoidAxioms[ExclusiveNorDisjunction].rightIdentityProperty
 
-     MonoidAxioms[Two[String, Int]].associativeProperty
-     MonoidAxioms[Two[String, Int]].leftIdentityProperty
-     MonoidAxioms[Two[String, Int]].rightIdentityProperty
+     MonoidAxioms[Validated[String, Int]].associativeProperty
+     MonoidAxioms[Validated[String, Int]].leftIdentityProperty
+     MonoidAxioms[Validated[String, Int]].rightIdentityProperty
 
-     type Fivers = Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]
-     MonoidAxioms[Fivers].associativeProperty
-     MonoidAxioms[Fivers].leftIdentityProperty
-     MonoidAxioms[Fivers].rightIdentityProperty
+     MonoidAxioms[MyValidated[String, Int]].associativeProperty
+     MonoidAxioms[MyValidated[String, Int]].leftIdentityProperty
+     MonoidAxioms[MyValidated[String, Int]].rightIdentityProperty
 
      MonoidAxioms[AccumulateRight[String, Int]].associativeProperty
      MonoidAxioms[AccumulateRight[String, Int]].leftIdentityProperty
@@ -118,6 +126,10 @@ object CustomMonoidProp extends Definitions {
 
      import monoid.data.Combine._
      import monoid.data.UnderlyingFunctionEq._
+
+     MonoidAxioms[MyFunction[String, Int]].associativeProperty
+     MonoidAxioms[MyFunction[String, Int]].leftIdentityProperty
+     MonoidAxioms[MyFunction[String, Int]].rightIdentityProperty
 
      MonoidAxioms[Combine[String, Int]].associativeProperty
      MonoidAxioms[Combine[String, Int]].leftIdentityProperty

@@ -31,6 +31,10 @@ class DefaultMonoidProp extends CatsSpecMonoid {
 
      checkAll("Monoid[Set[Int]]", GroupLaws[Set[Int]].monoid)
 
+     checkAll("Monoid[String]", GroupLaws[Option[List[Int]]].monoid)
+
+     checkAll("Monoid[String]", GroupLaws[Either[String, Int]].monoid)
+
      checkAll("Monoid[Trivial]", GroupLaws[Trivial].monoid)
 
      checkAll("Monoid[Two[String, Int]]", GroupLaws[Two[String, Int]].monoid)
@@ -47,10 +51,6 @@ class DefaultMonoidProp extends CatsSpecMonoid {
      checkAll("Monoid[ExclusiveDisjunction]", GroupLaws[ExclusiveDisjunction].monoid)
 
      checkAll("Monoid[ExclusiveNorDisjunction]", GroupLaws[ExclusiveNorDisjunction].monoid)
-
-     checkAll("Monoid[String]", GroupLaws[Option[List[Int]]].monoid)
-
-     checkAll("Monoid[String]", GroupLaws[Either[String, Int]].monoid)
 
      checkAll("Monoid[Validated[String, Int]]", GroupLaws[Validated[String, Int]].monoid)
 

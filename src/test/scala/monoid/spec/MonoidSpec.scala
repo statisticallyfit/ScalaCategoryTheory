@@ -35,6 +35,58 @@ class MonoidSpec extends Specification {
           }
 
 
+
+          "-> Option[Int] is a Monoid, where None is the empty value" in {
+
+               Monoid[Option[Int]].combine(Some(1), Some(2)) shouldEqual Some(3)
+               Monoid[Option[Int]].combineAll(List(None, Some(5), Some(7), None)) shouldEqual Some(12)
+               Monoid[Option[Int]].empty shouldEqual None
+          }
+
+
+          "-> Two[Trivial, Option[Int]] is a Monoid" in {
+
+               Monoid[Two[Trivial, Option[Int]]].combineAll(List(
+
+                    Two(Trivial(), Some(1)), Two(Trivial(), None),
+                    Two(Trivial(), Some(3)), Two(Trivial(), Some(5))
+
+               )) shouldEqual Two(Trivial(), Some(9))
+
+               Monoid[Two[Trivial, Option[Int]]].empty shouldEqual Two(Trivial(), None)
+          }
+
+
+          "-> Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction] is a Monoid" in {
+
+               type Fiver = Five[Trivial, Conjunction, Disjunction, ExclusiveDisjunction, ExclusiveNorDisjunction]
+
+               Monoid[Fiver].combineAll(
+                    List(
+                         Five(Trivial(), Conjunction(true), Disjunction(true), ExclusiveDisjunction(true),
+                              ExclusiveNorDisjunction(false)),
+
+                         Five(Trivial(), Conjunction(false), Disjunction(false), ExclusiveDisjunction(true),
+                              ExclusiveNorDisjunction(false)),
+
+                         Five(Trivial(), Conjunction(true), Disjunction(true), ExclusiveDisjunction(true),
+                              ExclusiveNorDisjunction(false)),
+
+                         Five(Trivial(), Conjunction(true), Disjunction(true), ExclusiveDisjunction(true),
+                              ExclusiveNorDisjunction(false))
+                    )
+               ) shouldEqual Five(Trivial(), Conjunction(false), Disjunction(true), ExclusiveDisjunction(false),
+                    ExclusiveNorDisjunction(true))
+
+
+               Monoid[Fiver].empty shouldEqual Five(Trivial(),
+                    Conjunction(true),
+                    Disjunction(false),
+                    ExclusiveDisjunction(false),
+                    ExclusiveNorDisjunction(true))
+          }
+
+
           "-> Boolean conjunction (and) is a Monoid where TRUE is the empty value" in {
 
                Monoid[Conjunction].combineAll(List(Conjunction(true), Conjunction(false),
@@ -63,25 +115,154 @@ class MonoidSpec extends Specification {
           }
 
 
-          "-> Option[Int] is a Monoid, where None is the empty value" in {
+          "-> ExclusiveDisjunction is a Monoid where ODD number of trues is TRUE and EVEN number of trues is " +
+               "FALSE" in {
 
-               Monoid[Option[Int]].combine(Some(1), Some(2)) shouldEqual Some(3)
-               Monoid[Option[Int]].combineAll(List(None, Some(5), Some(7), None)) shouldEqual Some(12)
-               Monoid[Option[Int]].empty shouldEqual None
+               //Testing two at a time (truth table)
+
+               Monoid[ExclusiveDisjunction].combine(
+                    ExclusiveDisjunction(true),
+                    ExclusiveDisjunction(true)) shouldEqual ExclusiveDisjunction(false)
+
+               Monoid[ExclusiveDisjunction].combine(
+                    ExclusiveDisjunction(true),
+                    ExclusiveDisjunction(false)) shouldEqual ExclusiveDisjunction(true)
+
+               Monoid[ExclusiveDisjunction].combine(
+                    ExclusiveDisjunction(false),
+                    ExclusiveDisjunction(false)) shouldEqual ExclusiveDisjunction(false)
+
+
+               //TESTING: more values at once
+
+               //Even TRUES, Even FALSE
+               Monoid[ExclusiveDisjunction].combineAll(
+                    List(ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
+
+               //Even TRUES, Odd FALSE
+               Monoid[ExclusiveDisjunction].combineAll(
+                    List(ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
+
+               //Odd TRUES, Odd False
+               Monoid[ExclusiveDisjunction].combineAll(
+                    List(ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
+
+               //Odd TRUES, Even False
+               Monoid[ExclusiveDisjunction].combineAll(
+                    List(ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(true),
+                         ExclusiveDisjunction(false),
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
+
+
+               //TESTING: all same values, even or odd numbers
+
+               //All true, odd number
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true),
+                    n = 5) shouldEqual ExclusiveDisjunction(true)
+               // All true, even number
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true),
+                    n = 4) shouldEqual ExclusiveDisjunction(false)
+
+               //All false, even number
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false),
+                    n = 5) shouldEqual ExclusiveDisjunction(false)
+               //All False, odd number
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false),
+                    n = 4) shouldEqual ExclusiveDisjunction(false)
+
+
+
+
+               Monoid[ExclusiveDisjunction].empty shouldEqual ExclusiveDisjunction(false)
           }
 
 
-          "-> Two[Trivial, Option[Int]] is a Monoid" in {
+          "-> ExclusiveNorDisjunction is a Monoid where EVEN number of falses results in TRUE and ODD number of " +
+               "falses results in FALSE" in {
 
-               Monoid[Two[Trivial, Option[Int]]].combineAll(List(
+               //Testing two at a time (truth table)
 
-                    Two(Trivial(), Some(1)), Two(Trivial(), None),
-                    Two(Trivial(), Some(3)), Two(Trivial(), Some(5))
+               Monoid[ExclusiveNorDisjunction].combine(
+                    ExclusiveNorDisjunction(true),
+                    ExclusiveNorDisjunction(true)) shouldEqual ExclusiveNorDisjunction(true)
 
-               )) shouldEqual Two(Trivial(), Some(9))
+               Monoid[ExclusiveNorDisjunction].combine(
+                    ExclusiveNorDisjunction(true),
+                    ExclusiveNorDisjunction(false)) shouldEqual ExclusiveNorDisjunction(false)
 
-               Monoid[Two[Trivial, Option[Int]]].empty shouldEqual Two(Trivial(), None)
+               Monoid[ExclusiveNorDisjunction].combine(
+                    ExclusiveNorDisjunction(false),
+                    ExclusiveNorDisjunction(false)) shouldEqual ExclusiveNorDisjunction(true)
+
+
+               //TESTING: more values at once
+
+               //Even number of falses
+               Monoid[ExclusiveNorDisjunction].combineAll(
+                    List(ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(true)
+
+
+               //Odd number of falses
+               Monoid[ExclusiveNorDisjunction].combineAll(
+                    List(ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(false)
+
+
+               //TESTING: all same values, even or odd numbers
+
+               //All false, even number
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false),
+                    n = 5) shouldEqual ExclusiveNorDisjunction(false)
+               //All False, odd number
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false),
+                    n = 4) shouldEqual ExclusiveNorDisjunction(true)
+               //All true, odd number
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true),
+                    n = 5) shouldEqual ExclusiveNorDisjunction(true)
+               // All true, even number
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true),
+                    n = 4) shouldEqual ExclusiveNorDisjunction(true)
+
+
+
+               Monoid[ExclusiveNorDisjunction].empty shouldEqual ExclusiveNorDisjunction(true)
           }
+
 
 
           "-> AccumulateRight[String, Int] is a Monoid" in {
