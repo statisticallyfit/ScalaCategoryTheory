@@ -1,3 +1,4 @@
+
 /*
 import cats.{Eq, Functor}
 import cats.implicits._
@@ -12,14 +13,10 @@ val t2: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(t1)(_ - 5)
 val t3: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(t2)(_ * 2)
 */
 
+import cats.data.Validated
+import cats.data.Validated._
 import cats.{Eq, Monoid}
 import cats.implicits._
 import monoid.data._
-Monoid[ExclusiveDisjunction].combineAll(
-	List(ExclusiveDisjunction(true),
-		ExclusiveDisjunction(false),
-		ExclusiveDisjunction(false),
-		ExclusiveDisjunction(true),
-		ExclusiveDisjunction(true),
-		ExclusiveDisjunction(false),
-		ExclusiveDisjunction(false)))
+
+Monoid[Validated[String, Conjunction]].empty == Valid(Monoid[Conjunction].empty)

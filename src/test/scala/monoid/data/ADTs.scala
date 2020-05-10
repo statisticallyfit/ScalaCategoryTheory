@@ -183,8 +183,8 @@ object MyValidated {
 
                (valid1, valid2) match {
                     case (NotValid(e1), NotValid(e2)) => NotValid(Monoid[E].combine(e1, e2))
-                    case (i @ NotValid(_), IsValid(_)) => i
-                    case (IsValid(_), i @ NotValid(_)) => i
+                    case (n @ NotValid(_), IsValid(_)) => n
+                    case (IsValid(_), n @ NotValid(_)) => n
                     case (IsValid(a1), IsValid(a2)) => IsValid(Monoid[A].combine(a1, a2))
                }
           }

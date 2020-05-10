@@ -2,11 +2,10 @@ package monoid.spec
 
 
 import monoid.data._
-
 import cats.Monoid
-import cats.data.Validated.{Valid, Invalid}
+import cats.data.Validated
+import cats.data.Validated.{Invalid, Valid}
 import cats.implicits._
-
 import org.specs2.mutable._
 
 /**
@@ -144,7 +143,7 @@ class MonoidSpec extends Specification {
                          ExclusiveDisjunction(true),
                          ExclusiveDisjunction(false),
                          ExclusiveDisjunction(true),
-                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
 
                //Even TRUES, Odd FALSE
                Monoid[ExclusiveDisjunction].combineAll(
@@ -165,7 +164,7 @@ class MonoidSpec extends Specification {
                          ExclusiveDisjunction(false),
                          ExclusiveDisjunction(true),
                          ExclusiveDisjunction(true),
-                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
 
                //Odd TRUES, Even False
                Monoid[ExclusiveDisjunction].combineAll(
@@ -181,18 +180,18 @@ class MonoidSpec extends Specification {
                //TESTING: all same values, even or odd numbers
 
                //All true, odd number
-               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true),
-                    n = 5) shouldEqual ExclusiveDisjunction(true)
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true), n = 5) shouldEqual
+                    ExclusiveDisjunction(true)
                // All true, even number
-               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true),
-                    n = 4) shouldEqual ExclusiveDisjunction(false)
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(true),  n = 4) shouldEqual
+                    ExclusiveDisjunction(false)
 
                //All false, even number
-               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false),
-                    n = 5) shouldEqual ExclusiveDisjunction(false)
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false), n = 5) shouldEqual
+                    ExclusiveDisjunction(false)
                //All False, odd number
-               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false),
-                    n = 4) shouldEqual ExclusiveDisjunction(false)
+               Monoid[ExclusiveDisjunction].combineN(ExclusiveDisjunction(false), n = 4) shouldEqual
+                    ExclusiveDisjunction(false)
 
 
 
@@ -219,9 +218,12 @@ class MonoidSpec extends Specification {
                     ExclusiveNorDisjunction(false)) shouldEqual ExclusiveNorDisjunction(true)
 
 
+
+
                //TESTING: more values at once
 
-               //Even number of falses
+
+               //Even TRUES, Even FALSE
                Monoid[ExclusiveNorDisjunction].combineAll(
                     List(ExclusiveNorDisjunction(false),
                          ExclusiveNorDisjunction(true),
@@ -230,10 +232,21 @@ class MonoidSpec extends Specification {
                          ExclusiveNorDisjunction(true),
                          ExclusiveNorDisjunction(false),
                          ExclusiveNorDisjunction(true),
-                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(true)
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
 
+               //Even TRUES, Odd FALSE
+               Monoid[ExclusiveNorDisjunction].combineAll(
+                    List(ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(false)
 
-               //Odd number of falses
+               //Odd TRUES, Odd False
                Monoid[ExclusiveNorDisjunction].combineAll(
                     List(ExclusiveNorDisjunction(true),
                          ExclusiveNorDisjunction(false),
@@ -242,25 +255,68 @@ class MonoidSpec extends Specification {
                          ExclusiveNorDisjunction(true),
                          ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(false)
 
+               //Odd TRUES, Even False
+               Monoid[ExclusiveNorDisjunction].combineAll(
+                    List(ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(true),
+                         ExclusiveNorDisjunction(false),
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(true)
+
 
                //TESTING: all same values, even or odd numbers
 
                //All false, even number
-               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false),
-                    n = 5) shouldEqual ExclusiveNorDisjunction(false)
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false), n = 5) shouldEqual
+                    ExclusiveNorDisjunction(false)
                //All False, odd number
-               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false),
-                    n = 4) shouldEqual ExclusiveNorDisjunction(true)
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(false), n = 4) shouldEqual
+                    ExclusiveNorDisjunction(true)
                //All true, odd number
-               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true),
-                    n = 5) shouldEqual ExclusiveNorDisjunction(true)
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true), n = 5) shouldEqual
+                    ExclusiveNorDisjunction(true)
                // All true, even number
-               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true),
-                    n = 4) shouldEqual ExclusiveNorDisjunction(true)
+               Monoid[ExclusiveNorDisjunction].combineN(ExclusiveNorDisjunction(true), n = 4) shouldEqual
+                    ExclusiveNorDisjunction(true)
 
 
 
                Monoid[ExclusiveNorDisjunction].empty shouldEqual ExclusiveNorDisjunction(true)
+          }
+
+          "-> Validated[String, Int] is a Monoid" in {
+
+               Monoid[Validated[String, Int]].combineAll(List(
+                    Invalid("Error 1"),
+                    Valid(4567),
+                    Invalid("Error 2"),
+                    Valid(12)
+               )) shouldEqual Invalid("Error 1Error 2")
+
+               Monoid[Validated[String, Int]].empty shouldEqual Valid(0)
+
+               Monoid[Validated[String, String]].empty shouldEqual Valid("")
+
+               Monoid[Validated[String, Conjunction]].empty shouldEqual Valid(Monoid[Conjunction].empty)
+          }
+
+
+          "-> MyValidated[String, Int] is a Monoid" in {
+
+               Monoid[MyValidated[String, Int]].combineAll(List(
+                    NotValid("Error 1"),
+                    IsValid(4567),
+                    NotValid("Error 2"),
+                    IsValid(12)
+               )) shouldEqual NotValid("Error 1Error 2")
+
+
+               Monoid[MyValidated[String, Int]].empty shouldEqual IsValid(0)
+               Monoid[MyValidated[String, String]].empty shouldEqual Valid("")
+
+               Monoid[MyValidated[String, Conjunction]].empty shouldEqual Valid(Monoid[Conjunction].empty)
           }
 
 
