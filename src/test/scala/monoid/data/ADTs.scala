@@ -219,12 +219,15 @@ object AccumulateRight {
           def combine(acc1: AccumulateRight[E, A], acc2: AccumulateRight[E, A]): AccumulateRight[E, A] ={
 
                (acc1, acc2) match {
-                    case (AccumulateRight(Valid(a1)), AccumulateRight(Valid(a2))) =>
-                         AccumulateRight(Valid(Monoid[A].combine(a1, a2)))
+                    case (AccumulateRight(Valid(a1)), AccumulateRight(Valid(a2))) => AccumulateRight(Valid(Monoid[A].combine(a1, a2)))
 
-                    case (AccumulateRight(Invalid(e)), _) => AccumulateRight(Invalid(e))
+                    case (AccumulateRight(Valid(a1)), AccumulateRight(Invalid(e2))) => AccumulateRight(Invalid(e2))
 
-                    case (_, AccumulateRight(Invalid(e))) => AccumulateRight(Invalid(e))
+                    case (AccumulateRight(Invalid(e)), AccumulateRight(Valid(_))) => AccumulateRight(Invalid(e))
+
+                    case (AccumulateRight(Invalid(_)), AccumulateRight(Invalid(e2))) => AccumulateRight(Invalid(e2))
+
+                    //case (_, AccumulateRight(Invalid(e))) => AccumulateRight(Invalid(e))
                }
           }
 
@@ -257,9 +260,9 @@ object AccumulateBoth {
                     case (AccumulateBoth(Invalid(e1)), AccumulateBoth(Invalid(e2))) =>
                          AccumulateBoth (Invalid (Monoid[E].combine(e1, e2)))
 
-                    case (_, a @ AccumulateBoth(Invalid(e))) => a
+                    case (_, i @ AccumulateBoth(Invalid(_))) => i
 
-                    case (a @ AccumulateBoth(Invalid(e)), _) => a
+                    case (i @ AccumulateBoth(Invalid(_)), _) => i
                }
           }
 
@@ -279,7 +282,7 @@ object AccumulateBoth {
 
 // ------------------------------------------------------------------------------------------
 
-case class MyFunction[A, B](f: A => B)
+case class MyFunction[A, B](inner: A => B)
 
 //note - useful for other instances like Combine
 object MyFunction {
@@ -301,7 +304,7 @@ object MyFunction {
           new Eq[MyFunction[A,B]] { //new Eq[A => B] {
 
           def eqv(myFunc1: MyFunction[A,B], myFunc2: MyFunction[A,B]): Boolean = //true // => Eq[B].eqv(f(a), g(a))
-               Eq[A => B].eqv(myFunc1.f, myFunc2.f)
+               Eq[A => B].eqv(myFunc1.inner, myFunc2.inner)
      }
 }
 

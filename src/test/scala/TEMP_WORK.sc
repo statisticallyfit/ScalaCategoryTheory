@@ -18,5 +18,43 @@ import cats.data.Validated._
 import cats.{Eq, Monoid}
 import cats.implicits._
 import monoid.data._
+Monoid[ExclusiveNorDisjunction].combineAll(
+	List(ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(true)
 
-Monoid[Validated[String, Conjunction]].empty == Valid(Monoid[Conjunction].empty)
+//Even TRUES, Odd FALSE
+Monoid[ExclusiveNorDisjunction].combineAll(
+	List(ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(false)
+
+//Odd TRUES, Odd False
+Monoid[ExclusiveNorDisjunction].combineAll(
+	List(ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(false)
+
+//Odd TRUES, Even False
+Monoid[ExclusiveNorDisjunction].combineAll(
+	List(ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(true),
+		ExclusiveNorDisjunction(false),
+		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(true)

@@ -143,7 +143,7 @@ class MonoidSpec extends Specification {
                          ExclusiveDisjunction(true),
                          ExclusiveDisjunction(false),
                          ExclusiveDisjunction(true),
-                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
 
                //Even TRUES, Odd FALSE
                Monoid[ExclusiveDisjunction].combineAll(
@@ -164,7 +164,7 @@ class MonoidSpec extends Specification {
                          ExclusiveDisjunction(false),
                          ExclusiveDisjunction(true),
                          ExclusiveDisjunction(true),
-                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(false)
+                         ExclusiveDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
 
                //Odd TRUES, Even False
                Monoid[ExclusiveDisjunction].combineAll(
@@ -232,7 +232,7 @@ class MonoidSpec extends Specification {
                          ExclusiveNorDisjunction(true),
                          ExclusiveNorDisjunction(false),
                          ExclusiveNorDisjunction(true),
-                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveDisjunction(true)
+                         ExclusiveNorDisjunction(false))) shouldEqual ExclusiveNorDisjunction(true)
 
                //Even TRUES, Odd FALSE
                Monoid[ExclusiveNorDisjunction].combineAll(
@@ -314,14 +314,19 @@ class MonoidSpec extends Specification {
 
 
                Monoid[MyValidated[String, Int]].empty shouldEqual IsValid(0)
-               Monoid[MyValidated[String, String]].empty shouldEqual Valid("")
+               Monoid[MyValidated[String, String]].empty shouldEqual IsValid("")
 
-               Monoid[MyValidated[String, Conjunction]].empty shouldEqual Valid(Monoid[Conjunction].empty)
+               Monoid[MyValidated[String, Conjunction]].empty shouldEqual IsValid(Monoid[Conjunction].empty)
           }
 
 
 
           "-> AccumulateRight[String, Int] is a Monoid" in {
+
+
+               Monoid[AccumulateRight[String, Int]].combine(AccumulateRight(Invalid("Err1")),
+                    AccumulateRight(Invalid("Err2"))) shouldEqual AccumulateRight(Invalid("Err2"))
+
 
                Monoid[AccumulateRight[String, Int]].combineAll(List(
 
@@ -331,9 +336,137 @@ class MonoidSpec extends Specification {
                     AccumulateRight(Invalid("Key Error")),
                     AccumulateRight(Valid(23))
 
-               )) shouldEqual AccumulateRight(Invalid("Parse Error"))
+               )) shouldEqual AccumulateRight(Invalid("Key Error"))
 
                Monoid[AccumulateRight[String, Int]].empty shouldEqual AccumulateRight(Valid(0))
+
+
+               Monoid[AccumulateRight[String, Disjunction]].empty shouldEqual
+                    AccumulateRight(Valid(Monoid[Disjunction].empty)) //Disjunction(false)
+          }
+
+          "-> AccumulateBoth[String, Int] is a Monoid" in {
+
+               Monoid[AccumulateBoth[Disjunction, Conjunction]].combineAll(List(
+                    AccumulateBoth(Invalid(Disjunction(false))),
+                    AccumulateBoth(Invalid(Disjunction(true)))
+
+               )) shouldEqual AccumulateBoth(Invalid(Disjunction(true)))
+
+
+               Monoid[AccumulateBoth[Disjunction, Conjunction]].combineAll(List(
+                    AccumulateBoth(Valid(Conjunction(false))),
+                    AccumulateBoth(Valid(Conjunction(true)))
+
+               )) shouldEqual AccumulateBoth(Valid(Conjunction(false)))
+
+
+
+               Monoid[AccumulateBoth[Disjunction, Conjunction]].combineAll(List(
+                    AccumulateBoth(Valid(Conjunction(false))),
+                    AccumulateBoth(Valid(Conjunction(true))),
+                    AccumulateBoth(Invalid(Disjunction(true))),
+                    AccumulateBoth(Valid(Conjunction(true)))
+
+               )) shouldEqual AccumulateBoth(Invalid(Disjunction(true)))
+
+
+               Monoid[AccumulateBoth[String, Int]].combineAll(List(
+
+                    AccumulateBoth(Invalid("Parse Error")),
+                    AccumulateBoth(Valid(12)),
+                    AccumulateBoth(Invalid("Config Error")),
+                    AccumulateBoth(Invalid("Key Error")),
+                    AccumulateBoth(Valid(23))
+
+               )) shouldEqual AccumulateBoth(Invalid("Parse ErrorConfig ErrorKey Error"))
+
+
+               Monoid[AccumulateBoth[String, Int]].empty shouldEqual AccumulateBoth(Valid(0))
+
+               Monoid[AccumulateBoth[String, Disjunction]].empty shouldEqual
+                    AccumulateBoth(Valid(Disjunction(false)))
+
+               Monoid[AccumulateBoth[String, Two[Conjunction, Disjunction]]].empty shouldEqual
+                    AccumulateBoth(Valid(Two(Conjunction(true), Disjunction(false))))
+          }
+
+
+          "-> MyFunction[Two[Int, Int], Int] is a Monoid" in {
+               val alpha: Two[Int, Int] => String = (two: Two[Int, Int]) => s"${two.a} + ${two.b}"
+               val beta: Two[Int, Int] => String = (two: Two[Int, Int]) => s"${two.a} * ${two.b}"
+
+               val f: Two[Int, Int] => Int = (two: Two[Int, Int]) => two.a + two.b
+               val g: Two[Int, Int] => Int = (two: Two[Int, Int]) => two.a * two.b
+
+
+               alpha(Two(4,2)) shouldEqual "4 + 2"
+               beta(Two(5, 3)) shouldEqual "5 * 3"
+
+               f(Two(8, 9)) shouldEqual 17
+               g(Two(3, 7)) shouldEqual 21
+
+
+               val strChecker: Two[Int,Int] => String =
+                    (two: Two[Int,Int]) => Monoid[String].combine(alpha(two), beta(two))
+
+
+               val intChecker: Two[Int,Int] => Int =
+                    (two: Two[Int,Int]) => Monoid[Int].combine(f(two), g(two))
+
+
+               // Method 1 ---------------------------------------------------------------------------------------
+               val combineTwoStr: MyFunction[Two[Int, Int], String] = Monoid[MyFunction[Two[Int, Int], String]].combine(
+                    MyFunction(alpha), MyFunction(beta)
+               )
+
+               combineTwoStr.inner(Two(4,2)) shouldEqual "4 + 24 * 2" //combines the end results of each function
+               strChecker(Two(4,2)) shouldEqual "4 + 24 * 2"
+
+               //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+               val combineTwoInt: MyFunction[Two[Int, Int], Int] = Monoid[MyFunction[Two[Int,Int], Int]].combine(
+                    MyFunction(f), MyFunction(g)
+               )
+
+               combineTwoInt.inner(Two(8, 3)) shouldEqual 35
+               intChecker(Two(8, 3)) shouldEqual 35
+
+
+               // Method 2 ---------------------------------------------------------------------------------------
+
+               val combinedStr: MyFunction[Two[Int, Int], String] = MyFunction(alpha).combine(MyFunction(beta)) //(Two
+               // (4,2))
+
+               combinedStr.inner(Two(4,2)) shouldEqual "4 + 24 * 2"
+               strChecker(Two(4,2)) shouldEqual "4 + 24 * 2"
+
+               //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+               val combinedInt: MyFunction[Two[Int, Int], Int] = MyFunction(f).combine(MyFunction(g))
+
+               combinedInt.inner(Two(4, 2)) shouldEqual 14
+               intChecker(Two(4, 2)) shouldEqual 14
+
+
+               // Method 3 ---------------------------------------------------------------------------------------
+               val combineInnerStr: Two[Int, Int] => String = Monoid[Two[Int,Int] => String].combine(alpha, beta)
+
+               combineInnerStr(Two(4,2)) shouldEqual "4 + 24 * 2"
+
+               //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+               val combineInnerInt: Two[Int, Int] => Int = Monoid[Two[Int, Int] => Int].combine(f, g)
+
+               combineInnerInt(Two(4, 2)) shouldEqual 14
+               intChecker(Two(4, 2)) shouldEqual 14
+
+
+
+               // Empty tests ----------------
+               Monoid[Two[Int, Int] => Validated[String, Int]].empty(Two(1,2)) shouldEqual Valid(0)
+               Monoid[Two[Int, Int] => Validated[Int, Conjunction]].empty(Two(1,2)) shouldEqual Valid(Conjunction(true))
+
+
           }
 
 
