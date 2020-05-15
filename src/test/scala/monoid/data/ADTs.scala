@@ -355,8 +355,7 @@ case class Memory[S, A](runMem: S => (A, S))
 
 object Memory {
 
-     implicit def memoryMonoid[S, A: Monoid] =
-          new Monoid[Memory[S, A]] {
+     implicit def memoryMonoid[S, A: Monoid]: Monoid[Memory[S, A]] = new Monoid[Memory[S, A]] {
 
           def combine(mem1: Memory[S, A], mem2: Memory[S, A]): Memory[S, A] = {
 

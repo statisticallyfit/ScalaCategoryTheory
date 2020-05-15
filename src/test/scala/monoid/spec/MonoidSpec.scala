@@ -470,18 +470,58 @@ class MonoidSpec extends Specification {
           }
 
 
-          //todo how to test this? Gives Comparison failure, no details on the function.
-          /*"-> Memory holds a function of type S => (A, S), which is also a Monoid" in {
+          "-> Memory[String, Int] is a Monoid" in {
 
-               val s: String = "reminder"
+               val input: String = "mermaid"
+               var LEN = input.length
 
-               Monoid[Memory[String, Int]].combineAll(List(
+               val g: String => (Int, String) = (str: String) => (LEN + 2, s"g($str)")
+               val f: String => (Int, String) = (str: String) => (LEN * 4, s"f($str)")
 
-                    Memory(s => (s.length + 1, s + s.head.toUpper)),
-                    Memory(s => (s.length, s))/*,
-                    Memory((s: String) => (s.length *2, s + s))*/
 
-               )) shouldEqual Memory((s:String) => (17, "reminderR"))
-          }*/
+               val result: Memory[String, Int] = Monoid[Memory[String, Int]].combine(Memory(f), Memory(g))
+
+               val (lenPlusTwo, inG) = g(input)
+               val (lenTimesFour, inF) = f(inG)
+
+               result.runMem(input) shouldEqual (lenPlusTwo + lenTimesFour, inF)
+               result.runMem(input) shouldEqual (Monoid[Int].combine(lenPlusTwo, lenTimesFour), s"f(g($input))")
+               result.runMem(input) shouldEqual (LEN + 2 + LEN*4, s"f(g($input))")
+
+               //-------------------------------------------------------------------------------------------
+
+               val res = Monoid[Memory[String, Int]].combineAll(
+                    List(
+                         Memory((s:String) => (s.length + 2, s.head.toUpper.toString + s.tail)),
+                         Memory((s:String) => (s.length * 4, s.head.toLower.toString + s.tail.head.toUpper.toString + s.tail
+                              .tail)),
+                         Memory((s:String) => (s.length + 5, s.head.toString + s.tail.head.toLower.toString + s.tail.tail.head.toUpper.toString +
+                              s.tail.tail.tail))
+                    ).reverse
+               )
+
+
+               res.runMem("quicksilver") shouldEqual (73, "quIcksilver")
+
+
+               //val s = "quicksilver"
+               LEN = "quicksilver".length
+
+               val memoryForwards: Memory[String, Int] = Monoid[Memory[String, Int]].combineAll(List(
+                    Memory((s:String) => (LEN + 2, s"(2 + ${s.length})")),
+                    Memory((s:String) => (LEN * 4, s"(4 * $s)")),
+                    Memory((s:String) => (LEN + 5, s"(5 + $s)"))
+               ).reverse)
+
+               memoryForwards.runMem("quicksilver") shouldEqual (Monoid[Int].combineAll(List(LEN + 2, LEN * 4, LEN + 5)), "(5 + (4 * (2 + 11)))")
+
+
+               val memoryBackwards: Memory[String, Int] = Monoid[Memory[String, Int]].combineAll(List(
+                    Memory((s:String) => (LEN + 2, s"(2 + $s)")),
+                    Memory((s:String) => (LEN * 4, s"(4 * $s)")),
+                    Memory((s:String) => (LEN + 5, s"(5 + ${s.length})"))
+               ))
+               memoryBackwards.runMem("quicksilver") shouldEqual (Monoid[Int].combineAll(List(LEN + 2, LEN * 4, LEN + 5)), "(2 + (4 * (5 + 11)))")
+          }
      }
 }

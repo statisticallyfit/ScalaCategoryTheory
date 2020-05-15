@@ -18,43 +18,16 @@ import cats.data.Validated._
 import cats.{Eq, Monoid}
 import cats.implicits._
 import monoid.data._
-Monoid[ExclusiveNorDisjunction].combineAll(
-	List(ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(true)
 
-//Even TRUES, Odd FALSE
-Monoid[ExclusiveNorDisjunction].combineAll(
-	List(ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(false)
 
-//Odd TRUES, Odd False
-Monoid[ExclusiveNorDisjunction].combineAll(
-	List(ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(false)
+val LEN = "quicksilver".length
 
-//Odd TRUES, Even False
-Monoid[ExclusiveNorDisjunction].combineAll(
-	List(ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(true),
-		ExclusiveNorDisjunction(false),
-		ExclusiveNorDisjunction(false))) == ExclusiveNorDisjunction(true)
+val res2 = Monoid[Memory[String, Int]].combineAll(List(
+	Memory((s:String) => (LEN + 2, s"(2 + ${s.length})")),
+	Memory((s:String) => (LEN * 4, s"(4 * ($s))")),
+	Memory((s:String) => (LEN + 5, s"(5 + ($s))"))
+))
+
+print(res2.runMem("quicksilver"))
+
+//res.runMem("quicksilver")
