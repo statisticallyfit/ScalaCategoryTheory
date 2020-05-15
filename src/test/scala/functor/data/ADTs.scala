@@ -11,12 +11,12 @@ case class Identity[A](value: A)
 
 object Identity {
 
-     implicit def identityFunctor/*[A, B]*/ = new Functor[Identity] {
+     implicit def identityFunctor: Functor[Identity]= new Functor[Identity] {
 
-          def map[A, B](fa: Identity[A])(f: A => B): Identity[B] = Identity( f(fa.value) )
+          def map[A, B](identity: Identity[A])(f: A => B): Identity[B] = Identity( f(identity.value) )
      }
 
-     implicit def identityEq[A : Eq] = new Eq[Identity[A]] {
+     implicit def identityEq[A : Eq]: Eq[Identity[A]] = new Eq[Identity[A]] {
 
           def eqv(id1: Identity[A], id2: Identity[A]): Boolean = Eq[A].eqv(id1.value, id2.value)
      }
@@ -25,37 +25,51 @@ object Identity {
 
 // ------------------------------------------------------------------------------------------
 
-case class Pair[A](aFirst: A, aSecond: A)
+// In haskell this already has kind * -> * so no need to bind any type in the functor instance creation:. This means
+// we can apply the function (f) to both the arguments, since we bind none of them.
+//data Pair a = Pair a a
+//Prelude> :k Pair
+//Pair :: * -> *
+
+case class Pair[A](a1: A, a2: A)
 
 object Pair {
 
      implicit def pairFunctor: Functor[Pair] = new Functor[Pair]{
 
-          def map[A, B](fa: Pair[A])(f: A => B): Pair[B] = Pair( f(fa.aFirst), f(fa.aSecond) )
+          def map[A, B](pair: Pair[A])(f: A => B): Pair[B] = Pair( f(pair.a1), f(pair.a2) )
      }
 
-     implicit def pairEq[A: Eq] = new Eq[Pair[A]] {
+     implicit def pairEq[A: Eq]: Eq[Pair[A]] = new Eq[Pair[A]] {
 
           def eqv(pair1: Pair[A], pair2: Pair[A]): Boolean =
-               Eq[A].eqv(pair1.aFirst, pair2.aFirst) && Eq[A].eqv(pair1.aSecond, pair2.aSecond)
+               Eq[A].eqv(pair1.a1, pair2.a1) && Eq[A].eqv(pair1.a2, pair2.a2)
      }
 }
 
 // ------------------------------------------------------------------------------------------
 
-case class Two[A, B](aValue: A, bValue: B)
+
+// Haskell source: https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/Functor.hs
+
+case class Two[A, B](a: A, b: B)
 
 object Two {
 
+     //See page 627 of Chris Allen: putting the type A here means we are binding the type here so the function (f)
+     // cannot act on the argument that is of type A, only on the leftover types (in this case B)
+     // NOTE: reason for doing this: to make the KIND of Two[A, B] be * -> * so it can be the same KIND as fmap,
+     // because otherwise by itself the Two[A, B] has kind * -> * -> * which is iincompatible with the kind of fmap
+     // (* -> *)
      implicit def twoFunctor[A]: Functor[Two[A, ?]] = new Functor[Two[A, ?]] {
 
-          def map[B, C](fa: Two[A, B])(f: B => C): Two[A, C] = Two(fa.aValue, f(fa.bValue))
+          def map[B, C](two: Two[A, B])(f: B => C): Two[A, C] = Two(two.a, f(two.b))
      }
 
-     implicit def twoEq[A: Eq, B: Eq] = new Eq[Two[A, B]] {
+     implicit def twoEq[A: Eq, B: Eq]: Eq[Two[A, B]] = new Eq[Two[A, B]] {
 
           def eqv(two1: Two[A, B], two2: Two[A, B]): Boolean =
-               Eq[A].eqv(two1.aValue, two2.aValue) && Eq[B].eqv(two1.bValue, two2.bValue)
+               Eq[A].eqv(two1.a, two2.a) && Eq[B].eqv(two1.b, two2.b)
      }
 }
 
@@ -65,9 +79,9 @@ case class Three[A, B, C](a: A, b: B, c: C)
 
 object Three {
 
-     implicit def threeFunctor[A, B]/*: Functor[Three[A, B, ?]]*/ = new Functor[Three[A, B, ?]] {
-          def map[C, D](fa: Three[A, B, C])(f: C => D): Three[A, B, D] =
-               Three(fa.a, fa.b, f(fa.c))
+     implicit def threeFunctor[A, B]: Functor[Three[A, B, ?]]= new Functor[Three[A, B, ?]] {
+          def map[C, D](three: Three[A, B, C])(f: C => D): Three[A, B, D] =
+               Three(three.a, three.b, f(three.c))
 
      }
 
@@ -80,25 +94,52 @@ object Three {
      }
 }
 
+
+
 // ------------------------------------------------------------------------------------------
 
+case class ThreeDup[A, B](a: A, b1: B, b2: B)
+
+object ThreeDup {
+
+     implicit def threeFunctor[A]: Functor[ThreeDup[A, ?]]= new Functor[ThreeDup[A, ?]] {
+          def map[B, C](three: ThreeDup[A, B])(f: B => C): ThreeDup[A, C] =
+               ThreeDup(three.a, f(three.b1), f(three.b2))
+
+     }
+
+     implicit def threeEq[A: Eq, B: Eq, C: Eq]: Eq[ThreeDup[A, B]] = new Eq[ThreeDup[A, B]] {
+
+          def eqv(three1: ThreeDup[A,B], three2: ThreeDup[A,B]): Boolean =
+               Eq[A].eqv(three1.a, three2.a) &&
+                    Eq[B].eqv(three1.b1, three2.b1) &&
+                    Eq[B].eqv(three1.b2, three2.b2)
+     }
+}
+
+// ------------------------------------------------------------------------------------------
+
+// Source in haskell: https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set2_flipArguments/ex1.hs
+// NOTE: Method to determine which type (A, or B) gets bounded:  declare this type asin the above file in the haskell
+// terminal and then check its kind by typing ( :k Sum) and then you can see which types (in order you can eliminate
+// by bynding in the declaration of Sum functor function)
 sealed abstract class Sum[+B, +A]
 final case class First[+A](first: A) extends Sum[Nothing, A]
 final case class Second[+B](second: B) extends Sum[B, Nothing]
 
 object Sum {
 
-     implicit def sumFunctor[B] = new Functor[Sum[B, ?]] {
+     implicit def sumFunctor[B]:  Functor[Sum[B, ?]] = new Functor[Sum[B, ?]] {
 
-          def map[A, C](fa: Sum[B, A])(f: A => C): Sum[B, C] ={
-               fa match {
+          def map[A, C](sum: Sum[B, A])(f: A => C): Sum[B, C] ={
+               sum match {
                     case First(a) => First(f(a))
                     case Second(b) => Second(b)
                }
           }
      }
 
-     implicit def sumEq[B: Eq, A: Eq] = new Eq[Sum[B, A]] {
+     implicit def sumEq[B: Eq, A: Eq]: Eq[Sum[B, A]] = new Eq[Sum[B, A]] {
 
           def eqv(sum1: Sum[B, A], sum2: Sum[B, A]): Boolean = {
                (sum1, sum2) match {
@@ -112,6 +153,112 @@ object Sum {
 }
 
 
+
+
+// ------------------------------------------------------------------------------------------
+
+//TODO test what happens when removing the + sign from both types +A here:
+
+sealed abstract class Maybe[+A]
+final case class Nought() extends Maybe[Nothing]
+final case class Just[+A](a: A) extends Maybe[A]
+
+object Maybe {
+     implicit def maybeFunctor: Functor[Maybe] = new Functor[Maybe] {
+
+          def map[A, B](maybe: Maybe[A])(f: A => B): Maybe[B] ={
+               maybe match {
+                    case Nought() => Nought()
+                    case Just(a) => Just(f(a))
+               }
+          }
+     }
+
+     implicit def maybeEq[A: Eq]: Eq[Maybe[A]] = new Eq[Maybe[A]] {
+
+          def eqv(maybe1: Maybe[A], maybe2: Maybe[A]): Boolean ={
+               (maybe1, maybe2) match {
+                    case (Nought(), Nought()) => true
+                    case (Just(a1), Just(a2)) => Eq[A].eqv(a1, a2)
+                    case (Nought(), _) => false
+                    case (_, Nought()) => false
+               }
+          }
+     }
+}
+
+
+// ---------------------------------------------------------------------------------------
+
+// Haskell source: https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/Functor.hs
+// NOTE this is just the same kind as Maybe type ( * -> *) so we don't need to bind type A, even though there are
+// three constructors instead of two. So number of constructors doesn't amke a difference when same number of types.
+
+
+sealed abstract class WhoCares[+A]
+final case class ItDoesnt() extends WhoCares[Nothing]
+final case class Matter[+A](a: A) extends WhoCares[A]
+final case class WhatThisIsCalled() extends WhoCares[Nothing]
+
+object WhoCares {
+     implicit def whoCaresFunctor: Functor[WhoCares] = new Functor[WhoCares] {
+
+          def map[A, B](whoCares: WhoCares[A])(f: A => B): WhoCares[B] = {
+               whoCares match {
+                    case ItDoesnt() => ItDoesnt()
+                    case Matter(a) => Matter(f(a))
+                    case WhatThisIsCalled() => WhatThisIsCalled()
+               }
+          }
+     }
+
+     implicit def whoCaresEq[A: Eq]: Eq[WhoCares[A]] = new Eq[WhoCares[A]] {
+
+          def eqv(who1: WhoCares[A], who2: WhoCares[A]): Boolean = {
+               (who1, who2) match {
+                    case (ItDoesnt(), ItDoesnt()) => true
+                    case (WhatThisIsCalled(), WhatThisIsCalled()) => true
+                    case (Matter(a1), Matter(a2)) => Eq[A].eqv(a1, a2)
+                    case _ => false
+               }
+          }
+     }
+}
+
+
+
+
+// ------------------------------------------------------------------------------------------
+
+//Haskell source: (under Suprising Functors): https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/Functor.hs
+
+sealed abstract class Constant[+A, +B]
+final case class GetConstant[+A](getConstant: A) extends Constant[A, Nothing]
+
+
+object Constant {
+     implicit def constantFunctor[A]: Functor[Constant[A, ?]] = new Functor[Constant[A, ?]] {
+
+          def map[B, C](constant: Constant[A, B])(f: B => C): Constant[A, C] ={
+               constant match {
+                    case GetConstant(phantomB) => GetConstant(phantomB)
+               }
+          }
+     }
+
+     implicit def constantEq[A: Eq, B: Eq]: Eq[Constant[A, B]] = new Eq[Constant[A, B]]{
+
+          def eqv(const1: Constant[A, B], const2: Constant[A, B]): Boolean = {
+
+               (const1, const2) match {
+                    case (GetConstant(a1), GetConstant(a2)) => Eq[A].eqv(a1, a2)
+               }
+          }
+     }
+}
+
+
+
 // ------------------------------------------------------------------------------------------
 
 sealed abstract class Quant[+A, +B]
@@ -121,10 +268,10 @@ final case class Bloor[+B](bloor: B) extends Quant[Nothing, B]
 
 object Quant {
 
-     implicit def quantFunctor[A] = new Functor[Quant[A, ?]] {
+     implicit def quantFunctor[A]: Functor[Quant[A, ?]] = new Functor[Quant[A, ?]] {
 
-          def map[B, C](fa: Quant[A, B])(f: B => C): Quant[A, C] ={
-               fa match {
+          def map[B, C](quant: Quant[A, B])(f: B => C): Quant[A, C] ={
+               quant match {
                     case Finance() => Finance()
                     case Desk(a) => Desk(a)
                     case Bloor(b) => Bloor(f(b))
@@ -132,7 +279,7 @@ object Quant {
           }
      }
 
-     implicit def quantEq[A: Eq, B: Eq] = new Eq[Quant[A, B]] {
+     implicit def quantEq[A: Eq, B: Eq]: Eq[Quant[A, B]] = new Eq[Quant[A, B]] {
 
           def eqv(quant1: Quant[A, B], quant2: Quant[A, B]): Boolean = {
 
@@ -167,18 +314,18 @@ final case class Something[+B](b: B) extends Company[Nothing, Nothing, B]
 
 object Company {
 
-     implicit def companyFunctor[A, C] = new Functor[Company[A, C, ?]] {
+     implicit def companyFunctor[A, C]: Functor[Company[A, C, ?]] = new Functor[Company[A, C, ?]] {
 
-          def map[B, D](fa: Company[A, C, B])(f: B => D): Company[A, C, D] ={
+          def map[B, D](company: Company[A, C, B])(f: B => D): Company[A, C, D] ={
 
-               fa match {
+               company match {
                     case d @ DeepBlue(a, c) => d
                     case Something(b) => Something(f(b))
                }
           }
      }
 
-     implicit def companyEq[A: Eq, B: Eq, C: Eq] = new Eq[Company[A, C, B]] {
+     implicit def companyEq[A: Eq, B: Eq, C: Eq]: Eq[Company[A, C, B]] = new Eq[Company[A, C, B]] {
 
           def eqv(c1: Company[A, C, B], c2: Company[A, C, B]): Boolean ={
 
@@ -194,38 +341,6 @@ object Company {
 
 
 
-// ------------------------------------------------------------------------------------------
-
-//TODO test what happens when removing the + sign from both types +A here:
-
-sealed abstract class Maybe[+A]
-final case class Nought() extends Maybe[Nothing]
-final case class Just[+A](a: A) extends Maybe[A]
-
-object Maybe {
-     implicit def maybeFunctor = new Functor[Maybe] {
-
-          def map[A, B](fa: Maybe[A])(f: A => B): Maybe[B] ={
-               fa match {
-                    case Nought() => Nought()
-                    case Just(a) => Just(f(a))
-               }
-          }
-     }
-
-     implicit def maybeEq[A: Eq] = new Eq[Maybe[A]] {
-
-          def eqv(maybe1: Maybe[A], maybe2: Maybe[A]): Boolean ={
-               (maybe1, maybe2) match {
-                    case (Nought(), Nought()) => true
-                    case (Just(a1), Just(a2)) => Eq[A].eqv(a1, a2)
-                    case (Nought(), _) => false
-                    case (_, Nought()) => false
-               }
-          }
-     }
-}
-
 
 // ------------------------------------------------------------------------------------------
 //note: based off this one:
@@ -236,10 +351,10 @@ final case class Wrong[+A, +B](a1: A, b: B, a2: A) extends Decision[B, A]
 final case class Correct[+B, +A](b1: B, a: A, b2: B) extends Decision[B, A]
 
 object Decision {
-     implicit def choiceFunctor[B] = new Functor[Decision[B, ?]] {
+     implicit def choiceFunctor[B]: Functor[Decision[B, ?]] = new Functor[Decision[B, ?]] {
 
-          def map[A, C](fa: Decision[B, A])(f: A => C): Decision[B, C] ={
-               fa match {
+          def map[A, C](decision: Decision[B, A])(f: A => C): Decision[B, C] ={
+               decision match {
                     case Wrong(a1, b, a2) => Wrong(f(a1), b, f(a2))
                     case Correct(b1, a, b2) => Correct(b1, f(a), b2)
                }
@@ -247,7 +362,7 @@ object Decision {
      }
 
 
-     implicit def choiceEq[A: Eq, B: Eq] = new Eq[Decision[B, A]] {
+     implicit def choiceEq[A: Eq, B: Eq]: Eq[Decision[B, A]] = new Eq[Decision[B, A]] {
 
           def eqv(c1: Decision[B, A], c2: Decision[B, A]): Boolean ={
 
@@ -274,11 +389,11 @@ final case class Print[+A](string: String, a: A) extends TalkToMe[A]
 final case class Read[+A](reader: String => A) extends TalkToMe[A]
 
 object TalkToMe {
-     implicit def talkToMeFunctor = new Functor[TalkToMe] {
+     implicit def talkToMeFunctor: Functor[TalkToMe] = new Functor[TalkToMe] {
 
-          def map[A, B](fa: TalkToMe[A])(f: A => B): TalkToMe[B] ={
+          def map[A, B](talkToMe: TalkToMe[A])(f: A => B): TalkToMe[B] ={
 
-               fa match {
+               talkToMe match {
                     case Halt() => Halt()
                     case Print(s, a) => Print(s, f(a))
                     case Read(sa) => Read(f.compose(sa))
@@ -290,7 +405,7 @@ object TalkToMe {
      }
 
 
-     implicit def talkToMeEq[A: Eq] = new Eq[TalkToMe[A]] {
+     implicit def talkToMeEq[A: Eq]: Eq[TalkToMe[A]] = new Eq[TalkToMe[A]] {
 
           def eqv(talk1: TalkToMe[A], talk2: TalkToMe[A]): Boolean = {
 
@@ -325,10 +440,10 @@ final case class Branch[+A](left: BinaryTree[A], mid: A, right: BinaryTree[A]) e
 //note changing this def since functor composition not working with previous def.
 
 object BinaryTree {
-     implicit def treeFunctor = new Functor[BinaryTree] {
+     implicit def treeFunctor: Functor[BinaryTree]  = new Functor[BinaryTree] {
 
-          def map[A, B](fa: BinaryTree[A])(f: A => B): BinaryTree[B] ={
-               fa match {
+          def map[A, B](binaryTree: BinaryTree[A])(f: A => B): BinaryTree[B] ={
+               binaryTree match {
                     case Leaf(a) => Leaf(f(a))
                     case Branch(left, mid, right) =>
                          Branch(map(left)(f), f(mid), map(right)(f))
@@ -336,7 +451,7 @@ object BinaryTree {
           }
      }
 
-     implicit def treeEq[A: Eq] = new Eq[BinaryTree[A]] {
+     implicit def treeEq[A: Eq]: Eq[BinaryTree[A]] = new Eq[BinaryTree[A]] {
 
           def eqv(tree1: BinaryTree[A], tree2: BinaryTree[A]): Boolean ={
                (tree1, tree2) match {
@@ -361,17 +476,17 @@ final case class Wagon[+T](passenger: T, train: Train[T]) extends Train[T]
 
 object Train {
 
-     implicit def trainFunctor = new Functor[Train]{
+     implicit def trainFunctor: Functor[Train] = new Functor[Train]{
 
-          def map[T, U](fa: Train[T])(f: T => U): Train[U] ={
-               fa match {
+          def map[T, U](train: Train[T])(f: T => U): Train[U] ={
+               train match {
                     case End() => End()
                     case Wagon(passenger, restOfTrain) => Wagon(f(passenger), map(restOfTrain)(f))
                }
           }
      }
 
-     implicit def trainEq[T: Eq] = new Eq[Train[T]] {
+     implicit def trainEq[T: Eq]: Eq[Train[T]] = new Eq[Train[T]] {
           def eqv(train1: Train[T], train2: Train[T]): Boolean ={
 
                (train1, train2) match {
@@ -391,17 +506,17 @@ object Train {
 case class ConstA[A, B](a: A)
 
 object ConstA {
-     implicit def constantFunctor[A] = new Functor[ConstA[A, ?]] {
+     implicit def constantFunctor[A]: Functor[ConstA[A, ?]] = new Functor[ConstA[A, ?]] {
 
-          def map[B, C](fa: ConstA[A, B])(f: B => C): ConstA[A, C] ={
+          def map[B, C](consta: ConstA[A, B])(f: B => C): ConstA[A, C] ={
 
-               fa match {
+               consta match {
                     case ConstA(a) => ConstA(a)
                }
           }
      }
 
-     implicit def constantEq[A: Eq, B] = new Eq[ConstA[A, B]] {
+     implicit def constantEq[A: Eq, B]: Eq[ConstA[A, B]] = new Eq[ConstA[A, B]] {
           def eqv(c1: ConstA[A, B], c2: ConstA[A, B]): Boolean ={
 
                (c1, c2) match {
@@ -467,17 +582,17 @@ object ConstA {
 case class ConstB[A, B](b: B)
 
 object ConstB {
-     implicit def otherKonstFunctor[A] = new Functor[ConstB[A, ?]] {
+     implicit def otherKonstFunctor[A]: Functor[ConstB[A, ?]] = new Functor[ConstB[A, ?]] {
 
-          def map[B, C](fa: ConstB[A, B])(f: B => C): ConstB[A, C] ={
+          def map[B, C](constb: ConstB[A, B])(f: B => C): ConstB[A, C] ={
 
-               fa match {
+               constb match {
                     case ConstB(b) => ConstB(f(b))
                }
           }
      }
 
-     implicit def otherKonstEq[A, B: Eq] = new Eq[ConstB[A, B]]{
+     implicit def otherKonstEq[A, B: Eq]: Eq[ConstB[A, B]] = new Eq[ConstB[A, B]]{
 
           def eqv(o1: ConstB[A, B], o2: ConstB[A, B]): Boolean ={
 
@@ -488,6 +603,11 @@ object ConstB {
      }
 }
 
+
+
+
+
+
 // ------------------------------------------------------------------------------------------
 
 //todo
@@ -496,17 +616,17 @@ case class LiftItOut[A, B](lifter: A => B)
 //final case class Lift[+A, +B](lifter: A => B) extends LiftItOut[A, B]
 object LiftItOut {
 
-     implicit def liftFunctor[A] = new Functor[LiftItOut[A, ?]]{
+     implicit def liftFunctor[A]: Functor[LiftItOut[A, ?]] = new Functor[LiftItOut[A, ?]]{
 
-          def map[B, C](fa: LiftItOut[A, B])(f: B => C): LiftItOut[A, C] ={
+          def map[B, C](liftItOut: LiftItOut[A, B])(f: B => C): LiftItOut[A, C] ={
 
-               fa match {
+               liftItOut match {
                     case LiftItOut(ab) => LiftItOut(f.compose(ab))
                }
           }
      }
 
-     implicit def liftEq[A, B] = new Eq[LiftItOut[A, B]] {
+     implicit def liftEq[A, B]: Eq[LiftItOut[A, B]] = new Eq[LiftItOut[A, B]] {
           def eqv(l1: LiftItOut[A, B], l2: LiftItOut[A, B]): Boolean = true //todo superficial def
      }
 }
@@ -518,16 +638,16 @@ case class Together[A, B](ab: A => B)
 object Together {
      //final case class Tog[+A, +B](ff: A => B, gg: A => B) extends Together[A, B]
 
-     implicit def togetherFunctor[A] = new Functor[Together[A, ?]]{
+     implicit def togetherFunctor[A]: Functor[Together[A, ?]] = new Functor[Together[A, ?]]{
 
-          def map[B, C](fa: Together[A, B])(f: B => C): Together[A, C] ={
-               fa match {
+          def map[B, C](together: Together[A, B])(f: B => C): Together[A, C] ={
+               together match {
                     case Together(ab) => Together(f.compose(ab))
                }
           }
      }
 
-     implicit def togetherEq[A, B] = new Eq[Together[A, B]] {
+     implicit def togetherEq[A, B]: Eq[Together[A, B]] = new Eq[Together[A, B]] {
           def eqv(t1: Together[A, B], t2: Together[A, B]): Boolean = true //todo superficial def
      }
 }
@@ -536,21 +656,21 @@ object Together {
 
 
 //note - structure is like IgnoreOne in set3 functor exercises of chris allen haskell
-case class Separate[A, C, B, D](ff: A => C, gg: B => D)
+case class Separate[A, C, B, D](functionAToC: A => C, functionBToD: B => D)
 
 object Separate {
 
-     implicit def separateFunctor[A, C, B] = new Functor[Separate[A, C, B, ?]]{
+     implicit def separateFunctor[A, C, B]: Functor[Separate[A, C, B, ?]] = new Functor[Separate[A, C, B, ?]]{
 
-          def map[D, E](fa: Separate[A,C,B,D])(f: D => E): Separate[A, C, B, E] ={
+          def map[D, E](separate: Separate[A,C,B,D])(fde: D => E): Separate[A, C, B, E] ={
 
-               fa match {
-                    case Separate(ffa, ggb) => Separate(ffa, f.compose(ggb))
+               separate match {
+                    case Separate(fac, fbd) => Separate(fac, fde.compose(fbd))
                }
           }
      }
 
-     implicit def separateEq[A, C, B, D] = new Eq[Separate[A, C, B, D]]{
+     implicit def separateEq[A, C, B, D]: Eq[Separate[A, C, B, D]] = new Eq[Separate[A, C, B, D]]{
           def eqv(sep1: Separate[A,C,B,D], sep2: Separate[A,C,B,D]): Boolean = true //todo superficial def
      }
 }
@@ -561,16 +681,19 @@ case class Notorious[O1,O2, A1,A2, T1,T2](go: O1 => O2, ga: A1 => A2, gt: T1 => 
 
 object Notorious {
 
-     implicit def notoriousFunctor[O1, O2, A1, A2, T1] = new Functor[Notorious[O1, O2, A1, A2, T1, ?]] {
+     implicit def notoriousFunctor[O1, O2, A1, A2, T1]: Functor[Notorious[O1, O2, A1, A2, T1, ?]] =
+          new Functor[Notorious[O1, O2, A1, A2, T1, ?]] {
 
-          def map[T2, Z](fa: Notorious[O1,O2, A1,A2, T1,T2])(f: T2 => Z): Notorious[O1,O2, A1,A2, T1,Z] ={
-               fa match {
+          def map[T2, Z](notorious: Notorious[O1,O2, A1,A2, T1,T2])(f: T2 => Z): Notorious[O1,O2, A1,A2, T1,Z] ={
+               notorious match {
                     case Notorious(go, ga, gt) => Notorious(go, ga, f.compose(gt))
                }
           }
      }
 
-     implicit def notoriousEq[O1, O2, A1, A2, T1, T2] = new Eq[Notorious[O1, O2, A1, A2, T1, T2]]{
+     implicit def notoriousEq[O1, O2, A1, A2, T1, T2]: Eq[Notorious[O1, O2, A1, A2, T1, T2]] =
+          new Eq[Notorious[O1, O2, A1, A2, T1, T2]]{
+
           def eqv(not1: Notorious[O1, O2, A1, A2, T1, T2], not2: Notorious[O1, O2, A1, A2, T1, T2]): Boolean = true
           //todo superficial definition
      }
