@@ -1,4 +1,4 @@
-package Util
+package myutil
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._

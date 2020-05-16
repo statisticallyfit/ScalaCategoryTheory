@@ -3,7 +3,7 @@ package functor.prop
 
 import functor.data._
 import functor.data.ArbitraryADTs._
-import Util.Util
+import myutil.Util
 
 
 import scala.collection.mutable.ListBuffer
@@ -97,7 +97,7 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[Maybe].compositionProperty[String, Option[String], String]
 
      FunctorAxioms[Company[Int, String, ?]].identityProperty[Double]
-     FunctorAxioms[Company[Int, String, ?]].compositionProperty[Double, Int, Double]
+     FunctorAxioms[Company[Int, String, ?]].compositionProperty[List[Double], Option[Int], Boolean]
 
      FunctorAxioms[Decision[(Int, Int), ?]].identityProperty[Int]
      FunctorAxioms[Decision[(Int, Int), ?]].compositionProperty[Int, String, List[Int]]
@@ -117,11 +117,17 @@ object CustomFunctorProp extends Definitions {
      FunctorAxioms[ConstB[Double, ?]].identityProperty[Int]
      FunctorAxioms[ConstB[Double, ?]].compositionProperty[Int, Double, Int]
 
+
+
+
+
+     import myutil.UnderlyingFunctionEq._
+
      FunctorAxioms[LiftItOut[Int, ?]].identityProperty[Int]
      FunctorAxioms[LiftItOut[Int, ?]].compositionProperty[Int, Double, Int]
 
-     FunctorAxioms[Together[Int, ?]].identityProperty[Int]
-     FunctorAxioms[Together[Int, ?]].compositionProperty[Int, Double, Int]
+     /*FunctorAxioms[Together[Int, ?]].identityProperty[Int]
+     FunctorAxioms[Together[Int, ?]].compositionProperty[Int, Double, Int]*/
 
      FunctorAxioms[Separate[Int, String, Double, ?]].identityProperty[Int]
      FunctorAxioms[Separate[Int, String, Double, ?]].compositionProperty[Int, Double, Int]

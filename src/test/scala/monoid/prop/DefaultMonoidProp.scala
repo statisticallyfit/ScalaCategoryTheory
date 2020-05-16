@@ -61,8 +61,8 @@ class DefaultMonoidProp extends CatsSpecMonoid {
      checkAll("Monoid[AccumulateBoth[String, List[String]]]", GroupLaws[AccumulateBoth[String, List[String]]].monoid)
 
 
-     import monoid.data.Combine._
-     import monoid.data.UnderlyingFunctionEq._
+     //import monoid.data.Combine._
+     import myutil.UnderlyingFunctionEq._
 
      checkAll("Monoid[MyFunction[Int, String]]", GroupLaws[MyFunction[Int, String]].monoid)
 

@@ -3,7 +3,7 @@ package monoid.prop
 
 import monoid.data._
 import monoid.data.ArbitraryADTs._
-import Util.Util
+import myutil.Util
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._
@@ -124,8 +124,11 @@ object CustomMonoidProp extends Definitions {
      MonoidAxioms[AccumulateBoth[String, List[String]]].leftIdentityProperty
      MonoidAxioms[AccumulateBoth[String, List[String]]].rightIdentityProperty
 
-     import monoid.data.Combine._
-     import monoid.data.UnderlyingFunctionEq._
+
+     //import monoid.data.Combine._
+
+     import myutil.UnderlyingFunctionEq._
+
 
      MonoidAxioms[MyFunction[String, Int]].associativeProperty
      MonoidAxioms[MyFunction[String, Int]].leftIdentityProperty

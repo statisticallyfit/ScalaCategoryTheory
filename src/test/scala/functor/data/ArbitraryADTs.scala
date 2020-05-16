@@ -220,20 +220,20 @@ object ArbitraryADTs {
           val genLiftItOut: Gen[LiftItOut[A, B]] = for {
                a <- Arbitrary.arbitrary[A]
                b <- Arbitrary.arbitrary[B]
-          } yield LiftItOut(a => b)
+          } yield LiftItOut((a:A) => b)
 
           Arbitrary(genLiftItOut)
      }
 
-     implicit def arbTogether[A: Arbitrary, B: Arbitrary]: Arbitrary[Together[A, B]] ={
+     /*implicit def arbTogether[A: Arbitrary, B: Arbitrary]: Arbitrary[Together[A, B]] ={
 
           val genTogether: Gen[Together[A, B]] = for {
                a <- Arbitrary.arbitrary[A]
                b <- Arbitrary.arbitrary[B]
-          } yield Together(a => b)
+          } yield Together( (a: A) => b)
 
           Arbitrary(genTogether)
-     }
+     }*/
 
      implicit def arbSeparate[A: Arbitrary, B: Arbitrary, C: Arbitrary, D: Arbitrary]: Arbitrary[Separate[A,C,B,D]] ={
 
@@ -242,7 +242,7 @@ object ArbitraryADTs {
                c <- Arbitrary.arbitrary[C]
                b <- Arbitrary.arbitrary[B]
                d <- Arbitrary.arbitrary[D]
-          } yield Separate(a => c, b => d)
+          } yield Separate( (a: A) => c,  (b: B) => d)
 
           Arbitrary(genSeparate)
      }
@@ -257,7 +257,7 @@ object ArbitraryADTs {
                a2 <- Arbitrary.arbitrary[A2]
                t1 <- Arbitrary.arbitrary[T1]
                t2 <- Arbitrary.arbitrary[T2]
-          } yield Notorious(o1 => o2, a1 => a2, t1 => t2)
+          } yield Notorious( (o1: O1) => o2,   (a1: A1) => a2,   (t1: T1) => t2)
 
           Arbitrary(genNotorious)
      }

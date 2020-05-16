@@ -230,10 +230,10 @@ object WhoCares {
 
 // ------------------------------------------------------------------------------------------
 
-//Haskell source: (under Suprising Functors): https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/Functor.hs
+//Haskell source: (under Suprising Functors): https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/Functor.hs#L488
 
 sealed abstract class Constant[+A, +B]
-final case class GetConstant[+A](getConstant: A) extends Constant[A, Nothing]
+final case class GetConstant[+A](a: A) extends Constant[A, Nothing]
 
 
 object Constant {
@@ -241,12 +241,13 @@ object Constant {
 
           def map[B, C](constant: Constant[A, B])(f: B => C): Constant[A, C] ={
                constant match {
-                    case GetConstant(phantomB) => GetConstant(phantomB)
+                    case GetConstant(constA) => GetConstant(constA) // The A is bound above so we cannot make
+                    // function f act on it.
                }
           }
      }
 
-     implicit def constantEq[A: Eq, B: Eq]: Eq[Constant[A, B]] = new Eq[Constant[A, B]]{
+     implicit def constantEq[A: Eq, B]: Eq[Constant[A, B]] = new Eq[Constant[A, B]]{
 
           def eqv(const1: Constant[A, B], const2: Constant[A, B]): Boolean = {
 
@@ -257,6 +258,63 @@ object Constant {
      }
 }
 
+
+
+// ------------------------------------------------------------------------------------------
+//Haskell source: https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise3.hs#L19-L23
+
+case class Flip[A, B, C](flip: B => A => C, b: B, a:A)
+
+object Flip {
+
+     implicit def flipFunctor[A, C]: Functor[Flip[A, ?, C]] = new Functor[Flip[A, ?, C]] {
+
+          def map[B, Z](flipObj: Flip[A, B, C])(fbz: B => Z): Flip[A, B, Z] ={
+
+               flipObj match {
+                    case Flip(fbac, b, a) => Flip( (b: B) => fbz.compose(fbac(b)), b, a)
+               }
+          }
+     }
+     /*implicit def flipFunctor[A]: Functor[Flip[A, ?, ?]] = new Functor[Flip[A, ?, ?]] {
+
+          def map[B, C, D](flipObj: Flip[A, B, C])(fcd: C => D): Flip[A, B, D] ={
+
+               flipObj match {
+                    case Flip(fbac, b, a) => Flip( (b: B) => fcd.compose(fbac(b)), b, a)
+               }
+          }
+     }*/
+     /*implicit def flipFunctor[B] = new Functor[Flip[?, B]] {
+
+          def map[A, C](fa: Flip[A, B])(f: A => C): Flip[C, B] = {
+               fa match {
+                    case Flp(flipAB, b, a) =>
+               }
+          }
+     }*/
+     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
+
+          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
+
+               import Konstant._
+               fa match {
+                    case Flp(Const(a1), b, a2) => Flp(Const(f(a1)), b, f(a2))
+               }
+          }
+     }*/
+
+     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
+
+          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
+
+               import Konstant._
+               fa match {
+                    case Flipper(Const(a1), b, a2) => Flipper(Const(f(a1)), b, f(a2))
+               }
+          }
+     }*/
+}
 
 
 // ------------------------------------------------------------------------------------------
@@ -308,6 +366,9 @@ object Quant {
 
 // ------------------------------------------------------------------------------------------
 
+//Haskell source = https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set2_flipArguments/ex2.hs#L2-L6
+
+
 sealed abstract class Company[+A, +C, +B]
 final case class DeepBlue[+A, +C](a: A, c: C) extends Company[A, C, Nothing]
 final case class Something[+B](b: B) extends Company[Nothing, Nothing, B]
@@ -316,7 +377,7 @@ object Company {
 
      implicit def companyFunctor[A, C]: Functor[Company[A, C, ?]] = new Functor[Company[A, C, ?]] {
 
-          def map[B, D](company: Company[A, C, B])(f: B => D): Company[A, C, D] ={
+          def map[B, Z](company: Company[A, C, B])(f: B => Z): Company[A, C, Z] ={
 
                company match {
                     case d @ DeepBlue(a, c) => d
@@ -527,55 +588,6 @@ object ConstA {
 }
 
 
-// ------------------------------------------------------------------------------------------
-//todo here need help https://github.com/statisticallyfit/Haskell/blob/e5e8e2eaf3dc8e0678691672010d2cc29e3fdb8e/HaskellTutorial/HaskellLearningTutorial/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise3.hs
-
-//case class Flip[A, B, C](flip: A => B => C)
-//
-//object Flip {
-//     import cats.syntax.functor._
-//
-//     import functor.data.Konstant._
-//
-//     implicit def flipFunctor[A, B] = new Functor[Flip[A, B, ?]] {
-//
-//          def map[C, D](fa: Flip[A, B, C])(f: C => D): Flip[A, B, D] ={
-//
-//               fa match {
-//                    case Flip(abc) => Flip(f.compose(abc.compose(Konst(_))))
-//               }
-//          }
-//     }
-//     /*implicit def flipFunctor[B] = new Functor[Flip[?, B]] {
-//
-//          def map[A, C](fa: Flip[A, B])(f: A => C): Flip[C, B] = {
-//               fa match {
-//                    case Flp(flipAB, b, a) =>
-//               }
-//          }
-//     }*/
-//     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
-//
-//          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
-//
-//               import Konstant._
-//               fa match {
-//                    case Flp(Const(a1), b, a2) => Flp(Const(f(a1)), b, f(a2))
-//               }
-//          }
-//     }*/
-//
-//     /*implicit def flipFunctor[A, B] = new Functor[Flip[Konstant[A, B], ?, B]] {
-//
-//          def map[_, C](fa: Flip[Konstant[A, B], A, B])(f: A => C): Flip[Konstant[C, B], C, B] ={
-//
-//               import Konstant._
-//               fa match {
-//                    case Flipper(Const(a1), b, a2) => Flipper(Const(f(a1)), b, f(a2))
-//               }
-//          }
-//     }*/
-//}
 
 // ------------------------------------------------------------------------------------------
 
@@ -610,7 +622,9 @@ object ConstB {
 
 // ------------------------------------------------------------------------------------------
 
-//todo
+// Haskell source: https://github.com/statisticallyfit/HaskellTutorial/blob/master/learninghaskell/src/Books/ChrisAllen_HaskellFirstPrinciples/chapter16_Functor/chapterExercises/set3_writeFunctorInstances/exercise5.hs#L18-L22
+
+
 case class LiftItOut[A, B](lifter: A => B)
 
 //final case class Lift[+A, +B](lifter: A => B) extends LiftItOut[A, B]
@@ -618,45 +632,25 @@ object LiftItOut {
 
      implicit def liftFunctor[A]: Functor[LiftItOut[A, ?]] = new Functor[LiftItOut[A, ?]]{
 
-          def map[B, C](liftItOut: LiftItOut[A, B])(f: B => C): LiftItOut[A, C] ={
+          def map[B, Z](liftItOut: LiftItOut[A, B])(fbc: B => Z): LiftItOut[A, Z] ={
 
                liftItOut match {
-                    case LiftItOut(ab) => LiftItOut(f.compose(ab))
+                    case LiftItOut(fab) => LiftItOut(fbc.compose(fab))
                }
           }
      }
 
-     implicit def liftEq[A, B]: Eq[LiftItOut[A, B]] = new Eq[LiftItOut[A, B]] {
-          def eqv(l1: LiftItOut[A, B], l2: LiftItOut[A, B]): Boolean = true //todo superficial def
+     implicit def liftEq[A: Eq, B: Eq](implicit ev: Eq[A => B]): Eq[LiftItOut[A, B]] = new Eq[LiftItOut[A, B]] {
+          def eqv(l1: LiftItOut[A, B], l2: LiftItOut[A, B]): Boolean = Eq[A => B].eqv(l1.lifter, l2.lifter)
      }
 }
 
-// ------------------------------------------------------------------------------------------
-
-case class Together[A, B](ab: A => B)
-
-object Together {
-     //final case class Tog[+A, +B](ff: A => B, gg: A => B) extends Together[A, B]
-
-     implicit def togetherFunctor[A]: Functor[Together[A, ?]] = new Functor[Together[A, ?]]{
-
-          def map[B, C](together: Together[A, B])(f: B => C): Together[A, C] ={
-               together match {
-                    case Together(ab) => Together(f.compose(ab))
-               }
-          }
-     }
-
-     implicit def togetherEq[A, B]: Eq[Together[A, B]] = new Eq[Together[A, B]] {
-          def eqv(t1: Together[A, B], t2: Together[A, B]): Boolean = true //todo superficial def
-     }
-}
 
 // ------------------------------------------------------------------------------------------
 
 
 //note - structure is like IgnoreOne in set3 functor exercises of chris allen haskell
-case class Separate[A, C, B, D](functionAToC: A => C, functionBToD: B => D)
+case class Separate[A, C, B, D](fac: A => C, fbd: B => D)
 
 object Separate {
 
@@ -665,13 +659,16 @@ object Separate {
           def map[D, E](separate: Separate[A,C,B,D])(fde: D => E): Separate[A, C, B, E] ={
 
                separate match {
-                    case Separate(fac, fbd) => Separate(fac, fde.compose(fbd))
+                    case Separate(_fac, _fbd) => Separate(_fac, fde.compose(_fbd))
                }
           }
      }
 
-     implicit def separateEq[A, C, B, D]: Eq[Separate[A, C, B, D]] = new Eq[Separate[A, C, B, D]]{
-          def eqv(sep1: Separate[A,C,B,D], sep2: Separate[A,C,B,D]): Boolean = true //todo superficial def
+     implicit def separateEq[A, C, B, D](implicit evAC: Eq[A => C], evBD: Eq[B => D]): Eq[Separate[A, C,B, D]] =
+          new Eq[Separate[A, C,B, D]]{
+
+          def eqv(sep1: Separate[A,C,B,D], sep2: Separate[A,C,B,D]): Boolean =
+               Eq[A => C].eqv(sep1.fac, sep2.fac) && Eq[B => D].eqv(sep1.fbd, sep2.fbd)
      }
 }
 
@@ -684,17 +681,22 @@ object Notorious {
      implicit def notoriousFunctor[O1, O2, A1, A2, T1]: Functor[Notorious[O1, O2, A1, A2, T1, ?]] =
           new Functor[Notorious[O1, O2, A1, A2, T1, ?]] {
 
-          def map[T2, Z](notorious: Notorious[O1,O2, A1,A2, T1,T2])(f: T2 => Z): Notorious[O1,O2, A1,A2, T1,Z] ={
+          def map[T2, Z](notorious: Notorious[O1,O2, A1,A2, T1,T2])(ftz: T2 => Z): Notorious[O1,O2, A1,A2, T1,Z] ={
                notorious match {
-                    case Notorious(go, ga, gt) => Notorious(go, ga, f.compose(gt))
+                    case Notorious(go, ga, gt) => Notorious(go, ga, ftz.compose(gt))
                }
           }
      }
 
-     implicit def notoriousEq[O1, O2, A1, A2, T1, T2]: Eq[Notorious[O1, O2, A1, A2, T1, T2]] =
+     implicit def notoriousEq[O1, O2, A1, A2, T1, T2](implicit evO1O2: Eq[O1 => O2],
+                                                      evA1A2: Eq[A1 => A2],
+                                                      evT1T2: Eq[T1 => T2]): Eq[Notorious[O1, O2, A1, A2, T1, T2]] =
           new Eq[Notorious[O1, O2, A1, A2, T1, T2]]{
 
-          def eqv(not1: Notorious[O1, O2, A1, A2, T1, T2], not2: Notorious[O1, O2, A1, A2, T1, T2]): Boolean = true
+          def eqv(not1: Notorious[O1, O2, A1, A2, T1, T2], not2: Notorious[O1, O2, A1, A2, T1, T2]): Boolean =
+               Eq[O1 => O2].eqv(not1.go, not2.go) &&
+                    Eq[A1 => A2].eqv(not1.ga, not2.ga) &&
+                    Eq[T1 => T2].eqv(not1.gt, not2.gt)
           //todo superficial definition
      }
 }

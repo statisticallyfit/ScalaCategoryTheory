@@ -300,21 +300,15 @@ object MyFunction {
      }
 
      // todo need to fix this???
-     implicit def functionEq[A: Eq, B: Eq](implicit ev: Eq[A => B]) =
-          new Eq[MyFunction[A,B]] { //new Eq[A => B] {
+     implicit def functionEq[A: Eq, B: Eq](implicit ev: Eq[A => B]): Eq[MyFunction[A,B]]  =
+          new Eq[MyFunction[A,B]] {
 
           def eqv(myFunc1: MyFunction[A,B], myFunc2: MyFunction[A,B]): Boolean = //true // => Eq[B].eqv(f(a), g(a))
                Eq[A => B].eqv(myFunc1.inner, myFunc2.inner)
      }
 }
 
-object UnderlyingFunctionEq {
-     //just a whimsical function -- say two functions are equal by default.
-     // todo need to fix this???
-     implicit def functionEq[A: Eq, B: Eq]: Eq[A => B] = new Eq[A => B] {
-          def eqv(f: A => B, g: A => B): Boolean = true //Eq[B].eqv(f(a), g(a))
-     }
-}
+
 
 
 // ------------------------------------------------------------------------------------------
@@ -374,7 +368,9 @@ object Memory {
      }
 
      //todo need to fix? Just said default "true"
-     implicit def memoryEq[S, A]: Eq[Memory[S, A]] = new Eq[Memory[S, A]] {
+     implicit def memoryEq[S: Eq, A: Eq]: Eq[Memory[S, A]] = new Eq[Memory[S, A]] {
+
           def eqv(mem1: Memory[S, A], mem2: Memory[S, A]): Boolean = true
+               //Eq[S => (A, S)].eqv(mem1.runMem, mem2.runMem)
      }
 }
