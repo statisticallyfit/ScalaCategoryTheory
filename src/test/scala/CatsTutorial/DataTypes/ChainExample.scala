@@ -1,7 +1,7 @@
 package CatsTutorial.DataTypes
 
 /**
- *
+ * Tutorial source = https://typelevel.org/cats/datatypes/chain.html
  */
 import cats.implicits._
 import cats.instances._
