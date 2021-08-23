@@ -13,13 +13,13 @@ import cats.{Eq, Monoid}
 case class Trivial()
 
 object Trivial {
-     implicit val trivialMonoid = new Monoid[Trivial]{
-          def combine(a: Trivial, b: Trivial): Trivial = Trivial()
-          def empty: Trivial = Trivial()
-     }
-     implicit val trivialEq = new Eq[Trivial]{
-          def eqv(a: Trivial, b: Trivial): Boolean = true
-     }
+	implicit val trivialMonoid: Monoid[Trivial] = new Monoid[Trivial]{
+		def combine(a: Trivial, b: Trivial): Trivial = Trivial()
+		def empty: Trivial = Trivial()
+	}
+	implicit val trivialEq: Eq[Trivial] = new Eq[Trivial]{
+		def eqv(a: Trivial, b: Trivial): Boolean = true
+	}
 }
 
 // ------------------------------------------------------------------------------------------
