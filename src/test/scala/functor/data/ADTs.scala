@@ -267,7 +267,7 @@ case class Flip[A, B, C](flip: B => A => C, b: B, a:A)
 
 object Flip {
 
-     implicit def flipFunctor[A, C]: Functor[Flip[A, ?, C]] = new Functor[Flip[A, ?, C]] {
+     /*implicit def flipFunctor[A, C]: Functor[Flip[A, ?, C]] = new Functor[Flip[A, ?, C]] {
 
           def map[B, Z](flipObj: Flip[A, B, C])(fbz: B => Z): Flip[A, B, Z] ={
 
@@ -275,7 +275,11 @@ object Flip {
                     case Flip(fbac, b, a) => Flip( (b: B) => fbz.compose(fbac(b)), b, a)
                }
           }
-     }
+     }*/
+     //TODO fix this error: type mismatch;
+     // found   : A => C
+     // required: A => B
+
      /*implicit def flipFunctor[A]: Functor[Flip[A, ?, ?]] = new Functor[Flip[A, ?, ?]] {
 
           def map[B, C, D](flipObj: Flip[A, B, C])(fcd: C => D): Flip[A, B, D] ={
@@ -331,7 +335,11 @@ object Quant {
           def map[B, C](quant: Quant[A, B])(f: B => C): Quant[A, C] ={
                quant match {
                     case Finance() => Finance()
+                    /* Can't act over 'a' because it must be used as placeholder to make the
+                     * kind for Quant from * -> * -> * into * -> * so that Functor type declaration is satisfied.
+                     */
                     case Desk(a) => Desk(a)
+                    //Can onlyact over the 'B' since that is the wildcard one, not Fixed in the type declaration.
                     case Bloor(b) => Bloor(f(b))
                }
           }
