@@ -7,7 +7,7 @@ import cats.data._
 import cats.data.NonEmptyChain
 import cats.kernel.Order
 
-
+import scala.util.Random
 
 object TestData {
 
@@ -20,7 +20,7 @@ object TestData {
 	case class Mammal(name: String) extends Animal
 	case class Bird(name: String) extends Animal {
 
-		def canEqual(that: Any): Boolean = that.isInstanceOf[Bird]
+		/*def canEqual(that: Any): Boolean = that.isInstanceOf[Bird]
 
 		override def equals(obj: Any): Boolean = obj match {
 			case bird: Bird => bird.canEqual(this) && this.hashCode() == bird.hashCode
@@ -34,7 +34,7 @@ object TestData {
 			result = prime * result + this.name.hashCode;
 			result = prime * result + (if (this.name == null) 0 else this.name.hashCode)
 			result
-		}
+		}*/
 	}
 
 	val animals = Seq(
@@ -68,8 +68,9 @@ object TestData {
 	}
 
 	val animalChain: Chain[Animal] = Chain.fromSeq(animals)
-	val temp: Chain[Animal] = Chain(Bird("sparrow"), Bird("sparrow"), Mammal("Deer"), Bird("raven"))
-	val animalChainDup: Chain[Animal] = animalChain ++ temp //TODO error here chain[object] vs chain[animal]
+	//val temp: Chain[Animal] = Chain(Bird("sparrow"), Bird("sparrow"), Mammal("Deer"), Bird("raven"))
+	val animalChainDup: Chain[Animal] = animalChain ++ Chain(Bird("sparrow"), Bird("sparrow"), Mammal("deer"), Bird
+	("raven")) //TODO error here chain[object] vs chain[animal]
 
 	implicit def animalOrder: Order[Animal] = new Order[Animal] {
 		override def compare(x: Animal, y: Animal): Int = {
@@ -97,11 +98,9 @@ object TestData {
 		case x if x > 0 => 2 * x
 	}
 
+	val xs: Chain[Int] = Chain.fromSeq(Range(-11, 11).toList)
 
-	val xs = Chain.fromSeq(Range(-11, 11).toList)
-
-
-
+	val values: Chain[Int] = Chain.fromSeq( Random.shuffle(Range(-10, 11).toList) )
 }
 
 
@@ -157,10 +156,8 @@ object ChainAPITests extends App {
 
 
 	// Collect first some
-	assert(animalChain.collectFirstSome(birdCollectSome) ==
-		Some((Bird(raven),Chain(Mammal(elephant), Mammal(tiger), Mammal(monkey), Bird(peacock), Bird(sparrow)))),
-		"Test 1: collectFirstSome"
-	)
+	assert(animalChain.collectFirstSome(birdCollectSome) == animalChain.collectFirst(birdCollect)
+		&& animalChain.collectFirstSome(birdCollectSome) == Some(Bird("raven")), "Test 1: collectFirstSome")
 
 
 	// Delete First
@@ -171,7 +168,24 @@ object ChainAPITests extends App {
 	)
 
 
-	//Distinct (chain
-	assert(animalChainDup.distinct(animalOrder))
+	//Distinct (chain)
+	assert(animalChainDup.distinct(animalOrder) == (animalChain :+ Mammal("deer")), "Test 1: distinct")
+
+
+	// FoldLeft (on Chain)
+	assert(
+		animalChainDup.foldLeft(Bird(""))((accBird, animal) => animal match {
+			case Mammal(_) => accBird
+			case Bird(incomingBirdName) => Bird(accBird.name + " " + incomingBirdName)
+		}) == Bird(" raven peacock sparrow sparrow sparrow raven"),
+		"Test 1: foldLeft"
+	)
+
+	assert(
+		values.foldLeft(0)({case (accPos, num) => if( num < 0) accPos else (accPos + num)}) == 55,
+		"Test 2: foldLeft"
+	)
+
+
 
 }
