@@ -1,41 +1,25 @@
-package CatsTutorial.DataTypes
+package CatsTutorial.DataTypes.Chain
 
 /**
  * Tutorial source = https://typelevel.org/cats/datatypes/chain.html
+ * Chain API Function reference = https://typelevel.org/cats/api/cats/data/Chain.html?search=nonemptychain
+ *
+ * Other sources for examples:
+ * --> http://thushw.blogspot.com/2015/09/scala-collectfirst-example.html
  */
+
 import cats.data._
-import cats.data.NonEmptyChain
 import cats.kernel.Order
 
 import scala.util.Random
 
+
 object TestData {
 
-	/**
-	 * Example sources:
-	 * http://thushw.blogspot.com/2015/09/scala-collectfirst-example.html
-	 */
 
 	trait Animal
 	case class Mammal(name: String) extends Animal
-	case class Bird(name: String) extends Animal {
-
-		/*def canEqual(that: Any): Boolean = that.isInstanceOf[Bird]
-
-		override def equals(obj: Any): Boolean = obj match {
-			case bird: Bird => bird.canEqual(this) && this.hashCode() == bird.hashCode
-			case _ => false
-		}
-
-		//Source = https://alvinalexander.com/scala/how-to-extract-unique-elements-scala-sequences-cookbook/
-		override def hashCode: Int = {
-			val prime = 31
-			var result = 1
-			result = prime * result + this.name.hashCode;
-			result = prime * result + (if (this.name == null) 0 else this.name.hashCode)
-			result
-		}*/
-	}
+	case class Bird(name: String) extends Animal
 
 	val animals = Seq(
 		Mammal("elephant"),
@@ -107,31 +91,7 @@ object TestData {
 object ChainAPITests extends App {
 
 	import TestData._
-	/*
-	sealed abstract class EChain[+A]
 
-	case object Empty extends EChain[Nothing]
-	case class Singleton[A](a: A) extends EChain[A]
-	// Append gives fast concatenation ability (always constant time O(1))
-	// NOTE: not exposed for user usage because then they could append empty chain or seq
-	case class Append[A](left: EChain[A], right: EChain[A]) extends EChain[A]
-
-	//Lifts any Seq into a Chain
-	case class Wrap[A](seq: Seq[A]) extends EChain[A]
-
-	//def isEmpty[A](c: EChain[A]): Boolean = c == Empty
-
-	// Chain does not directly expose Append and Wrap because arguments might be empty Chain or Seq, instead use
-	// concat or ++
-	def concat[A](c: EChain[A], c2: EChain[A]): EChain[A] = {
-		if (c.isEmpty) c2
-		else if (c2.isEmpty) c
-		else Append(c, c2)
-	}
-	 */
-
-
-	// Source for function reference = https://typelevel.org/cats/api/cats/data/Chain.html?search=nonemptychain
 
 
 	assert(Chain(1,2) ++ Chain(3, 4) == Chain(1,2,3,4), "Test a: chain concatenation")
@@ -186,6 +146,19 @@ object ChainAPITests extends App {
 		"Test 2: foldLeft"
 	)
 
+	assert(
+		Chain.fromSeq(Range(-5, 6).toList).foldLeft("__")((accStr, int) => s"($accStr + $int)")
+			== "(((((((((((__ + -5) + -4) + -3) + -2) + -1) + 0) + 1) + 2) + 3) + 4) + 5)",
+		"Test 3: foldLeft"
+	)
 
 
+	assert(
+		Chain.fromSeq(Range(-5, 6).toList).foldRight("__")((int, accStr) => s"($accStr + $int)")
+			== "(((((((((((__ + 5) + 4) + 3) + 2) + 1) + 0) + -1) + -2) + -3) + -4) + -5)",
+		"Test 1: foldRight"
+	)
+
+	//TODO moving on, left off at groupBy and need to finish downwards:
+	// https://typelevel.org/cats/api/cats/data/Chain.html#groupBy[B](f:A=%3EB)(implicitB:cats.Order[B]):scala.collection.immutable.SortedMap[B,cats.data.NonEmptyChain[A]]
 }
