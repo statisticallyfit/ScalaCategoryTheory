@@ -59,6 +59,8 @@ libraryDependencies ++= Seq(
      "org.typelevel"   %% "cats-testkit"           % "2.0.0",
      //Shapeless
      "com.chuusai"     %% "shapeless"      % "2.3.7", // was 2.3.3
+     // Matryoshka
+     "com.slamdata" %% "matryoshka-core" % "0.21.3",
      //Kind projector plugin
      "org.spire-math" %% "kind-projector" % "0.9.9" // was 0.9.4
 )
