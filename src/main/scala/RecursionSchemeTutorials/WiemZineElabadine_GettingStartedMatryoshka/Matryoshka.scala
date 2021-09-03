@@ -98,15 +98,21 @@ object Matryoshka {
 
 
 	/**
+	 * Goal (a) to build a chain Matryoshka from a list of strings. Need a recursive function that will go from top
+	 * to down to build our data structure of Matryoshka dolls from the `List` while simultaneously removing the
+	 * recursive structure we previously had.
 	 * Defining the coalgebra
 	 *
-	 * Here we define which operation we perform at each step of the computation. We have a `List[String]` as an
-	 * input and we will return `Matryoshka[List[String]]`
+	 * Here we define which operation we perform at each step of the computation.
+	 *
+	 * We have a `List[String]` ==> `Matryoshka[List[String]]`
 	 *
 	 * How it works: `Coalgebra` determines the next single step of the construction
+	 *
+	 * `def anamorphism[A](a: A)(f: Coalgebra[F, A])(implicit F: Functor[F]): F[A]`
 	 */
 
-	val coalgebra: Coalgebra[Matryoshka, NonEmptyList[String]] = {
+	val coalgebraDolls: Coalgebra[Matryoshka, NonEmptyList[String]] = {
 		case NonEmptyList(name: String, _: INil[String]) => Tiny(name) //TODO why doesn't Wiem put List[String]
 		// instead of INil here?
 		case NonEmptyList(name: String, restOfDaughters) => {
@@ -117,7 +123,47 @@ object Matryoshka {
 	}
 
 
+	/**
+	 * Goal (b) Calculate number of dolls
+	 *
+	 * We need to have a function which comes from `Matryoshka[_] => Int`.
+	 *
+	 * `Algebra[F[_], A]` is a type in the matryoshka library that olds a structure `F` to a value `A` so we can see
+	 * it as a function `F[_] => A`.
+	 *
+	 * `type Algebra[F[_], A] = F[A] => A`
+	 *
+	 * Defining our `Algebra[Matryoshka, Int]`:
+	 *
+	 * How it works: we collapse the data structure of Matryoshka dolls into a single integer value while
+	 * simultaneously taking the recursive structure and collapsing it to get a single value.
+	 *
+	 * `def cata[A](f: Algebra[F, A])(implicit BF: Functor[F]): A`
+	 */
+	val algebraCount: Algebra[Matryoshka, Int] = {
+		case Doll(_: String, daughterCount: Int) => 1 + daughterCount  // increment by daughter occurrence found
+		case Tiny(_) => 1 // base case need to start from 1 to increment, count 1 doll as 1
+	}
 
+
+	/**
+	 * Goal (c) Transform `List[String` to a `List[Person` with its age (the smallest doll should be 6 years old,
+	 * and each doll is 1 year older)
+	 *
+	 * We need `List[String] => Matryoshka[_] => List[Person]`
+	 *
+	 * `ana { Colagebra[Matryoshka, List[String]] } + cata { Algebra[Matryoshka, List[Person] }`
+	 */
+	val algebraPersonNameOrder: Algebra[Matryoshka, List[Person]] = {
+		case Doll(name: String, daughters: List[Person]) => Person(name, age = daughters.head.age + 1) +: daughters
+			//daughters :+ Person(name, age = daughters.last.age + 1)
+		case Tiny(name: String) => Person(name, age = 6) :: Nil // just a list not INil from scalaz
+	}
+
+	val algebraPersonAgeOrder: Algebra[Matryoshka, List[Person]] = {
+		case Doll(name: String, daughters: List[Person]) => daughters :+ Person(name, age = daughters.last.age + 1)
+		case Tiny(name: String) => Person(name, age = 6) :: Nil // just a list not INil from scalaz
+	}
 
 
 }
@@ -128,7 +174,7 @@ object Matryoshka {
 
 
 
-object Main extends App {
+object MatryoshkaExample extends App {
 
 	import Matryoshka._
 
@@ -146,9 +192,10 @@ object Main extends App {
 		)
 	)
 
-	Console.println(dolls)
+	Console.println(s"Example list of dolls via Fix: \n\n$dolls")
 
-	// ----------------------------------------------------------------------------
+	Console.println("\n----------------------------------------------------------------------------\n")
+
 
 
 
@@ -157,13 +204,108 @@ object Main extends App {
 	 * to down to build our data structure of Matryoshka dolls from the `List` while simultaneously removing the
 	 * recursive structure we previously had.
 	 *
-	 * Answer: `anamorphism`is a generic function that can build a type of shape `F[_]`
+	 * Answer: `anamorphism` is a generic function that can build a type of shape `F[_]`
 	 *
 	 * `def anamorphism[A](a: A)(f: Coalgebra[F, A])(implicit F: Functor[F]): F[A]`
 	 */
 	val names: NonEmptyList[String] =
 		NonEmptyList("Anastasia", "Berenice", "Clara", "Danika", "Eliza", "Olga", "Vasya","Yaroslava", "Zoya")
-	val goalA_namesToMatryoshka: Fix[Matryoshka] = names.ana[Fix[Matryoshka]](coalgebra)
+	//val goalA_ana_namesToMatryoshka: Fix[Matryoshka] = names.ana[Fix[Matryoshka]](coalgebra)
 
-	Console.println(goalA_namesToMatryoshka)
+
+	val anamorphismDolls: Fix[Matryoshka] = Fix(Doll("Anastasia",
+		Fix(Doll("Berenice",
+			Fix(Doll("Clara",
+				Fix(Doll("Danika",
+					Fix(Doll("Eliza",
+						Fix(Doll("Olga",
+							Fix(Doll("Vasya",
+								Fix(Doll("Yaroslava",
+									Fix(Tiny("Zoya"))
+								))
+							))
+						))
+					))
+				))
+			))
+		))
+	))
+
+	assert(names.ana[Fix[Matryoshka]](coalgebraDolls) == anamorphismDolls, "Test: goal A anamorphism")
+
+	Console.println(s"Goal A: anamorphism result: \n\n$anamorphismDolls")
+
+	//TODO
+	// 1) understand better how the psi and phi functions work in the hylo() definition, in order to create the list
+	// of matryoshkas.
+	// 2) understand how the composition operator works in the stack frame (recursion).
+	// 3) understand what is the purpose of having the Functor doll instance, and how exactly it is used in the
+	// anamorphism call.
+	// ARTICLE LINK = https://hyp.is/EIgqRAyQEeymfHf30Ljd1A/medium.com/@wiemzin/getting-started-with-recursion-schemes-using-matryoshka-f5b5ec01bb
+
+
+	Console.println("\n----------------------------------------------------------------------------\n")
+
+
+	/**
+	 * Goal (b) Calculate number of dolls
+	 *
+	 * We need to have a function which comes from `Matryoshka[_] => Int`.
+	 *
+	 * `Algebra[F[_], A]` is a type in the matryoshka library that olds a structure `F` to a value `A` so we can see
+	 * it as a function `F[_] => A`.
+	 *
+	 * `type Algebra[F[_], A] = F[A] => A`
+	 *
+	 * How it works: we need to collapse the matryoshka data structure into a single integer value while
+	 * simultaneously taking the recursive structure and collapsing it to get a single value.
+	 *
+	 * Answer: catamorphism is a from bottom-to-up generic function that can fold a value recursively into a
+	 * single value of type `A`
+	 *
+	 * `def cata[A](f: Algebra[F, A])(implicit BF: Functor[F]): A`
+	 */
+	//val matryoshkaDolls: Fix[Matryoshka] = anamorphismDolls
+
+	//val goalB_cata_countNumDolls: Int = matryoshkaDolls.cata[Int](algebra)
+
+	assert(anamorphismDolls.cata[Int](algebraCount) == 9, "Test: goal B catamorphism")
+
+
+
+
+
+	/**
+	 * Goal (c) make list of Persons
+	 */
+	val anaThenCataPersonsNameOrder: List[Person] = names.ana[Fix[Matryoshka]](coalgebraDolls).cata[List[Person]](algebraPersonNameOrder)
+	val anaThenCataPersonsAgeOrder: List[Person] = names.ana[Fix[Matryoshka]](coalgebraDolls).cata[List[Person]](algebraPersonAgeOrder)
+
+	val hyloPersonsNameOrder: List[Person] = names.hylo[Matryoshka, List[Person]](algebraPersonNameOrder, coalgebraDolls)
+
+	val hyloPersonsAgeOrder: List[Person] = names.hylo[Matryoshka, List[Person]](algebraPersonAgeOrder, coalgebraDolls)
+
+
+	assert(anaThenCataPersonsNameOrder == hyloPersonsNameOrder, "Test: ana . cata == hylo (name order)")
+	assert(anaThenCataPersonsAgeOrder == hyloPersonsAgeOrder, "Test: ana . cata == hylo (age order)")
+
+
+	assert(hyloPersonsNameOrder == List(Person("Anastasia",14), Person("Berenice",13),
+		Person("Clara",12), Person("Danika",11), Person("Eliza",10),
+		Person("Olga",9), Person("Vasya",8), Person("Yaroslava",7),
+		Person("Zoya",6)),
+		"Test: hylo name order"
+	)
+
+	assert(hyloPersonsAgeOrder == List(Person("Zoya",6), Person("Yaroslava",7),
+		Person("Vasya",8), Person("Olga",9), Person("Eliza",10),
+		Person("Danika",11), Person("Clara",12), Person("Berenice",13),
+		Person("Anastasia",14)),
+		"Test: hylo age order"
+	)
+
+	assert(hyloPersonsNameOrder.reverse == hyloPersonsAgeOrder, "Test: name order reverse of age order")
+
+
+	Console.println("\n----------------------------------------------------------------------------\n")
 }
