@@ -8,6 +8,7 @@ package RecursionSchemeTutorials.FortySevenDegrees
 import utils.FoldUtils._
 
 
+import scala.language.higherKinds
 
 
 object Part1_FoldUnfoldBasic extends App {

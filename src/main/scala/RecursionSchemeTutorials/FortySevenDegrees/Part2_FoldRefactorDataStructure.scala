@@ -9,11 +9,12 @@ import cats.implicits._ //for fmap to work
 import utils.FoldUtils._
 
 
+import scala.language.higherKinds
 
 
 object Part2_FoldRefactorDataStructure extends App {
 
-	import Operations._
+	import Operations.{list, prod, prodOpt, prodFList2}
 
 
 	/**
@@ -153,7 +154,7 @@ object Part2_FoldRefactorDataStructure extends App {
 			def step2_recurse: O[L] => O[B] = {
 				_ match {
 					case None => None
-					case Some((head, tail)) => Some((head, kernel(tail))) // applying kernel to squash the tail
+					case Some((e, es)) => Some((e, kernel(es))) // applying kernel to squash the tail
 					// to type `B`
 				}
 			}
@@ -189,7 +190,10 @@ object Part2_FoldRefactorDataStructure extends App {
 				}
 			}
 
-			def step2_recurse: O[L] => O[B] = _.fmap(kernel)
+			// OLD: case Some((e, es)) => Some((e, kernel(es)))
+			// NEW:  Converting this step to use fmap from Functor:
+			def step2_recurse: O[L] => O[B] = optEL => optEL.fmap(es => kernel(es))
+				//_.fmap(kernel)
 
 			def step3_compute: O[B] => B = f // same as f computation
 
@@ -211,7 +215,7 @@ object Part2_FoldRefactorDataStructure extends App {
 	 * `type ListF[A, B] = Option[(A, B)]`
 	 *
 	 * (2) The second step is to get rid of `List[E]` and `E` completely from the signature of the fold and leave
-	 * `L` as a type pameter of `foldRight` to represent our data structure. The functor restriction also migrates
+	 * `L` as a type parameter of `foldRight` to represent our data structure. The functor restriction also migrates
 	 * to the type parameters.
 	 *
 	 * Now we can factor out the `step1` and call it `project` as it is projecting our data
@@ -228,6 +232,7 @@ object Part2_FoldRefactorDataStructure extends App {
 	implicit def functor[A]: Functor[ListF[A, ?]] = Functor[Option].compose[(A, ?)]
 
 	//NOTE step 1 = unpack
+
 	def projectList[E]: List[E] => ListF[E, List[E]] = _ match { // matching on List[E] param
 		case Nil => None
 		case head :: tail => Some( (head, tail) )
@@ -238,14 +243,18 @@ object Part2_FoldRefactorDataStructure extends App {
 		new (L => B) {
 			kernel =>
 
-			def apply(init: L): B = f( project(init).fmap(kernel)  )
 
-			// step 1a unpack) project :: L => F[L]
-			// step 1b unpack) project(init) :: F[L]
-			// step 2 recurse) F[L].fmap(kernel: L => B) ==> F[B}
-			// step 3 compute) f( F[B] ) ==> B
+			// step3_compute(step2_recurse(project(init)))
+			// (O[B] => B) . (O[L] => O[B]) . (L => O[L]) . (B)
+			// (F[B] => B) . (F[L] => F[B]) . (L => F[L]) . (B)
+			def apply(init: L): B = f( project(init).fmap(es => kernel(es))  )
+
+			// step 1: unpack) project :: L => F[L] ..... project(init)
+			// step 2: recurse) F[L] => F[B] ............ project(init).fmap(kernel)
+			// step 3: compute) f :: F[B] => B .......... f(project(init).fmap(kernel))
 		}
 	}
 
-	assert( foldRight_project(prodFList)(projectList).apply(list) == 5040, "Test: foldRight_project")
+	assert( foldRight_project(prodFList2)(projectList).apply(1 :: 2 :: 3 :: 4 :: 5 :: 6 :: 7 :: Nil) == 5040,
+		"Test: foldRight_project")
 }
