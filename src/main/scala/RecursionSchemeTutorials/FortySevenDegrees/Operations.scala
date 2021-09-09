@@ -71,7 +71,9 @@ object Operations {
 	}
 
 
-	val prodCataAlgebra1: Part3_CataAna.Algebra[Part3_CataAna.ListF[Int, ?], Int] = {
+	//HELP tried moving these to Part3 to fix the type mismatch error - still not working
+
+	/*val prodCataAlgebra1: Part3_CataAna.Algebra[Part3_CataAna.ListF[Int, ?], Int] = {
 		case None => 1
 		case Some((x, y)) => x * y
 	}
@@ -81,5 +83,5 @@ object Operations {
 			if (v <= 0) None
 			else Some((v, v - 1))
 		}
-	}
+	}*/
 }

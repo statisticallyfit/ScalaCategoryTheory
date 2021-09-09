@@ -57,6 +57,8 @@ libraryDependencies ++= Seq(
      "org.typelevel"   %% "cats-laws"           % "2.6.1", // was 2.0.0
      "org.typelevel"   %% "cats-free"           % "2.6.1", // was 2.0.0
      "org.typelevel"   %% "cats-testkit"           % "2.6.1", // was 2.0.0
+     "org.typelevel" %% "cats-effect" % "3.2.8",
+
      //Shapeless
      "com.chuusai"     %% "shapeless"      % "2.3.7", // was 2.3.3
      // Matryoshka
@@ -67,6 +69,19 @@ libraryDependencies ++= Seq(
      //FunctionMeta library to print function name, arguments... for a function while inside that function
      "com.github.katlasik" %% "functionmeta" % "0.4.1" % "provided",
      // sourcecode library to print function name passed as argument
-     "com.lihaoyi" %% "sourcecode" % "0.2.7"
+     "com.lihaoyi" %% "sourcecode" % "0.2.7",
 
+     //Droste recursion schemes
+     "io.higherkindness" %% "droste-core" % "0.8.0",
+     "io.higherkindness" %% "droste-laws" % "0.8.0",
+     "io.higherkindness" %% "droste-macros" % "0.8.0",
+     /*"io.higherkindness" %% "droste-meta" % "0.8.0",
+     "io.higherkindness" %% "droste-reftree" % "0.8.0",*/
+     "io.higherkindness" %% "droste-scalacheck" % "0.8.0",
+
+     // Example: Protobuf from google to do 47degrees tutorial (https://github
+     // .com/higherkindness/ersatz/blob/master/build.sbt#L20)
+     "com.google.protobuf" % "protobuf-java" % "3.10.0",
+     "com.google.flatbuffers"  % "flatbuffers-java" % "1.11.1",
+     "com.github.os72"         % "protoc-jar" % "3.8.0"
 )

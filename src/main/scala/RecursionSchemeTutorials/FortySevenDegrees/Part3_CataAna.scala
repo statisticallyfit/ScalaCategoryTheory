@@ -9,7 +9,7 @@ package RecursionSchemeTutorials.FortySevenDegrees
 import cats._
 import cats.implicits._
 
-import scala.language.higherKinds
+//import scala.language.higherKinds
 
 import Operations.{list, prodFList3, rangeFList3/*, prodCataAlgebra, rangeAnaCoalgebra*/}
 
@@ -20,7 +20,7 @@ object Part3_CataAna extends App {
 	/**
 	 * REFACTORING 3: Catamorphism and Anamorphism
 	 *
-	 * The function `foldRight` is a `catamorphism` and `unfold` is an `anamoprhism`
+	 * The function `foldRight` is a `catamorphism` and `unfold` is an `anamorphism`
 	 *
 	 *
 	 */
@@ -29,7 +29,7 @@ object Part3_CataAna extends App {
 
 	//TODO study how this defines `ListF` to be a functor - how does compose work here?
 	// How does this relate to my old way of declaring functor instance by defining `map`?
-	implicit def functor[A]: Functor[ListF[A, ?]] = Functor[Option].compose[(A, ?)]
+	implicit def functor[A]: Functor[ListF[A, *]] = Functor[Option].compose[(A, *)]
 
 
 
@@ -115,12 +115,12 @@ object Part3_CataAna extends App {
 	type Coalgebra[F[_], A] = A => F[A]
 
 	//NOTE step 3 = unpack (for unfold)
-	def embedAlgebra[E]: Algebra[ListF[E, ?], List[E]]  = {
+	def embedAlgebra[E]: Algebra[ListF[E, *], List[E]]  = {
 		case None => Nil
 		case Some((e, es)) => e :: es
 	}
 
-	def projectCoalgebra[E]: Coalgebra[ListF[E, ?], List[E]] = /*_ match*/ { // matching on
+	def projectCoalgebra[E]: Coalgebra[ListF[E, *], List[E]] = /*_ match*/ { // matching on
 		// List[E] param
 		case Nil => None
 		case e :: es => Some( (e, es) )
@@ -135,19 +135,20 @@ object Part3_CataAna extends App {
 	}
 
 	def ana[F[_]: Functor, S, A](coalgebra: Coalgebra[F, A])(embed: Algebra[F, S]): A => S = {
-		new (A => S) {kernel =>
+		new (A => S) { kernel =>
 
 			def apply(input: A): S =
 				embed( coalgebra(input).fmap(a => kernel(a)) )
 		}
 	}
 
-	val prodCataAlgebra: Algebra[ListF[Int, ?], Int] = {
+
+	val prodCataAlgebra: Algebra[ListF[Int, *], Int] = {
 		case None => 1
 		case Some((x, y)) => x * y
 	}
 
-	val rangeAnaCoalgebra: Coalgebra[ListF[Int, ?], Int] = {
+	val rangeAnaCoalgebra: Coalgebra[ListF[Int, *], Int] = {
 		v => {
 			if (v <= 0) None
 			else Some((v, v - 1))
@@ -167,9 +168,42 @@ object Part3_CataAna extends App {
 	//    assert( cata(prodCataAlgebra)(projectCoalgebra).apply(List(1,2,3,4,5,6,7)) == 5040, "Test: cata")
 
 	//commenting out for now
-	/*assert( cata(prodCataAlgebra)(projectCoalgebra).apply(List(1,2,3,4,5,6,7)) == 5040, "Test: cata")
+	//assert( cata(prodCataAlgebra)(projectCoalgebra).apply(List(1,2,3,4,5,6,7)) == 5040, "Test: cata")
 
-	assert( ana(rangeAnaCoalgebra)(embedAlgebra).apply(5) == List(5,4,3,2,1), "Test: ana" )*/
+	//assert( ana(rangeAnaCoalgebra)(embedAlgebra).apply(5) == List(5,4,3,2,1), "Test: ana" )
 
+
+	/**
+	 * Use case: Factorial
+	 */
+	//TODO fix so this works
+	/*val rangeList: Int => List[Int] = ana(rangeAnaCoalgebra)(embedAlgebra)
+	val productList: List[Int] => Int = cata(prodCataAlgebra)(projectCoalgebra)
+	val factorial: Int => Int = productList compose rangeList*/
+
+	// HELP
+	// TESTING
+	//assert(factorial(4) == 24, "Test factorial made by composing")
+
+	/**
+	 * Hylomorphism = cata . ana
+	 */
+	def hylo[F[_]: Functor, A, B](algebra: Algebra[F, B], coalgebra: Coalgebra[F, A]): A => B = {
+		new (A => B) {
+			kernel =>
+			def apply(init: A): B = {
+				algebra(coalgebra(init).fmap(a => kernel(a)))
+				// 1) coalgebra :: A => F[A]
+				// 2) fmap :: F[A] => F[B]
+				// 3) algebra :: F[B] => B
+			}
+		}
+	}
+
+
+	// HELP
+	// TESTING
+	/*val factorialHylo: Int => Int = hylo[ListF[Int, *], Int, Int](prodCataAlgebra, rangeAnaCoalgebra)
+	assert(factorialHylo(4) == 24, "Test: Factorial hylo")*/
 
 }
