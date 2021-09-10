@@ -1,4 +1,4 @@
-package RecursionSchemeTutorials.FortySevenDegrees.ProtobufDrosteExample.proto
+package RecursionSchemeTutorials.FortySevenDegrees.ProtobufDrosteExample
 
 /**
  * Internal representation of schema

@@ -1,4 +1,4 @@
-package RecursionSchemeTutorials.FortySevenDegrees.ProtobufDrosteExample
+package RecursionSchemeTutorials.FortySevenDegrees.ProtobufDrosteExample.proto
 
 /**
  * GOAL: parser as an anamorphism in Skeuomorph: https://hyp.is/PtLH0BFrEeyTPA_QK0rIig/www.47deg.com/blog/recursion-schemes-introduction/
