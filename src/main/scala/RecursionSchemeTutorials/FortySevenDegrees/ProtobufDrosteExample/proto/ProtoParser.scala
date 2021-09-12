@@ -48,14 +48,15 @@ object ProtoParser {
 	}
 
 
-	def fromFieldTypeCoalgebra(field: FieldDescriptorProto, namedMessages: List[NamedMessage]): Coalgebra[ProtobufF, Type] = Coalgebra {
+	def fromFieldTypeCoalgebra(field: FieldDescriptorProto, namedMessages: List[NamedMessage]): Coalgebra[ProtobufF,
+		Type] = Coalgebra { // the coalgebra means: Type => ProtobufF[Type]
 
-		case Type.TYPE_BOOL => TBool()
-		case Type.TYPE_STRING => TString()
-		case Type.TYPE_UINT64 => TUint64()
+		case Type.TYPE_BOOL => ProtobufF.TBool()
+		case Type.TYPE_STRING => ProtobufF.TString()
+		case Type.TYPE_UINT64 => ProtobufF.TUint64()
 		case Type.TYPE_MESSAGE =>
 			findMessage(name = field.getTypeName, namedMessages = namedMessages)
-			.fold[ProtobufF[Type]](TNull())(descrProto => TNamedType(descrProto.getName))
+			.fold[ProtobufF[Type]](ProtobufF.TNull())(descrProto => ProtobufF.TNamedType(descrProto.getName))
 	}
 
 
@@ -84,7 +85,7 @@ object ProtoParser {
 
 
 
-	def fromDescriptor[A](descriptor: FileDescriptorProto)(implicit A: Embed[ProtobufF, A]): Protocol[A] = {
+	def fromDescriptor[A](descriptor: FileDescriptorProto)(implicit ev: Embed[ProtobufF, A]): Protocol[A] = {
 		val named: List[NamedMessage] = namedMessages(descriptor)
 		val messages: List[A]  = descriptor.getMessageTypeList.asScala.toList.map(
 			m => ProtobufF.message[A](
