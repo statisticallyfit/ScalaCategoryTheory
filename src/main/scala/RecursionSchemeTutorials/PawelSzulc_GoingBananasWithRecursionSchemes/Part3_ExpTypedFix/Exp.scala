@@ -1,9 +1,12 @@
 package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part3_ExpTypedFix
 
 
-import scalaz._
+
+
 import slamdata.Predef._
-import scalaz.Functor
+import scalaz._
+//import scalaz.{Functor, Applicative}
+//import scalaz.syntax.all._
 
 import scala.language.higherKinds
 
@@ -11,6 +14,9 @@ import matryoshka._
 import matryoshka.data._
 import matryoshka.implicits._
 
+
+import cats._
+import cats.implicits._
 
 /**
  *
@@ -69,9 +75,103 @@ object ExpThings {
 	}
 }*/
 
+
+
+
+
+
+
 object Exp {
 
+	/*implicit def expMonoid[A](implicit ev: cats.Monoid[A]): cats.Monoid[Exp[A]] = new cats.Monoid[Exp[A]] {
+		def empty: Exp[A] = IntValue[A](0) // TODO int 0 or multip 1? (sum or addition monoid?)
+
+		def combine(x: Exp[A], y: Exp[A]): Exp[A] = (x, y) match {
+			case (Sum(x1, x2), Sum(y1, y2)) => Sum(ev.combine(x1, x2), ev.combine(y1, y2))
+			case (IntValue(v1), IntValue(v2)) => IntValue(v1 + v2) //TODO
+			case (IntValue(v1), IntValue(v2)) => IntValue(v1 + v2) //TODO
+		}
+	}*/
+
+	implicit def expFunctor: cats.Functor[Exp] = new cats.Functor[Exp] {
+		def map[A, B](fa: Exp[A])(f: A => B): Exp[B] = fa match {
+			case IntValue(v) => IntValue(v)
+			case DecValue(v) => DecValue(v)
+			case Sum(a1, a2) => Sum(f(a1), f(a2))
+			case Multiply(a1, a2) => Multiply(f(a1), f(a2))
+			case Divide(a1, a2) => Divide(f(a1), f(a2))
+			case Square(a) => Square(f(a))
+		}
+	}
+
+	//TODO how to define ap so that can return Exp[B] not Exp[Exp[B]]?
+	/*implicit def expApply: cats.Apply[Exp] = new cats.Apply[Exp] {
+		//def pure[A](x: A): Exp[A] = Divide (Square(x), x)
+
+		def ap[A, B](ff: Exp[A => B])(fa: Exp[A]): Exp[B] = {
+			fa.map(a => ff.map(f => f(a)))
+		}
+			//fa.flatMap(a => ff.map(f: (A => B) => f(a)))
+
+		def map[A, B](fa: Exp[A])(f: A => B): Exp[B] = fa.map(f) // need to copy from Functor
+
+		//def product[A, B](fa: Exp[A], fb: Exp[B]): Exp[(A, B)]
+
+	}*/
+
+
 }
+
+
+object TypeGetter {
+
+	import scala.reflect.runtime.universe._
+
+	def getType[T: TypeTag](obj: T) = {
+		def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
+
+		getTypeTag(1).tpe
+	}
+
+
+	def typeof[T: TypeTag](obj: T) = typeOf[T]
+
+	def cleanName[T: TypeTag](obj: T): String = {
+
+		val topLevelName: String = obj.getClass.toString.split(' ')(1)
+		// NOTE:
+		// CASE 1: If obj is part of package, then getName returns its entire package path (So passing
+		// Fix(Sum(intval, intval)) would result in "matryoshka.data.Fix"
+		// CASE 2: If obj is of a user-defined class (not pkg), then getName returns its exact top-level
+		// name. (So passing Sum(intval, intval) would result in "Sum" )
+
+		//If CASE 2, then we are done, just return the name (there are no package dots to eliminate)
+		///if (!topLevelName.contains('.')){
+
+		if (!typeof(obj).toString.contains('.')) {
+			return topLevelName
+		}
+
+		// HELP: when obj == Sum(intval, intval), then toplevelname CONTAINS the "." even though it
+		//  doesn't!!!!  WHY???
+
+
+		//Else, contain to clean away the package name of upper-level packages:
+		val notUsed = topLevelName.split('.').reverse.tail.reverse.mkString(".")
+
+		val notUsedWithDot: String = notUsed + "."
+
+		typeof(obj).toString.replace(notUsedWithDot, "")
+
+	}
+
+	val vf = Fix[Exp]( Sum[Fix[Exp]](
+		Fix[Exp](IntValue[Fix[Exp]](10)),
+		Fix[Exp](IntValue[Fix[Exp]](5))
+	) )
+	val v = Sum(IntValue(2), IntValue(3))
+}
+
 
 object ExpRunner3 extends App {
 
@@ -94,13 +194,13 @@ object ExpRunner3 extends App {
 	//  1) F == IntValue
 	//  2) [_] == Fix[Exp]
 	//  THEREFORE: `unFix = IntValue[Fix[Exp]](10)`
-	val exp1_FixAtLeaves = Sum(
+	val expSum1_FixAtLeaves = Sum(
 		Fix(IntValue[Fix[Exp]](10)),
 		Fix(IntValue[Fix[Exp]](5))
 	)
 
 	// NOTE: continuing to adjust the types
-	val exp2_FixAtLeaves_FinishTypes: Exp[Fix[Exp]] = Sum[Fix[Exp]](
+	val expSum2_FixAtLeaves_FinishTypes: Exp[Fix[Exp]] = Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
 		Fix[Exp](IntValue[Fix[Exp]](5))
 	)
@@ -110,13 +210,13 @@ object ExpRunner3 extends App {
 	// 2) [_] == Fix[Exp]
 	// THEREFORE: unFix = Sum[Fix[Exp]](IntValue(_), IntValue(_))
 	// ALSO: overall expr3 type is Fix[Exp] because the unfix is the Fix(Sum(_,_))
-	val exp3_FixWrap = Fix( Sum[Fix[Exp]](
+	val expSum3_FixWrap = Fix( Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
 		Fix[Exp](IntValue[Fix[Exp]](5))
 	) )
 
 	// No more infinite stacking of types!
-	val exp4_FixWrap_FinishTypes: Fix[Exp] = Fix[Exp]( Sum[Fix[Exp]](
+	val expSum4_FixWrap_FinishTypes: Fix[Exp] = Fix[Exp]( Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
 		Fix[Exp](IntValue[Fix[Exp]](5))
 	) )
@@ -125,11 +225,33 @@ object ExpRunner3 extends App {
 
 
 
-	//stack three levels of Exp
-	val three_STACK: Exp[Exp[Exp[Unit]]] = Divide[Exp[Exp[Unit]]](
+	// ------------------------------------------------------------------------------------------------
+
+	// NOTE: the expression BEFORE Fixing it
+
+	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
+
+	/*val three_STACK: Exp[Exp[Exp[Unit]]] = Divide[Exp[Exp[Unit]]](
 		DecValue[Exp[Unit]](5.2),
 		Sum[Exp[Unit]](IntValue[Unit](10),IntValue[Unit](5) )
+	)*/
+
+	// 1) F == IntValue
+	// 2) Fix[F] == Fix[Exp]
+	val expDiv1_FixLeaves = Divide(
+		Fix(DecValue[Fix[Exp]](5.2)),
+		Sum(Fix(IntValue[Fix[Exp]](10)), Fix(IntValue[Fix[Exp]](5)))
 	)
+
+	// 1)
+	val expDiv2_FixLeaves_FinishTypes: Exp[Fix[Exp]] = Divide(
+		DecValue(2.5), //Fix(DecValue[Fix[Exp]](5.2)),
+		Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(IntValue[Fix[Exp]](5))
+		)
+	)
+
 
 
 

@@ -76,6 +76,7 @@ object ExpRunner2 extends App {
 
 
 
+
 	// non-typed
 	val exp = Multiply(
 		Sum(IntValue(10), DecValue(2.5)),
