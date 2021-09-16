@@ -5,6 +5,7 @@ package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Par
 
 import slamdata.Predef._
 import scalaz._
+
 //import scalaz.{Functor, Applicative}
 //import scalaz.syntax.all._
 
@@ -136,7 +137,7 @@ object TypeGetter {
 
 	def typeof[T: TypeTag](obj: T) = typeOf[T]
 
-	def cleanName[T: TypeTag](obj: T): String = {
+	/*def cleanName[T: TypeTag](obj: T): String = {
 
 		val topLevelName: String = obj.getClass.toString.split(' ')(1)
 		// NOTE:
@@ -157,12 +158,62 @@ object TypeGetter {
 
 
 		//Else, contain to clean away the package name of upper-level packages:
-		val notUsed = topLevelName.split('.').reverse.tail.reverse.mkString(".")
+		val notUsed = topLevelName.split('.').toList.reverse.tail.reverse.mkString(".")
 
 		val notUsedWithDot: String = notUsed + "."
 
 		typeof(obj).toString.replace(notUsedWithDot, "")
 
+	}*/
+
+	//TODO apply this new version to all below tests to see if they still work
+	def mix[T: TypeTag](obj: T): String = {
+
+		val r1a = typeof(obj).toString.replace("Product with Serializable ", "")
+		val r1b = if(r1a.contains("[Product with Serializable]")) r1a else r1a.replace("Product with Serializable]", "]")
+		val r2 = r1b.replace("_ >: ", "")
+		val r3 = r2.replace("[with ", "[")
+		val r4 = r3.replace("Object","").replace("_ ", "").replace(" <: ", "").replace("<: ", "").replace(" <:", "")
+		val r5 = r4.replace("]with", "] with")
+
+		val tempStr = r5
+
+
+		val pkgs = tempStr.split("[\\[\\]]").flatMap(e => e.split(' ')).filter(e => e.contains('.'))
+
+		val oldNewReplacements = pkgs.distinct.map(p => (p, p.split('.').last))
+
+		oldNewReplacements.foldLeft(tempStr)(
+			(currentStrType, tuple) => tuple match {
+				case (oldPkg: String, newShort: String) => currentStrType.replaceAll(oldPkg, newShort)
+			}
+		)
+	}
+
+	def getTypeName[T: TypeTag](obj: T): String = {
+
+		val r1 = typeof(obj).toString
+			.replace("Product with Serializable ", "")
+			.replace("Product with Serializable]", "]")
+		val r2 = r1.replace("_ >: ", "")
+		val r3 = r2.replace("[with ", "[")
+		val r4 = r3
+			.replace("Object","")
+			.replace("_ ", "")
+			.replace(" <: ", "")
+			.replace("<: ", "")
+			.replace(" <:", "")
+
+		val pkgs = r4.split("[\\[\\]]").flatMap(e => e.split(' ')).filter(e => e.contains('.'))
+
+		val oldNewReplacements = pkgs.distinct.map(p => (p, p.split('.').last))
+
+		oldNewReplacements.foldLeft(r4)(
+			(currentStrType, tuple) => tuple match {
+				case (pkgName: String, className: String) =>
+					currentStrType.replaceAll(pkgName, className)
+			}
+		)
 	}
 
 	val vf = Fix[Exp]( Sum[Fix[Exp]](
@@ -175,35 +226,57 @@ object TypeGetter {
 
 object ExpRunner3 extends App {
 
-	import org.scalactic._
-	import TripleEquals._
-	import Tolerance._
+
+	//NOTE: expr before applying Fix
+
+	val expSum_Infinite_NoType = Sum(IntValue(10), DecValue(5))
+
+	val expSum_Infinite_Typed: Exp[Exp[Unit]] = Sum[Exp[Unit]](
+		IntValue[Unit](10),
+		DecValue[Unit](5)
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum_Infinite_NoType) == "Sum[Exp[Nothing]]",
+		"Test 1a: BEFORE Fix: expSum_Infinite_NoType")
+	// TESTI
+	assert(TypeGetter.getTypeName(expSum_Infinite_Typed) == "Exp[Exp[Unit]]",
+		"Test 1b: BEFORE Fix: expSum_Infinite_Typed")
 
 
-	val EPSILON: Double = 0.00001
+	// NOTE: Applying Fix now to get rid of Exp[Exp[Exp....]]] recursion
 
+	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
 
-
-
-
-	// stack two levels of Exp
-	// NOTE: putting in the Fix into this expression to kill the recursion, infinte typing of Exp
-	// NOTE: put in the types as per `class Fix[F[_]](unFix: F[Fix[F]]` so since unFix = IntValue(10)
+	// Putting in the Fix into this expression to kill the recursion, infinte typing of Exp
+	// Put in the types as per `class Fix[F[_]](unFix: F[Fix[F]]` so since unFix = IntValue(10)
 	//  then the type is no longer Unit.
 	// Decomposing the unFix: F[Fix[F]]
 	//  1) F == IntValue
 	//  2) [_] == Fix[Exp]
 	//  THEREFORE: `unFix = IntValue[Fix[Exp]](10)`
-	val expSum1_FixAtLeaves = Sum(
+	val expSum1_FixLeaves = Sum(
 		Fix(IntValue[Fix[Exp]](10)),
-		Fix(IntValue[Fix[Exp]](5))
+		Fix(DecValue[Fix[Exp]](5))
 	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum1_FixLeaves) == "Sum[Fix[Exp]]",
+		"Test 1a: DURING Fix: expSum1_FixLeaves")
 
-	// NOTE: continuing to adjust the types
-	val expSum2_FixAtLeaves_FinishTypes: Exp[Fix[Exp]] = Sum[Fix[Exp]](
+	val expSum2_FixLeaves_AddTypes = Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
-		Fix[Exp](IntValue[Fix[Exp]](5))
+		Fix[Exp](DecValue[Fix[Exp]](5))
 	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum2_FixLeaves_AddTypes) == "Sum[Fix[Exp]]",
+		"Test 1b: DURING Fix: expSum2_FixLeaves_AddTypes")
+
+	val expSum2_FixLeaves_FinishTypes: Exp[Fix[Exp]] = Sum[Fix[Exp]](
+		Fix[Exp](IntValue[Fix[Exp]](10)),
+		Fix[Exp](DecValue[Fix[Exp]](5))
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum2_FixLeaves_FinishTypes) == "Exp[Fix[Exp]]",
+		"Test 1c: DURING Fix: expSum2_FixLeaves_FinishTypes")
 
 	// unFix = Sum(Fix(IntValue(_), IntValue(_)))
 	// 1) (outer) F == Sum
@@ -212,65 +285,185 @@ object ExpRunner3 extends App {
 	// ALSO: overall expr3 type is Fix[Exp] because the unfix is the Fix(Sum(_,_))
 	val expSum3_FixWrap = Fix( Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
-		Fix[Exp](IntValue[Fix[Exp]](5))
+		Fix[Exp](DecValue[Fix[Exp]](5))
 	) )
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum3_FixWrap) == "Fix[Exp]",
+		"Test 1d: DURING Fix: expSum3_FixWrap")
 
 	// No more infinite stacking of types!
 	val expSum4_FixWrap_FinishTypes: Fix[Exp] = Fix[Exp]( Sum[Fix[Exp]](
 		Fix[Exp](IntValue[Fix[Exp]](10)),
-		Fix[Exp](IntValue[Fix[Exp]](5))
+		Fix[Exp](DecValue[Fix[Exp]](5))
 	) )
+	// TESTING
+	assert(TypeGetter.getTypeName(expSum4_FixWrap_FinishTypes) == "Fix[Exp]",
+		"Test 1e: END Fix: expSum4_FixWrap_FinishTypes")
 
-	//TODO left off here, todo refactor the rest below same way as above
+
+	// ------------------------------------------------------------------------------------------------
+
+
+	// NOTE: the expression BEFORE Fixing it
+
+	val expDiv_Infinite_NoType = Divide(
+		DecValue(5.2),
+		Sum(IntValue(10), DecValue(5.0))
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv_Infinite_NoType) == "Divide[Exp[Exp[Nothing]]]",
+		"Test 2a: BEFORE Fix: expDiv_Infinite_NoType")
+
+	val expDiv_Infinite_Typed: Exp[Exp[Exp[Unit]]] = Divide[Exp[Exp[Unit]]](
+		DecValue[Exp[Unit]](5.2),
+		Sum[Exp[Unit]](IntValue[Unit](10),DecValue[Unit](5) )
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv_Infinite_Typed) == "Exp[Exp[Exp[Unit]]]",
+		"Test 2a: BEFORE Fix: expDiv_Infinite_Typed")
+
+	// NOTE: starting to wrap the values in Fix, starting at the leaves
+
+	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
+
+	// 1) F == IntValue
+	// 2) Fix[F] == Fix[Exp]
+	// NOTE: throws error if you define this without the Fix[Exp] type for the leaves
+	val expDiv1_FixLeaves = Divide(
+		DecValue[Exp[Unit]](5.2),
+		Sum(
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		)
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv1_FixLeaves) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
+		"Test 2a: DURING Fix: expDiv1_FixLeaves")
+
+	val expDiv2_FixLeaves_FinishTypes/*: Exp[Fix[Exp]]*/ = Divide(
+		DecValue[Exp[Unit]](5.2),
+		Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		)
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv2_FixLeaves_FinishTypes) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
+		"Test 2b: DURING Fix: expDiv2_FixLeaves_FinishTypes")
+
+	val expDiv3_FixMiddle_part1/*: Exp[Fix[Exp]]*/ = Divide(
+		DecValue[Exp[Unit]](5.2),
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		))
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv3_FixMiddle_part1) == "Divide[Product with Serializable]",
+		"Test 2c: DURING Fix: expDiv3_FixMiddle_part1")
+
+	val expDiv3_FixMiddle_part2/*: Exp[Fix[Exp]]*/ = Divide(
+		Fix(DecValue[Fix[Exp]](5.2)),
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		))
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv3_FixMiddle_part2) == "Divide[Fix[Exp]]",
+		"Test 2d: DURING Fix: expDiv3_FixMiddle_part2")
+
+	val expDiv4_FixMiddle_FinishTypes/*: Exp[Fix[Exp]]*/ = Divide[Fix[Exp]](
+		Fix(DecValue[Fix[Exp]](5.2)),
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		))
+	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv4_FixMiddle_FinishTypes) == "Divide[Fix[Exp]]",
+		"Test 2e: DURING Fix: expDiv4_FixMiddle_FinishTypes")
+
+
+	val expDiv5_FixWrap/*: Fix[Exp]*/ = Fix(Divide[Fix[Exp]](
+		Fix(DecValue[Fix[Exp]](5.2)),
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](5))
+		))
+	))
+	// TESTING
+	assert(TypeGetter.getTypeName(expDiv5_FixWrap) == "Fix[Exp]",
+		"Test 2f: END Fix: expDiv5_FixWrap")
 
 
 
 	// ------------------------------------------------------------------------------------------------
 
 	// NOTE: the expression BEFORE Fixing it
-
-	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
-
-	/*val three_STACK: Exp[Exp[Exp[Unit]]] = Divide[Exp[Exp[Unit]]](
-		DecValue[Exp[Unit]](5.2),
-		Sum[Exp[Unit]](IntValue[Unit](10),IntValue[Unit](5) )
-	)*/
-
-	// 1) F == IntValue
-	// 2) Fix[F] == Fix[Exp]
-	val expDiv1_FixLeaves = Divide(
-		Fix(DecValue[Fix[Exp]](5.2)),
-		Sum(Fix(IntValue[Fix[Exp]](10)), Fix(IntValue[Fix[Exp]](5)))
-	)
-
-	// 1)
-	val expDiv2_FixLeaves_FinishTypes: Exp[Fix[Exp]] = Divide(
-		DecValue(2.5), //Fix(DecValue[Fix[Exp]](5.2)),
-		Sum[Fix[Exp]](
-			Fix(IntValue[Fix[Exp]](10)),
-			Fix(IntValue[Fix[Exp]](5))
+	// non-typed
+	val expMult_Infinite_NoType = Multiply(
+		Sum(
+			IntValue(10),
+			DecValue(2.5)
+		),
+		Divide(
+			DecValue(5.2),
+			Sum(
+				IntValue(10),
+				IntValue(5))
 		)
 	)
-
-
-
-
-	// non-typed
-	val exp = Multiply(
-		Sum(IntValue(10), DecValue(2.5)),
-		Divide(DecValue(5.2), Sum(IntValue(10), IntValue(5)))
-	)
+	// TODO left off here apply the new definition of getType to all the above to see if they still work
 	// typed
-	val exp_STACK: Exp[Exp[Exp[Exp[Unit]]]] = Multiply[Exp[Exp[Exp[Unit]]]]( //
+	val expMult_Infinite_Typed: Exp[Exp[Exp[Exp[Unit]]]] = Multiply[Exp[Exp[Exp[Unit]]]]( //
 		Sum[Exp[Exp[Unit]]](
 			IntValue[Exp[Unit]](10),
 			DecValue[Exp[Unit]](2.5)
 		),
 		Divide[Exp[Exp[Unit]]](
 			DecValue[Exp[Unit]](5.2),
-			Sum[Exp[Unit]](IntValue[Unit](10), IntValue[Unit](5))
+			Sum[Exp[Unit]](
+				IntValue[Unit](10),
+				IntValue[Unit](5)
+			)
 		)
 	)
+
+	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
+
+	val expMult1_FixLeaves  = Multiply( //
+		Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
+		),
+		Divide(
+			DecValue[Exp[Unit]](5.2),
+			Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
+			)
+		)
+	)
+	println(TypeGetter.cleanName(expMult1_FixLeaves.exp1))
+	println(TypeGetter.typeof(expMult1_FixLeaves.exp1))
+
+	val expMult_end  = Fix[Exp](Multiply[Fix[Exp]]( //
+		Fix[Exp](Sum[Fix[Exp]](
+			Fix[Exp](IntValue[Fix[Exp]](10)),
+			Fix[Exp](DecValue[Fix[Exp]](2.5))
+		)),
+		Fix[Exp](Divide[Fix[Exp]](
+			Fix[Exp](DecValue[Fix[Exp]](5.2)),
+			Fix[Exp](Sum[Fix[Exp]](
+				Fix[Exp](IntValue[Fix[Exp]](10)),
+				Fix[Exp](IntValue[Fix[Exp]](5))
+			))
+		))
+	))
+
+
+	// ------------------------------------------------------------------------------------------------
 
 	// non-typed
 	val doubledExp = Multiply(
