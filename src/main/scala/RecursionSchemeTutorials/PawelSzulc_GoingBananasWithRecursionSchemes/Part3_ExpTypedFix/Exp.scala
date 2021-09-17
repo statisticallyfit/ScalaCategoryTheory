@@ -411,12 +411,15 @@ object ExpRunner3 extends App {
 			DecValue(5.2),
 			Sum(
 				IntValue(10),
-				IntValue(5))
+				DecValue(5))
 		)
 	)
-	// TODO left off here apply the new definition of getType to all the above to see if they still work
+	// TESTING
+	assert(TypeGetter.getTypeName(expMult_Infinite_NoType) == "Multiply[Exp[Exp[Nothing] with Exp[Exp[Nothing]]]]",
+		"Test 3a: BEFORE Fix: expMult_Infinite_NoType")
+
 	// typed
-	val expMult_Infinite_Typed: Exp[Exp[Exp[Exp[Unit]]]] = Multiply[Exp[Exp[Exp[Unit]]]]( //
+	val expMult_Infinite_Typed/*: Exp[Exp[Exp[Exp[Unit]]]]*/ = Multiply[Exp[Exp[Exp[Unit]]]]( //
 		Sum[Exp[Exp[Unit]]](
 			IntValue[Exp[Unit]](10),
 			DecValue[Exp[Unit]](2.5)
@@ -429,6 +432,11 @@ object ExpRunner3 extends App {
 			)
 		)
 	)
+	// TESTING
+	assert(TypeGetter.getTypeName(expMult_Infinite_Typed) == "Multiply[Exp[Exp[Exp[Unit]]]]",
+		"Test 3b: BEFORE Fix: expMult_Infinite_Typed")
+
+
 
 	// PROPERTY: `class Fix[F[_]](unFix: F[Fix[F]]`
 
@@ -445,8 +453,19 @@ object ExpRunner3 extends App {
 			)
 		)
 	)
-	println(TypeGetter.cleanName(expMult1_FixLeaves.exp1))
-	println(TypeGetter.typeof(expMult1_FixLeaves.exp1))
+	// TESTING
+	assert(TypeGetter.getTypeName(expMult1_FixLeaves) == "Multiply[Exp[Exp[Fix[Exp] with Exp[Unit]] with Fix[Exp]]]",
+		"Test 3a: DURING Fix: expMult1_FixLeaves")
+	// TESTING
+	val innerType1: String = TypeGetter.getTypeName(expMult1_FixLeaves.exp1)
+	val innerType2: String = TypeGetter.getTypeName(expMult1_FixLeaves.exp2)
+	assert(innerType1 == innerType2 &&
+		innerType1 == "Exp[Exp[Fix[Exp] with Exp[Unit]] with Fix[Exp]]",
+		"Test 3a: DURING Fix: expMult1_FixLeaves (exp1, exp2)")
+
+	// TODO left off here develop these further by building up Fix-wrap slowly
+
+
 
 	val expMult_end  = Fix[Exp](Multiply[Fix[Exp]]( //
 		Fix[Exp](Sum[Fix[Exp]](
@@ -461,6 +480,9 @@ object ExpRunner3 extends App {
 			))
 		))
 	))
+	// TESTING
+	assert(TypeGetter.getTypeName(expMult_end) == "Fix[Exp]",
+		"Test 3a: DURING Fix: expMult_end")
 
 
 	// ------------------------------------------------------------------------------------------------
