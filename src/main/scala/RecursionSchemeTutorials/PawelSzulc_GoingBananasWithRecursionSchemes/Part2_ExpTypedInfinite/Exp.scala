@@ -11,40 +11,6 @@ final case class Multiply[A](exp1: A, exp2: A) extends Exp[A]
 final case class Divide[A](exp1: A, exp2: A) extends Exp[A]
 final case class Square[A](exp: A) extends Exp[A]
 
-/*object ExpThings {
-
-	def evaluate[A]: Exp[A] => Double = exp => exp match {
-		case IntValue(v) => v.toDouble
-		case DecValue(v) => v
-		case Sum(e1, e2) => evaluate(e1) + evaluate(e2) // recursion part
-		case Multiply(e1, e2) => evaluate(e1) * evaluate(e2)
-		case Square(e) => {
-			val v = evaluate(e)
-			v * v
-		}
-		case Divide(e1, e2) => evaluate(e1) / evaluate(e2)
-	}
-
-	def mkString[A]: Exp[A] => String = exp => exp match {
-		case IntValue(v) => v.toString
-		case DecValue(v) => v.toString
-		case Sum(e1, e2) => s"(${mkString(e1)} + ${mkString(e2)})"
-		case Multiply(e1, e2) => s"(${mkString(e1)} * ${mkString(e2)})"
-		case Square(e) => s"(${mkString(e)}^2)"
-		case Divide(e1, e2) => s"(${mkString(e1)} / ${mkString(e2)})"
-
-	}
-
-	def optimize[A]: Exp[A] => Exp[A] = exp => exp match {
-		case Multiply(e1, e2) if(e1 == e2) => Square(optimize(e1))
-		case Multiply(e1, e2) => Multiply(optimize(e1), optimize(e2))
-		case IntValue(v) => IntValue(v)
-		case DecValue(v) => DecValue(v)
-		case Sum(e1, e2) => Sum(optimize(e1), optimize(e2))
-		case Square(e) => Square(optimize(e))
-		case Divide(e1, e2) => Divide(optimize(e1), optimize(e2))
-	}
-}*/
 
 object ExpRunner2 extends App {
 
@@ -112,32 +78,5 @@ object ExpRunner2 extends App {
 		Sum[Exp[Unit]](IntValue[Unit](3),IntValue[Unit](4))
 	)
 
-
-
-	// TESTING: evaluate
-	// NOTE: these ways of phrasing the +- are equivalent:
-	// KEY: the epsilon value must be with fewer decimal places to the right than the solution number.
-	//println(evaluate(exp_STACK) == evaluate(exp))
-
-
-	/*assert( evaluate(exp_STACK) == evaluate(exp)
-		&& (evaluate(exp) - 4.3333333) < EPSILON, "Test: evaluate")
-	assert(evaluate(exp) === 4.3333333 +- EPSILON, "Test 2: evaluate")
-	assert(evaluate(doubledExp) == evaluate(squared), "Test 3: evaluate")
-
-	assert( (evaluate(exp_STACK) - 4.3333333) < EPSILON, "Test: evaluate STACK")
-	assert(evaluate(exp_STACK) === 4.3333333 +- EPSILON, "Test 2: evaluate STACK")
-	assert(evaluate(doubledExp_STACK) == evaluate(squared_STACK), "Test 3: evaluate STACK")
-
-
-	// TESTING: mkstring
-	assert(mkString(exp) == "((10 + 2.5) * (5.2 / (10 + 5)))", "Test: mkString")
-	assert(mkString(doubledExp) == "((3 + 4) * (3 + 4))", "Test 2: mkString")
-	assert(mkString(squared) == "((3 + 4)^2)", "Test 3: mkString")
-
-
-	//TESTING: optimize
-	assert(optimize(exp) == exp, "Test 1: optimize")
-	assert(optimize(doubledExp) == squared, "Test 2: optimize")*/
 
 }

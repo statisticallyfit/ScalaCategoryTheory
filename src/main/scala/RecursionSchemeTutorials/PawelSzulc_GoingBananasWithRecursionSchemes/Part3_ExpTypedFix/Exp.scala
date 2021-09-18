@@ -128,68 +128,15 @@ object TypeGetter {
 
 	import scala.reflect.runtime.universe._
 
-	def getType[T: TypeTag](obj: T) = {
+	def typeof[T: TypeTag](obj: T) = typeOf[T]
+
+	/*def getType[T: TypeTag](obj: T) = {
 		def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
 
 		getTypeTag(1).tpe
-	}
-
-
-	def typeof[T: TypeTag](obj: T) = typeOf[T]
-
-	/*def cleanName[T: TypeTag](obj: T): String = {
-
-		val topLevelName: String = obj.getClass.toString.split(' ')(1)
-		// NOTE:
-		// CASE 1: If obj is part of package, then getName returns its entire package path (So passing
-		// Fix(Sum(intval, intval)) would result in "matryoshka.data.Fix"
-		// CASE 2: If obj is of a user-defined class (not pkg), then getName returns its exact top-level
-		// name. (So passing Sum(intval, intval) would result in "Sum" )
-
-		//If CASE 2, then we are done, just return the name (there are no package dots to eliminate)
-		///if (!topLevelName.contains('.')){
-
-		if (!typeof(obj).toString.contains('.')) {
-			return topLevelName
-		}
-
-		// HELP: when obj == Sum(intval, intval), then toplevelname CONTAINS the "." even though it
-		//  doesn't!!!!  WHY???
-
-
-		//Else, contain to clean away the package name of upper-level packages:
-		val notUsed = topLevelName.split('.').toList.reverse.tail.reverse.mkString(".")
-
-		val notUsedWithDot: String = notUsed + "."
-
-		typeof(obj).toString.replace(notUsedWithDot, "")
-
 	}*/
 
-	//TODO apply this new version to all below tests to see if they still work
-	/*def mix[T: TypeTag](obj: T): String = {
-
-		val r1a = typeof(obj).toString.replace("Product with Serializable ", "")
-		val r1b = if(r1a.contains("[Product with Serializable]")) r1a else r1a.replace("Product with Serializable]", "]")
-		val r2 = r1b.replace("_ >: ", "")
-		val r3 = r2.replace("[with ", "[")
-		val r4 = r3.replace("Object","").replace("_ ", "").replace(" <: ", "").replace("<: ", "").replace(" <:", "")
-		val r5 = r4.replace("]with", "] with")
-
-		val tempStr = r5
-
-
-		val pkgs = tempStr.split("[\\[\\]]").flatMap(e => e.split(' ')).filter(e => e.contains('.'))
-
-		val oldNewReplacements = pkgs.distinct.map(p => (p, p.split('.').last))
-
-		oldNewReplacements.foldLeft(tempStr)(
-			(currentStrType, tuple) => tuple match {
-				case (oldPkg: String, newShort: String) => currentStrType.replaceAll(oldPkg, newShort)
-			}
-		)
-	}*/
-	def mix[T: TypeTag](obj: T): String = {
+	def typeClean[T: TypeTag](obj: T): String = {
 
 		val r1a = typeof(obj).toString.replace("Product with Serializable ", "")
 		//val r1a = typeof(obj).toString.replace("Product with Serializable with ", "")
@@ -219,7 +166,7 @@ object TypeGetter {
 		)
 	}
 
-	def getTypeName[T: TypeTag](obj: T): String = {
+	/*def getTypeName_OLD[T: TypeTag](obj: T): String = {
 
 		val r1 = typeof(obj).toString
 			.replace("Product with Serializable ", "")
@@ -243,13 +190,8 @@ object TypeGetter {
 					currentStrType.replaceAll(pkgName, className)
 			}
 		)
-	}
+	}*/
 
-	val vf = Fix[Exp]( Sum[Fix[Exp]](
-		Fix[Exp](IntValue[Fix[Exp]](10)),
-		Fix[Exp](IntValue[Fix[Exp]](5))
-	) )
-	val v = Sum(IntValue(2), IntValue(3))
 }
 
 
@@ -265,10 +207,10 @@ object ExpRunner3 extends App {
 		DecValue[Unit](5)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expSum_Infinite_NoType) == "Sum[Exp[Nothing]]",
+	assert(TypeGetter.typeClean(expSum_Infinite_NoType) == "Sum[Exp[Nothing]]",
 		"Test 1a: BEFORE Fix: expSum_Infinite_NoType")
 	// TESTI
-	assert(TypeGetter.mix(expSum_Infinite_Typed) == "Exp[Exp[Unit]]",
+	assert(TypeGetter.typeClean(expSum_Infinite_Typed) == "Exp[Exp[Unit]]",
 		"Test 1b: BEFORE Fix: expSum_Infinite_Typed")
 
 
@@ -288,7 +230,7 @@ object ExpRunner3 extends App {
 		Fix(DecValue[Fix[Exp]](5))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expSum1_FixLeaves) == "Sum[Fix[Exp]]",
+	assert(TypeGetter.typeClean(expSum1_FixLeaves) == "Sum[Fix[Exp]]",
 		"Test 1a: DURING Fix: expSum1_FixLeaves")
 
 	val expSum2_FixLeaves_AddTypes = Sum[Fix[Exp]](
@@ -296,7 +238,7 @@ object ExpRunner3 extends App {
 		Fix[Exp](DecValue[Fix[Exp]](5))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expSum2_FixLeaves_AddTypes) == "Sum[Fix[Exp]]",
+	assert(TypeGetter.typeClean(expSum2_FixLeaves_AddTypes) == "Sum[Fix[Exp]]",
 		"Test 1b: DURING Fix: expSum2_FixLeaves_AddTypes")
 
 	val expSum2_FixLeaves_FinishTypes: Exp[Fix[Exp]] = Sum[Fix[Exp]](
@@ -304,7 +246,7 @@ object ExpRunner3 extends App {
 		Fix[Exp](DecValue[Fix[Exp]](5))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expSum2_FixLeaves_FinishTypes) == "Exp[Fix[Exp]]",
+	assert(TypeGetter.typeClean(expSum2_FixLeaves_FinishTypes) == "Exp[Fix[Exp]]",
 		"Test 1c: DURING Fix: expSum2_FixLeaves_FinishTypes")
 
 	// unFix = Sum(Fix(IntValue(_), IntValue(_)))
@@ -317,7 +259,7 @@ object ExpRunner3 extends App {
 		Fix[Exp](DecValue[Fix[Exp]](5))
 	) )
 	// TESTING
-	assert(TypeGetter.mix(expSum3_FixWrap) == "Fix[Exp]",
+	assert(TypeGetter.typeClean(expSum3_FixWrap) == "Fix[Exp]",
 		"Test 1d: DURING Fix: expSum3_FixWrap")
 
 	// No more infinite stacking of types!
@@ -326,7 +268,7 @@ object ExpRunner3 extends App {
 		Fix[Exp](DecValue[Fix[Exp]](5))
 	) )
 	// TESTING
-	assert(TypeGetter.mix(expSum4_FixWrap_FinishTypes) == "Fix[Exp]",
+	assert(TypeGetter.typeClean(expSum4_FixWrap_FinishTypes) == "Fix[Exp]",
 		"Test 1e: END Fix: expSum4_FixWrap_FinishTypes")
 
 
@@ -340,7 +282,7 @@ object ExpRunner3 extends App {
 		Sum(IntValue(10), DecValue(5.0))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv_Infinite_NoType) == "Divide[Exp[Exp[Nothing]]]",
+	assert(TypeGetter.typeClean(expDiv_Infinite_NoType) == "Divide[Exp[Exp[Nothing]]]",
 		"Test 2a: BEFORE Fix: expDiv_Infinite_NoType")
 
 	val expDiv_Infinite_Typed: Exp[Exp[Exp[Unit]]] = Divide[Exp[Exp[Unit]]](
@@ -348,7 +290,7 @@ object ExpRunner3 extends App {
 		Sum[Exp[Unit]](IntValue[Unit](10),DecValue[Unit](5) )
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv_Infinite_Typed) == "Exp[Exp[Exp[Unit]]]",
+	assert(TypeGetter.typeClean(expDiv_Infinite_Typed) == "Exp[Exp[Exp[Unit]]]",
 		"Test 2a: BEFORE Fix: expDiv_Infinite_Typed")
 
 	// NOTE: starting to wrap the values in Fix, starting at the leaves
@@ -366,7 +308,7 @@ object ExpRunner3 extends App {
 		)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv1_FixLeaves) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
+	assert(TypeGetter.typeClean(expDiv1_FixLeaves) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
 		"Test 2a: DURING Fix: expDiv1_FixLeaves")
 
 	val expDiv2_FixLeaves_FinishTypes/*: Exp[Fix[Exp]]*/ = Divide(
@@ -377,7 +319,7 @@ object ExpRunner3 extends App {
 		)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv2_FixLeaves_FinishTypes) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
+	assert(TypeGetter.typeClean(expDiv2_FixLeaves_FinishTypes) == "Divide[Exp[Fix[Exp] with Exp[Unit]]]",
 		"Test 2b: DURING Fix: expDiv2_FixLeaves_FinishTypes")
 
 	val expDiv3_FixMiddle_part1/*: Exp[Fix[Exp]]*/ = Divide(
@@ -388,7 +330,7 @@ object ExpRunner3 extends App {
 		))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv3_FixMiddle_part1) == "Divide[Product with Serializable]",
+	assert(TypeGetter.typeClean(expDiv3_FixMiddle_part1) == "Divide[Product with Serializable]",
 		"Test 2c: DURING Fix: expDiv3_FixMiddle_part1")
 
 	val expDiv3_FixMiddle_part2/*: Exp[Fix[Exp]]*/ = Divide(
@@ -399,7 +341,7 @@ object ExpRunner3 extends App {
 		))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv3_FixMiddle_part2) == "Divide[Fix[Exp]]",
+	assert(TypeGetter.typeClean(expDiv3_FixMiddle_part2) == "Divide[Fix[Exp]]",
 		"Test 2d: DURING Fix: expDiv3_FixMiddle_part2")
 
 	val expDiv4_FixMiddle_FinishTypes/*: Exp[Fix[Exp]]*/ = Divide[Fix[Exp]](
@@ -410,7 +352,7 @@ object ExpRunner3 extends App {
 		))
 	)
 	// TESTING
-	assert(TypeGetter.mix(expDiv4_FixMiddle_FinishTypes) == "Divide[Fix[Exp]]",
+	assert(TypeGetter.typeClean(expDiv4_FixMiddle_FinishTypes) == "Divide[Fix[Exp]]",
 		"Test 2e: DURING Fix: expDiv4_FixMiddle_FinishTypes")
 
 
@@ -422,7 +364,7 @@ object ExpRunner3 extends App {
 		))
 	))
 	// TESTING
-	assert(TypeGetter.mix(expDiv5_FixWrap) == "Fix[Exp]",
+	assert(TypeGetter.typeClean(expDiv5_FixWrap) == "Fix[Exp]",
 		"Test 2f: END Fix: expDiv5_FixWrap")
 
 
@@ -444,7 +386,7 @@ object ExpRunner3 extends App {
 		)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expMult_Infinite_NoType) == "Multiply[Exp[Exp[Nothing] with Exp[Exp[Nothing]]]]",
+	assert(TypeGetter.typeClean(expMult_Infinite_NoType) == "Multiply[Exp[Exp[Nothing] with Exp[Exp[Nothing]]]]",
 		"Test 3a: BEFORE Fix: expMult_Infinite_NoType")
 
 	// typed
@@ -462,7 +404,7 @@ object ExpRunner3 extends App {
 		)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expMult_Infinite_Typed) == "Multiply[Exp[Exp[Exp[Unit]]]]",
+	assert(TypeGetter.typeClean(expMult_Infinite_Typed) == "Multiply[Exp[Exp[Exp[Unit]]]]",
 		"Test 3b: BEFORE Fix: expMult_Infinite_Typed")
 
 
@@ -483,54 +425,115 @@ object ExpRunner3 extends App {
 		)
 	)
 	// TESTING
-	assert(TypeGetter.mix(expMult1_FixLeaves) == "Multiply[Exp[Exp[Fix[Exp] with Exp[Unit]] with Fix[Exp]]]",
+	assert(TypeGetter.typeClean(expMult1_FixLeaves) == "Multiply[Exp[Exp[Fix[Exp] with Exp[Unit]] with Fix[Exp]]]",
 		"Test 3a: DURING Fix: expMult1_FixLeaves")
+
 	// TESTING
-	val innerType1: String = TypeGetter.mix(expMult1_FixLeaves.exp1)
-	val innerType2: String = TypeGetter.mix(expMult1_FixLeaves.exp2)
+	val innerType1: String = TypeGetter.typeClean(expMult1_FixLeaves.exp1)
+	val innerType2: String = TypeGetter.typeClean(expMult1_FixLeaves.exp2)
+
 	assert(innerType1 == innerType2 &&
 		innerType1 == "Exp[Exp[Fix[Exp] with Exp[Unit]] with Fix[Exp]]",
 		"Test 3a: DURING Fix: expMult1_FixLeaves (exp1, exp2)")
 
-	// TODO left off here develop these further by building up Fix-wrap slowly
+
+
+	val expMult2_FixLeaves  = Multiply( //
+		Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
+		),
+		Divide(
+			Fix(DecValue[Fix[Exp]](5.2)),
+			Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
+			)
+		)
+	)
+	// TESTING
+	assert(TypeGetter.typeClean(expMult2_FixLeaves) == "Multiply[Exp[Fix[Exp]]]",
+		"Test 3b: DURING Fix: expMult2_FixLeaves")
+
+
+	val expMult3_FixMiddle  = Multiply( //
+		Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
+		),
+		Divide(
+			Fix(DecValue[Fix[Exp]](5.2)),
+			Fix(Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
+			))
+		)
+	)
+	// TESTING
+	assert(TypeGetter.typeClean(expMult3_FixMiddle) == "Multiply[Exp[Fix[Exp]]]",
+		"Test 3c: DURING Fix: expMult3_FixMiddle")
 
 
 
-	val expMult_end  = Fix[Exp](Multiply[Fix[Exp]]( //
-		Fix[Exp](Sum[Fix[Exp]](
-			Fix[Exp](IntValue[Fix[Exp]](10)),
-			Fix[Exp](DecValue[Fix[Exp]](2.5))
+	val expMult4_FixMiddle_part1  = Multiply( //
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
 		)),
-		Fix[Exp](Divide[Fix[Exp]](
-			Fix[Exp](DecValue[Fix[Exp]](5.2)),
-			Fix[Exp](Sum[Fix[Exp]](
-				Fix[Exp](IntValue[Fix[Exp]](10)),
-				Fix[Exp](IntValue[Fix[Exp]](5))
+		Divide(
+			Fix(DecValue[Fix[Exp]](5.2)),
+			Fix(Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
+			))
+		)
+	)
+	// TESTING
+	assert(TypeGetter.typeClean(expMult4_FixMiddle_part1) == "Multiply[Product with Serializable]",
+		"Test 3d: DURING Fix: expMult4_FixMiddle_part1")
+
+	// TESTING
+	val innerTypeMult1 = TypeGetter.typeClean(expMult4_FixMiddle_part1.exp1)
+	val innerTypeMult2 = TypeGetter.typeClean(expMult4_FixMiddle_part1.exp2)
+
+	assert(innerTypeMult1 == innerTypeMult2 && innerTypeMult1 == "Product with Serializable",
+		"Test 3d: DURING Fix: expMult4_FixMiddle_part1 (exp1, exp2)")
+
+
+
+	val expMult4_FixMiddle_part2  = Multiply( //
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
+		)),
+		Fix(Divide[Fix[Exp]](
+			Fix(DecValue[Fix[Exp]](5.2)),
+			Fix(Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
+			))
+		))
+	)
+	// TESTING
+	assert(TypeGetter.typeClean(expMult4_FixMiddle_part2) == "Multiply[Fix[Exp]]",
+		"Test 3e: DURING Fix: expMult4_FixMiddle_part2")
+
+	val expMult5_FixWrap = Fix(Multiply[Fix[Exp]]( //
+		Fix(Sum[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](10)),
+			Fix(DecValue[Fix[Exp]](2.5))
+		)),
+		Fix(Divide[Fix[Exp]](
+			Fix(DecValue[Fix[Exp]](5.2)),
+			Fix(Sum[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](10)),
+				Fix(IntValue[Fix[Exp]](5))
 			))
 		))
 	))
 	// TESTING
-	assert(TypeGetter.mix(expMult_end) == "Fix[Exp]",
-		"Test 3a: DURING Fix: expMult_end")
+	assert(TypeGetter.typeClean(expMult5_FixWrap) == "Fix[Exp]",
+		"Test 3f: END Fix: expMult5_FixWrap")
 
 
-	// ------------------------------------------------------------------------------------------------
-
-	// non-typed
-	val doubledExp = Multiply(
-		Sum(IntValue(3), IntValue(4)),
-		Sum(IntValue(3), IntValue(4))
-	)
-	// typed
-	val doubledExp_STACK: Exp[Exp[Exp[Unit]]] = Multiply[Exp[Exp[Unit]]](
-		Sum[Exp[Unit]](IntValue[Unit](3), IntValue[Unit](4)),
-		Sum[Exp[Unit]](IntValue[Unit](3), IntValue[Unit](4))
-	)
-
-	//non-typed
-	val squared = Square(Sum(IntValue(3),IntValue(4)))
-	//typed
-	val squared_STACK: Exp[Exp[Exp[Unit]]]  = Square[Exp[Exp[Unit]]](
-		Sum[Exp[Unit]](IntValue[Unit](3),IntValue[Unit](4))
-	)
 }
