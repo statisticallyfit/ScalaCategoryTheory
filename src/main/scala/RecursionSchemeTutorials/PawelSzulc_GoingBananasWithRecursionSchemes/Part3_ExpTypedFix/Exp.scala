@@ -518,6 +518,8 @@ object ExpRunner3 extends App {
 	assert(TypeGetter.typeClean(expMult4_FixMiddle_part2) == "Multiply[Fix[Exp]]",
 		"Test 3e: DURING Fix: expMult4_FixMiddle_part2")
 
+
+
 	val expMult5_FixWrap = Fix(Multiply[Fix[Exp]]( //
 		Fix(Sum[Fix[Exp]](
 			Fix(IntValue[Fix[Exp]](10)),
