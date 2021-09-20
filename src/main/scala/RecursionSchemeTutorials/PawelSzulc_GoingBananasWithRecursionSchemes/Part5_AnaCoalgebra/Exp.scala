@@ -1,24 +1,18 @@
-package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part4_CataAlgebra
+package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part5_AnaCoalgebra
 
+/**
+ *
+ */
 
-
-/*import cats._
-import cats.Functor
-import cats.implicits._
-
-import higherkindness.droste.Algebra
-import higherkindness.droste.data._
-import higherkindness.droste.implicits._*/
-
-
-import slamdata.Predef._
-
-import scalaz.{Functor, Applicative}
+//import slamdata.Predef._
+import scalaz.{Applicative, Functor}
 import scalaz.syntax.all._
 
 import scala.language.higherKinds
-
 import matryoshka._
+// NOTE: need this to avoid error of "No implicits found for Corecursive[T]" when doing anamorphism
+// MEANING: Fix needs to implement BirecursiveT typeclass
+import matryoshka.data.Fix.birecursiveT
 import matryoshka.data._
 import matryoshka.implicits._
 
@@ -46,12 +40,22 @@ object ExpOps {
 		case Divide(a1, a2) => a1 / a2 // evaluate(a1) / evaluate(a2)
 	}
 
-	val mkString: Algebra[Exp, String] /*Exp[A] => String*/ = exp => exp match {
+	import scala.util.Try
+
+	val mkString: Algebra[Exp, String] /*Exp[String] => String*/ = exp => exp match {
 		case IntValue(v) => v.toString
 		case DecValue(v) => v.toString
 		case Sum(a1, a2) => s"($a1 + $a2)"
 		case Multiply(a1, a2) => s"($a1 * $a2)"
-		case Square(e) => s"($e)^2"
+		case Square(e) => {
+			val tryInt: Option[Int] = Try(e.toInt).toOption
+			val tryDouble: Option[Double] = Try(e.toDouble).toOption
+
+			(tryInt, tryDouble) match {
+				case (None, None) => s"($e)^2" // then not an int, more complicated still Exp type
+				case _ => s"${tryInt.get}^2" // if either worked, then it is a number, so use no parentheses
+			}
+		}
 		case Divide(a1, a2) => s"($a1 / $a2)"
 
 	}
@@ -59,8 +63,13 @@ object ExpOps {
 	// NOTE: redefining this function so that it evaluates nested Exps
 
 	val optimize: Algebra[Exp, Fix[Exp]] = { // Exp[Fix[Exp]] => Fix[Exp]
-		case Multiply(Fix(a1), Fix(a2)) if(a1 == a2) => Fix(Square(optimize(a1)))
+		/*case Multiply(Fix(a1), Fix(a2)) if(a1 == a2) => Fix(Square(optimize(a1)))
 		//case other => Fix(other) // this line alone without things below won't resolve nested squares.
+		case Multiply(Fix(a1), Fix(a2)) => Fix(Multiply(optimize(a1), optimize(a2)))*/
+		case Multiply(Fix(a1), Fix(a2)) => a1 == a2 match {
+			case true => Fix(Square(optimize(a1)))
+			case false => Fix(Multiply(optimize(a1), optimize(a2)))
+		}
 		case Sum(Fix(a1), Fix(a2)) => Fix(Sum(optimize(a1), optimize(a2)))
 		case Divide(Fix(a1), Fix(a2)) => Fix(Divide(optimize(a1), optimize(a2)))
 		case Square(Fix(a)) => Fix(Square(optimize(a)))
@@ -68,15 +77,59 @@ object ExpOps {
 		case d@DecValue(_) => Fix(d)
 		//case other => optimize(other)
 	}
-	/*Exp[A] => Exp[A] = exp => exp match {
-		case Multiply(a1, a2) if(a1 == a2) => Square(optimize(a1))
-		case Multiply(a1, a2) => Multiply(optimize(a1), optimize(a2))
-		case IntValue(v) => IntValue(v)
-		case DecValue(v) => DecValue(v)
-		case Sum(a1, a2) => Sum(optimize(a1), optimize(a2))
-		case Square(e) => Square(optimize(e))
-		case Divide(a1, a2) => Divide(optimize(a1), optimize(a2))
-	}*/
+
+
+	// NOTE: should rearrange (2 * (2 * (3 * (3 * 5)))) ===> ((((2 * 2) * 3) * 3) * 5)
+
+	val rearrange: Algebra[Exp, Fix[Exp]] = { // Exp[Fix[Exp]] => Fix[Exp]
+		/*case Multiply(Fix(a), Fix(Multiply(Fix(b), Fix(c)))) =>
+			Fix(Multiply(
+				Fix(Multiply(rearrange(a), rearrange(b))),
+				rearrange(c)
+			))*/
+
+		case Multiply(Fix(IntValue(aInt)), Fix(Multiply(Fix(IntValue(bInt)), Fix(c)))) =>
+			Fix(Multiply(
+				Fix(Multiply(
+					Fix(IntValue(aInt)), Fix(IntValue(bInt))
+				)),
+				rearrange(c)
+			))
+			// TODO why doesn't this work instead of the above one?
+		/*case Multiply(Fix(IntValue(aInt)), Fix(Multiply(Fix(b), Fix(c)))) =>
+			Fix(Multiply(
+				Fix(Multiply(
+					Fix(IntValue(aInt)), rearrange(b)
+				)),
+				rearrange(c)
+			))*/
+
+		case Multiply(Fix(a1), Fix(a2)) =>
+			Fix(Multiply(rearrange(a1), rearrange(a2)))
+
+		case Sum(Fix(a1), Fix(a2)) =>
+			Fix(Sum(rearrange(a1), rearrange(a2)))
+
+		case Divide(Fix(a1), Fix(a2)) =>
+			Fix(Divide(rearrange(a1), rearrange(a2)))
+
+		case Square(Fix(a)) => Fix(Square(rearrange(a)))
+
+		case i@IntValue(_) => Fix(i)
+
+		case d@DecValue(_) => Fix(d)
+	}
+
+
+	// PROP: `type Coalgebra[F[_], A] = A => F[A]`
+
+	// TODO why here Int => Exp[Int] with no Fix constructor? Does this have something to do with Coalgebra vs.  Algebra?
+	val divisors: Coalgebra[Exp, Int] = { // Int => Exp[Int]
+		case n if(n % 2 == 0 && n != 2) => Multiply(2, n / 2)
+		case n if(n % 3 == 0 && n != 3) => Multiply(3, n / 3)
+		case n if(n % 5 == 0 && n != 5) => Multiply(5, n / 5)
+		case n => IntValue(n)
+	}
 }
 
 
@@ -97,9 +150,16 @@ object ExpFunctor  {
 }
 
 
+// TODO left off here to define property testing cata . ana from slideshow then move on to another tutorial
+/*
+class Definitions extends Properties("Anamorphism - Catamorphism"){
+
+}*/
 
 
-object ExpRunner4 extends App {
+
+
+object ExpRunner5 extends App {
 
 
 	import ExpOps._
@@ -237,10 +297,85 @@ object ExpRunner4 extends App {
 	assert(nestedSquareExp.cata(mkString) == "(((5 * 5) + 4))^2",
 		"Test: nestedSquareExp.cata(mkString)")
 
-	assert(nestedDoubleExp.cata(optimize).cata(mkString) == "(((5)^2 + 4))^2" &&
-		optimize(nestedDoubleExp.unFix).cata(mkString) == "(((5)^2 + 4))^2" &&
-		nestedSquareExp.cata(optimize).cata(mkString) == "(((5)^2 + 4))^2",
+	assert(nestedDoubleExp.cata(optimize).cata(mkString) == "((5^2 + 4))^2" &&
+		optimize(nestedDoubleExp.unFix).cata(mkString) == "((5^2 + 4))^2" &&
+		nestedSquareExp.cata(optimize).cata(mkString) == "((5^2 + 4))^2",
 		"Test: nestedDouble optimize == nested squared optimize")
 
 
+
+
+
+
+
+	// PROPERTY: `def ana[A](a: A)(f: Coalgebra[Base, A])(implicit BF: Functor[Base]): T`
+
+	// TODO figure out why need Fix[Exp] here as type parameter and how it is related to the error
+	// "No implicits found for type parameter T: Corecursive.Aux[Exp[Int], Int]"
+
+	// TESTING
+	val divisorsOf12: Fix[Exp] = Fix(
+		Multiply[Fix[Exp]](
+			Fix(IntValue[Fix[Exp]](2)),
+			Fix(Multiply[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](2)),
+				Fix(IntValue[Fix[Exp]](3))
+			))
+		)
+	)
+
+	assert(12.ana[Fix[Exp]](divisors) == divisorsOf12, "Test: anamorphism 12")
+	assert(12.ana[Fix[Exp]](divisors).cata(mkString) == "(2 * (2 * 3))", "Test: divisors of 12 (string)")
+
+
+	val divisorsOf28: Fix[Exp] = Fix(Multiply(
+		Fix(
+			IntValue(2)),
+		Fix(Multiply(
+			Fix(IntValue(2)),
+			Fix(Multiply(
+				Fix(IntValue(3)),
+				Fix(Multiply(
+					Fix(IntValue(3)),
+					Fix(IntValue(5))
+				))
+			))
+		))
+	))
+
+	assert(180.ana[Fix[Exp]](divisors) == divisorsOf28,
+		"Test: anamorphism 180")
+
+	assert(180.ana[Fix[Exp]](divisors).cata(mkString) == "(2 * (2 * (3 * (3 * 5))))",
+		"Test: anamorphism 180 (string)")
+	assert(180.ana[Fix[Exp]](divisors).cata(rearrange).cata(mkString) == "((2 * 2) * ((3 * 3) * 5))",
+		"Test: ana . cata 180 rearrange divisors string")
+	assert(180.ana[Fix[Exp]](divisors)
+		.cata(rearrange)
+		.cata(optimize)
+		.cata(mkString) == "(2^2 * (3^2 * 5))",
+		"Test: ana . cata 180 rearrange optimize divisors string")
+
+	assert(32.ana[Fix[Exp]](divisors).cata(evaluate) == 32.0, "Test: cata . ana 32 evaluate")
+
+	/*assert(16.ana[Fix[Exp]](divisors).cata(mkString) == "(2 * (2 * (2 * 2)))", "Test: ana (16) string")
+	/*assert(16.ana[Fix[Exp]](divisors).cata(rearrange).cata(mkString) == "(2 * (2 * (2 * 2)))",
+		"Test: ana (16) string")*/
+	// TODO fix square for rearrange: ((2 * 2^2) * 2) -----> 2^4
+	// TODO consider using Pow? instead of square? then adapting the right branch of the multiply in the rearrange  method?
+	println(16.ana[Fix[Exp]](divisors).cata(rearrange).cata(mkString))
+	println(16.ana[Fix[Exp]](divisors)
+		.cata(rearrange)
+		.cata(optimize)
+		.cata(mkString))*/
+
+
+
+
+	// ---------------------------------------------------------------
+
+	// PROPERTY
+	// TESTING
+	import org.scalacheck.Prop.forAll
+	import org.scalacheck._
 }

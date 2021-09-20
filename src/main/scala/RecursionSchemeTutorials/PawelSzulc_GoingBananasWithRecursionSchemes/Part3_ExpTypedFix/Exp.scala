@@ -16,8 +16,6 @@ import matryoshka.data._
 import matryoshka.implicits._
 
 
-import cats._
-import cats.implicits._
 
 /**
  *
@@ -94,7 +92,7 @@ object Exp {
 		}
 	}*/
 
-	implicit def expFunctor: cats.Functor[Exp] = new cats.Functor[Exp] {
+	implicit def expFunctor: Functor[Exp] = new Functor[Exp] {
 		def map[A, B](fa: Exp[A])(f: A => B): Exp[B] = fa match {
 			case IntValue(v) => IntValue(v)
 			case DecValue(v) => DecValue(v)
@@ -124,78 +122,11 @@ object Exp {
 }
 
 
-object TypeGetter {
-
-	import scala.reflect.runtime.universe._
-
-	def typeof[T: TypeTag](obj: T) = typeOf[T]
-
-	/*def getType[T: TypeTag](obj: T) = {
-		def getTypeTag[T: TypeTag](obj: T) = typeTag[T]
-
-		getTypeTag(1).tpe
-	}*/
-
-	def typeClean[T: TypeTag](obj: T): String = {
-
-		val r1a = typeof(obj).toString.replace("Product with Serializable ", "")
-		//val r1a = typeof(obj).toString.replace("Product with Serializable with ", "")
-		val r1b = if(r1a.contains("[Product with Serializable]")) r1a else r1a.replace("Product with Serializable]", "]")
-		val r2 = r1b.replace("_ >: ", "")
-		val r3 = r2.replace("Object","").replace("_ ", "").replace(" <: ", "").replace("<: ", "").replace(" <:", "")
-		val r4 = r3.replace("[with ", "[")
-		val r5 = r4.replace("]with", "] with")
-
-		val withAtFront: String = "with "
-		val r6 = r5.substring(0, withAtFront.length) == withAtFront match {
-			case true => r5.substring(withAtFront.length)
-			case false => r5
-		}
-
-		val tempStr = r6
-
-
-		val pkgs = tempStr.split("[\\[\\]]").flatMap(e => e.split(' ')).filter(e => e.contains('.'))
-
-		val oldNewReplacements = pkgs.distinct.map(p => (p, p.split('.').last))
-
-		oldNewReplacements.foldLeft(tempStr)(
-			(currentStrType, tuple) => tuple match {
-				case (oldPkg: String, newShort: String) => currentStrType.replaceAll(oldPkg, newShort)
-			}
-		)
-	}
-
-	/*def getTypeName_OLD[T: TypeTag](obj: T): String = {
-
-		val r1 = typeof(obj).toString
-			.replace("Product with Serializable ", "")
-			.replace("Product with Serializable]", "]")
-		val r2 = r1.replace("_ >: ", "")
-		val r3 = r2.replace("[with ", "[")
-		val r4 = r3
-			.replace("Object","")
-			.replace("_ ", "")
-			.replace(" <: ", "")
-			.replace("<: ", "")
-			.replace(" <:", "")
-
-		val pkgs = r4.split("[\\[\\]]").flatMap(e => e.split(' ')).filter(e => e.contains('.'))
-
-		val oldNewReplacements = pkgs.distinct.map(p => (p, p.split('.').last))
-
-		oldNewReplacements.foldLeft(r4)(
-			(currentStrType, tuple) => tuple match {
-				case (pkgName: String, className: String) =>
-					currentStrType.replaceAll(pkgName, className)
-			}
-		)
-	}*/
-
-}
-
 
 object ExpRunner3 extends App {
+
+
+	import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.util.TypeGetter
 
 
 	//NOTE: expr before applying Fix
