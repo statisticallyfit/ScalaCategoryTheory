@@ -1,4 +1,4 @@
-package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part4_CataAnaAlgebra
+package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part4_CataAlgebra
 
 
 
@@ -57,8 +57,14 @@ object ExpOps {
 	}
 
 	val optimize: Algebra[Exp, Fix[Exp]] = { // Exp[Fix[Exp]] => Fix[Exp]
-		case Multiply(Fix(a1), Fix(a2)) if(a1 == a2) => Fix(Square(Fix(a1)))
-		case other => Fix(other)
+		case Multiply(Fix(a1), Fix(a2)) if(a1 == a2) => Fix(Square(optimize(a1)))
+		//case other => Fix(other) // this line alone without things below won't resolve nested squares.
+		case Sum(Fix(a1), Fix(a2)) => Fix(Sum(optimize(a1), optimize(a2)))
+		case Divide(Fix(a1), Fix(a2)) => Fix(Divide(optimize(a1), optimize(a2)))
+		case Square(Fix(a)) => Fix(Square(optimize(a)))
+		case i@IntValue(_) => Fix(i)
+		case d@DecValue(_) => Fix(d)
+		//case other => optimize(other)
 	}
 	/*Exp[A] => Exp[A] = exp => exp match {
 		case Multiply(a1, a2) if(a1 == a2) => Square(optimize(a1))
@@ -229,6 +235,58 @@ object ExpRunner4 extends App {
 	assert(squaredExp.cata(mkString) == "((3 + 4))^2", "Test: squared.cata(mkString)")
 	assert(doubleExp.cata(mkString) == "((3 + 4) * (3 + 4))", "Test: doubleExp.cata(mkString)")
 
+
 	assert(doubleExp.cata(optimize) == squaredExp, "Test: doubleExp.cata(optimize) == squaredExp")
-	assert(doubleExp.cata(optimize).cata(mkString) == "((3 + 4))^2", "Test: doubleExp optimize string")
+	assert(squaredExp.cata(optimize) == squaredExp, "Test: squaredExp.cata(optimize) == squaredExp")
+
+	assert(doubleExp.cata(optimize).cata(mkString) == "((3 + 4))^2" &&
+		squaredExp.cata(mkString) == doubleExp.cata(optimize).cata(mkString),
+		"Test: doubleExp optimize string")
+
+
+
+
+	// NOTE
+	val nestedDoubleExp = Fix(Multiply[Fix[Exp]](
+		Fix(Sum[Fix[Exp]](
+			Fix(Multiply[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](5)),
+				Fix(IntValue[Fix[Exp]](5))
+			)),
+			Fix(IntValue[Fix[Exp]](4))
+		)),
+		Fix(Sum[Fix[Exp]](
+			Fix(Multiply[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](5)),
+				Fix(IntValue[Fix[Exp]](5))
+			)),
+			Fix(IntValue[Fix[Exp]](4))
+		))
+	))
+	val nestedSquareExp = Fix(Square[Fix[Exp]](
+		Fix(Sum[Fix[Exp]](
+			Fix(Multiply[Fix[Exp]](
+				Fix(IntValue[Fix[Exp]](5)),
+				Fix(IntValue[Fix[Exp]](5))
+			)),
+			Fix(IntValue[Fix[Exp]](4))
+		))
+	))
+	// TESTING
+	assert(nestedDoubleExp.cata(evaluate) == 841.0 &&
+		nestedDoubleExp.cata(evaluate) == nestedSquareExp.cata(evaluate),
+		"Test: nestedDoubleExp.cata(evaluate)")
+
+
+	assert(nestedDoubleExp.cata(mkString) == "(((5 * 5) + 4) * ((5 * 5) + 4))",
+		"Test: nestedDoubleExp.cata(mkString)")
+	assert(nestedSquareExp.cata(mkString) == "(((5 * 5) + 4))^2",
+		"Test: nestedSquareExp.cata(mkString)")
+
+	assert(nestedDoubleExp.cata(optimize).cata(mkString) == "(((5)^2 + 4))^2" &&
+		optimize(nestedDoubleExp.unFix).cata(mkString) == "(((5)^2 + 4))^2" &&
+		nestedSquareExp.cata(optimize).cata(mkString) == "(((5)^2 + 4))^2",
+		"Test: nestedDouble optimize == nested squared optimize")
+
+
 }
