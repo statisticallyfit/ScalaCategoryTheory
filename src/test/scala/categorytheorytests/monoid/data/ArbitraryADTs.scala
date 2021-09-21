@@ -1,4 +1,4 @@
-package monoid.data
+package categorytheorytests.monoid.data
 
 import cats.data.Validated._
 import cats.data.Validated

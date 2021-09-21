@@ -1,4 +1,4 @@
-package CatsTutorial.DataTypes.Chain
+package tutorialtests.CatsTutorial.DataTypes.Chain
 
 /**
  * Tutorial source = https://typelevel.org/cats/datatypes/chain.html

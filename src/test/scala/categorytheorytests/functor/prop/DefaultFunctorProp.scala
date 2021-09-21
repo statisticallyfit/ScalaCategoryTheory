@@ -1,9 +1,9 @@
-package functor.prop
+package categorytheorytests.functor.prop
 
 
 
-import functor.data._
-import functor.data.ArbitraryADTs._
+import categorytheorytests.functor.data._
+import categorytheorytests.functor.data.ArbitraryADTs._
 
 import cats.data.Validated
 import cats.implicits._

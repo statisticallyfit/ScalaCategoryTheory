@@ -36,6 +36,10 @@ libraryDependencies ++= Seq(
      "org.scala-lang" % "scala-reflect" % "2.12.13",
      //ScalaCheck
      "org.scalacheck" %% "scalacheck" % "1.15.4" % Test, // was 1.15.2
+     // ScalaTest
+     "org.scalatest" %% "scalatest" % "3.2.10" % Test,
+     // ScalaTestPlus (property-based mixed with specs-based testing)
+     "org.scalatestplus" %% "scalacheck-1-15" % "3.2.10.0" % Test,
      //Specs2
      "org.specs2" %% "specs2-core" % "4.12.9" % Test, // was 4.10.6
      "org.specs2" %% "specs2-scalacheck" % "4.12.9" % Test, // was 4.10.6

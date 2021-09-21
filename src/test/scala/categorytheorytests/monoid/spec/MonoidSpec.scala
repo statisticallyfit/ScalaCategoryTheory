@@ -1,4 +1,4 @@
-package monoid.spec
+package categorytheorytests.monoid.spec
 
 
 import monoid.data._

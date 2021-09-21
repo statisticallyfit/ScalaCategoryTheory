@@ -1,4 +1,4 @@
-package functor.data
+package categorytheorytests.functor.data
 
 
 import cats.data.Validated._

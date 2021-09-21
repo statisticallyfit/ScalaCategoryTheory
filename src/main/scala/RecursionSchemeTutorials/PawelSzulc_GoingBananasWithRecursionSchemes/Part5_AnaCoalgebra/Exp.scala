@@ -17,6 +17,10 @@ import matryoshka.data._
 import matryoshka.implicits._
 
 
+
+
+
+
 sealed trait Exp[A]
 
 final case class IntValue[A](v: Int) extends Exp[A]
@@ -150,11 +154,7 @@ object ExpFunctor  {
 }
 
 
-// TODO left off here to define property testing cata . ana from slideshow then move on to another tutorial
-/*
-class Definitions extends Properties("Anamorphism - Catamorphism"){
 
-}*/
 
 
 
@@ -376,6 +376,4 @@ object ExpRunner5 extends App {
 
 	// PROPERTY
 	// TESTING
-	import org.scalacheck.Prop.forAll
-	import org.scalacheck._
 }

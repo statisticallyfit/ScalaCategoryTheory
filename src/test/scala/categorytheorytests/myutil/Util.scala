@@ -1,4 +1,4 @@
-package myutil
+package categorytheorytests.myutil
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._

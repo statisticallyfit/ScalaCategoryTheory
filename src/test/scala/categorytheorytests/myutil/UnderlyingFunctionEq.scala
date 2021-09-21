@@ -1,4 +1,4 @@
-package myutil
+package categorytheorytests.myutil
 
 import cats.Eq
 

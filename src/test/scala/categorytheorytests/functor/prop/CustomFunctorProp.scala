@@ -1,9 +1,9 @@
-package functor.prop
+package categorytheorytests.functor.prop
 
 
-import functor.data._
-import functor.data.ArbitraryADTs._
-import myutil.Util
+import categorytheorytests.functor.data._
+import categorytheorytests.functor.data.ArbitraryADTs._
+import categorytheorytests.myutil.Util
 
 
 import scala.collection.mutable.ListBuffer

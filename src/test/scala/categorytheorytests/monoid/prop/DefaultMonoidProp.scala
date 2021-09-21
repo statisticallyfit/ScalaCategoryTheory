@@ -1,4 +1,4 @@
-package monoid.prop
+package categorytheorytests.monoid.prop
 
 
 import monoid.data._
