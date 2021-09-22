@@ -1,9 +1,9 @@
 package categorytheorytests.monoid.prop
 
 
-import monoid.data._
-import monoid.data.ArbitraryADTs._
-import myutil.Util
+import categorytheorytests.monoid.data._
+import categorytheorytests.monoid.data.ArbitraryADTs._
+import categorytheorytests.myutil.Util
 
 import scala.reflect.{ClassTag, classTag}
 import scala.reflect.runtime.universe._
@@ -15,10 +15,10 @@ import org.scalacheck._
 
 
 /***
-  *
-  * A specification to test how different structures adhere to Monoid typeclass laws.
-  *
-  */
+ *
+ * A specification to test how different structures adhere to Monoid typeclass laws.
+ *
+ */
 class Definitions extends Properties("Monoid") {
 
 
@@ -127,7 +127,7 @@ object CustomMonoidProp extends Definitions {
 
      //import monoid.data.Combine._
 
-     import myutil.UnderlyingFunctionEq._
+     import categorytheorytests.myutil.UnderlyingFunctionEq._
 
 
      MonoidAxioms[MyFunction[String, Int]].associativeProperty

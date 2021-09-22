@@ -121,7 +121,7 @@ object CustomFunctorProp extends Definitions {
 
 
 
-     import myutil.UnderlyingFunctionEq._
+     import categorytheorytests.myutil.UnderlyingFunctionEq._
 
      FunctorAxioms[LiftItOut[Int, ?]].identityProperty[Int]
      FunctorAxioms[LiftItOut[Int, ?]].compositionProperty[Int, Double, Int]

@@ -42,56 +42,54 @@ import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part
 
 //trait A extends AnyFunSpec
 
-trait Spec extends AnyFunSpec with BeforeAndAfterAll with ScalaCheckDrivenPropertyChecks  with should.Matchers
+trait Spec extends AnyFunSpec with /*BeforeAndAfterAll with*/ ScalaCheckDrivenPropertyChecks  with should.Matchers
 
-class Def extends Properties("Divisor Spec") {
+class DivisorLaws extends Properties("Divisor Spec") with Spec {
 
-	trait DivisorLaws  extends Spec {
+	val positiveInt: Gen[Int] = arbitrary[Int] suchThat (_ > 0) // avoid division by zero error here?
 
-		def apply: Unit
-		
-		val positiveInt: Gen[Int] = arbitrary[Int] suchThat (_ > 0) // avoid division by zero error here?
-
-		val divisorsToInitialValueByAnaThenCata = describe("divisors") {
-			it("ana then cata should evaluate divisors back to initial value") {
-				forAll(positiveInt) { (number: Int) =>
-					number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual number
-				}
+	val divisorsToInitialValueByAnaThenCata = forAll(positiveInt) { (number: Int) =>
+		number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual number
+	}
+	/*val divisorsToInitialValueByAnaThenCata = describe("divisors") {
+		it("ana then cata should evaluate divisors back to initial value") {
+			forAll(positiveInt) { (number: Int) =>
+				number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual number
 			}
 		}
+	}*/
 
-		val divisorsToInitialValueByHylo = describe("divisors") {
-			it("hylo should evaluate divisors back to initial value") {
-				forAll(positiveInt) { (number: Int) =>
-					number.hylo[Exp, Double](evaluate, divisors) shouldEqual number
-				}
-			}
-		}
-
-		val divisorsToInitialValueEquivHyloAndAnaCata= describe("divisors") {
-			it("ana then cata is same as hylo for to evaluate divisors back to initial value"){
-				forAll(positiveInt) { (number: Int) =>
-
-					number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual
-						number.hylo[Exp, Double](evaluate, divisors)
-				}
+	val divisorsToInitialValueByHylo = describe("divisors") {
+		it("hylo should evaluate divisors back to initial value") {
+			forAll(positiveInt) { (number: Int) =>
+				number.hylo[Exp, Double](evaluate, divisors) shouldEqual number
 			}
 		}
 	}
 
-	object DivisorLaws {
-		def apply(a: Unit): DivisorLaws = new DivisorLaws {
-			def apply = a
+	val divisorsToInitialValueEquivHyloAndAnaCata= describe("divisors") {
+		it("ana then cata is same as hylo for to evaluate divisors back to initial value"){
+			forAll(positiveInt) { (number: Int) =>
+
+				number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual
+					number.hylo[Exp, Double](evaluate, divisors)
+			}
 		}
 	}
+
 }
 
 
 
 
-object ExpWithAnaCataHyloProp extends Def {
+object ExpWithAnaCataHyloProp  {
 
-	DivisorLaws.divisorsToInitialValueByAnaThenCata
+	val d = new DivisorLaws
+	//d.divisorsToInitialValueByAnaThenCata.check
+	// TODO how to call these things? want to make it like those in functortests but cannot since apply method
+	//  doesn't take those kinds of parameters
+
+	/*DivisorLaws.divisorsToInitialValueByAnaThenCata
 	DivisorLaws.divisorsToInitialValueByHylo
-	DivisorLaws.divisorsToInitialValueEquivHyloAndAnaCata
+	DivisorLaws.divisorsToInitialValueEquivHyloAndAnaCata*/
 }

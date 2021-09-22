@@ -58,7 +58,7 @@ class DefaultFunctorProp extends CatsSpec {
      checkAll("ConstB[Double, Int]", FunctorTests[ConstB[Double, ?]].functor[Int, Int, Int])
 
      //todo
-     import myutil.UnderlyingFunctionEq._
+     import categorytheorytests.myutil.UnderlyingFunctionEq._
 
      checkAll("LiftItOut[Int, Int]", FunctorTests[LiftItOut[Int, ?]].functor[Int, Int, Int])
 

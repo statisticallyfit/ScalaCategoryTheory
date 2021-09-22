@@ -1,7 +1,8 @@
 package categorytheorytests.monoid.spec
 
 
-import monoid.data._
+import categorytheorytests.monoid.data._
+
 import cats.Monoid
 import cats.data.Validated
 import cats.data.Validated.{Invalid, Valid}

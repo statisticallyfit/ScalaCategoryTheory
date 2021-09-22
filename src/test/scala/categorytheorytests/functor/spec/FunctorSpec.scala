@@ -223,7 +223,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 //
 //          "-> Pair[A, A] is a functor" in {
 //
-//               import functor.data.Pair._
+//               import categorytheorytests.functor.data.Pair._
 //
 //               ".   -> mapping: we can map a function" in {
 //
@@ -275,7 +275,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
           "-> Three[A,B,C] is a functor" in {
 
-               import functor.data.Three._
+               import categorytheorytests.functor.data.Three._
                /*import org.specs2.matcher.{Expectable => _, _}
                import org.specs2.specification.core.{SpecificationStructure => _, _}
                import org.specs2.specification.core.{Fragments => _, _}*/
@@ -338,7 +338,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
           "-> BinaryTree[T] is a functor" in {
 
-               import functor.data.BinaryTree._
+               import categorytheorytests.functor.data.BinaryTree._
 
                val tree: BinaryTree[Int] = Branch(Branch(Leaf(1), 4, Leaf(5)), 23,
                     Branch(Branch(Leaf(2), 5, Leaf(2)), 1, Leaf(9)))
@@ -415,7 +415,7 @@ class FunctorSpec extends Specification with AllInstances with AllSyntax {
 
 //          "-> LiftItOut[A, B] is a functor" in {
 //
-//               import functor.data.LiftItOut._
+//               import categorytheorytests.functor.data.LiftItOut._
 //
 //               val lft = (_: String).length
 //               def timesTwo(x: Int): Int = x * 2

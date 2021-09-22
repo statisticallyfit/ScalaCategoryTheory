@@ -1,8 +1,9 @@
 package categorytheorytests.monoid.prop
 
 
-import monoid.data._
-import monoid.data.ArbitraryADTs._
+import categorytheorytests.monoid.data._
+import categorytheorytests.monoid.data.ArbitraryADTs._
+
 import cats.data.Validated
 import cats.instances.AllInstances
 import cats.syntax.AllSyntax
@@ -62,7 +63,7 @@ class DefaultMonoidProp extends CatsSpecMonoid {
 
 
      //import monoid.data.Combine._
-     import myutil.UnderlyingFunctionEq._
+     import categorytheorytests.myutil.UnderlyingFunctionEq._
 
      checkAll("Monoid[MyFunction[Int, String]]", GroupLaws[MyFunction[Int, String]].monoid)
 
