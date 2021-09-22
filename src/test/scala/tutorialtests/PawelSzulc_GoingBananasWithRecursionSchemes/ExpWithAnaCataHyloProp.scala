@@ -8,21 +8,24 @@ package tutorialtests.PawelSzulc_GoingBananasWithRecursionSchemes
 //import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
 import org.scalatest._
-import org.scalatest.matchers._
+
 import org.scalatest.prop._
 import org.scalatest.propspec.AnyPropSpec
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers._
+import org.scalatest.{BeforeAndAfterAll/*, FlatSpec*/} //TODO where is FlatSpec? why not found?
 
-import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
+import org.scalatestplus.scalacheck.ScalaCheckDrivenPropertyChecks
 
-
+//import org.scalatestplus.scalacheck.ScalaCheckPropertyChecks
 import org.scalacheck._
 import org.scalacheck.Prop.forAll
 import org.scalacheck.{Arbitrary, Gen, Prop}
 import org.scalacheck.Arbitrary.arbitrary
 
-
 import scala.language.higherKinds
 import matryoshka._
+
 // NOTE: need this to avoid error of "No implicits found for Corecursive[T]" when doing anamorphism. MEANING: Fix needs to implement BirecursiveT typeclass
 import matryoshka.data.Fix.birecursiveT
 import matryoshka.data._
@@ -33,55 +36,62 @@ import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part
 import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part5_AnaCoalgebra.ExpOps._
 import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part5_AnaCoalgebra.ExpFunctor._
 
+/**
+ *
+ */
 
-// FlatSpec with Matchers with BeforeAndAfterAll
-/*trait BaseScalaSpec extends Specification with ScalaCheckDrivenPropertyChecks {
+//trait A extends AnyFunSpec
 
-}*/
+trait Spec extends AnyFunSpec with BeforeAndAfterAll with ScalaCheckDrivenPropertyChecks  with should.Matchers
 
-class DivisorLaws extends Properties("Divisor Spec") {
+class Def extends Properties("Divisor Spec") {
 
+	trait DivisorLaws  extends Spec {
 
-
-	trait DivisorLaws[A]  {
+		def apply: Unit
+		
 		val positiveInt: Gen[Int] = arbitrary[Int] suchThat (_ > 0) // avoid division by zero error here?
 
-		val divisorsToInitialValueByAnaThenCata = {
-			property("ana then cata should evaluate divisors back to initial value") =
+		val divisorsToInitialValueByAnaThenCata = describe("divisors") {
+			it("ana then cata should evaluate divisors back to initial value") {
 				forAll(positiveInt) { (number: Int) =>
-					number.ana[Fix[Exp]](divisors).cata(evaluate) == number
+					number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual number
 				}
+			}
 		}
 
-		val divisorsToInitialValueByHylo = {
-			property("hylo should evaluate divisors back to initial value") =
+		val divisorsToInitialValueByHylo = describe("divisors") {
+			it("hylo should evaluate divisors back to initial value") {
 				forAll(positiveInt) { (number: Int) =>
-					number.hylo[Exp, Double](evaluate, divisors) == number
+					number.hylo[Exp, Double](evaluate, divisors) shouldEqual number
 				}
+			}
 		}
 
-		val divisorsToInitialValueEquivHyloAndAnaCata = {
-			property("ana then cata is same as hylo for to evaluate divisors back to initial value") =
+		val divisorsToInitialValueEquivHyloAndAnaCata= describe("divisors") {
+			it("ana then cata is same as hylo for to evaluate divisors back to initial value"){
 				forAll(positiveInt) { (number: Int) =>
 
-					number.ana[Fix[Exp]](divisors).cata(evaluate) ==
+					number.ana[Fix[Exp]](divisors).cata(evaluate) shouldEqual
 						number.hylo[Exp, Double](evaluate, divisors)
 				}
+			}
 		}
 	}
 
-// TODO HELP left off here but cannot instantiate the divisorlaws because of no object but how else to define apply? 
-	/*object DivisorLaws {
-		def apply[A](implicit ev: Arbitrary[A]): DivisorLaws[A] = new DivisorLaws[A]{
-			override val positiveInt: Gen[Int] = ev
+	object DivisorLaws {
+		def apply(a: Unit): DivisorLaws = new DivisorLaws {
+			def apply = a
 		}
-	}*/
+	}
 }
-/*
-class DivisorHyloTests extends Properties("Hylo") /*with ScalaCheckPropertyChecks*/ with should.Matchers */
 
 
-object ExpWithAnaCataHyloProp extends DivisorLaws {
 
-	DivisorLaws[Int].divisorsToInitialValueByAnaThenCata
+
+object ExpWithAnaCataHyloProp extends Def {
+
+	DivisorLaws.divisorsToInitialValueByAnaThenCata
+	DivisorLaws.divisorsToInitialValueByHylo
+	DivisorLaws.divisorsToInitialValueEquivHyloAndAnaCata
 }
