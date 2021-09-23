@@ -39,6 +39,8 @@ import scalaz.syntax.all._
 //trait A extends AnyFunSpec
 /*
 trait Spec extends AnyFunSpec with BeforeAndAfterAll with ScalaCheckDrivenPropertyChecks  with should.Matchers*/
+// NOTE scalatestplus reference: https://github.com/subashprabanantham/hakuna-matata/blob/master/scalatest/src/test
+// /scala/BaseScalaSpec.scala
 
 
 class SpecClass extends Properties("Divisor Spec") /*with Spec*/ {

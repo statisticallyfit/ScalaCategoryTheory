@@ -342,6 +342,7 @@ object ExpRunner5 extends App {
 			))
 		))
 	))
+	val e = Multiply(Fix(IntValue[Fix[Exp]](5)), Fix(IntValue[Fix[Exp]](4))).embed
 
 	assert(180.ana[Fix[Exp]](divisors) == divisorsOf28,
 		"Test: anamorphism 180")
