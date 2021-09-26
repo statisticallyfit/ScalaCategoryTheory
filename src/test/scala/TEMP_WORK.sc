@@ -1,25 +1,21 @@
+import cats.Order
+import cats.syntax.order._
+import cats.instances.int._
 
-/*
-import cats.{Eq, Functor}
-import cats.implicits._
-import functor.data.Three
-import functor.data.Three.threeFunctor
+import cats.Functor
 
+import higherkindness.droste._
+import data._
+import list._
+import Basis._
 
-//Functor[Three[Int,Int,?]].map(Three(1,1, 2))(_ + 1).map(_ - 5).map(_ * 2)
-
-val t1: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(Three(1,1, 2))(_ + 1)
-val t2: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(t1)(_ - 5)
-val t3: Three[Int,Int,Int] = Functor[Three[Int,Int,?]].map(t2)(_ * 2)
-*/
-
-import cats.data.Validated
-import cats.data.Validated._
-import cats.{Eq, Functor, Monoid}
-import cats.implicits._
-import functor.data._
 import scala.language.higherKinds
 
+// 2.1 cata
 
+val prodAlg = Algebra[ListF[Int, ?], Int] {
+	case NilF => 1
+	case ConsF(h, t) => h * t
+}
 
-:kind Constant
+val prod = scheme.cata[ListF[Int, ?], List[Int], Int](prodAlg)

@@ -1,7 +1,9 @@
 package tutorialtests.PawelSzulc_GoingBananasWithRecursionSchemes
 
 
-
+/**
+ * Tutorial source = https://www.slideshare.net/paulszulc/going-bananas-with-recursion-schemes-for-fixed-point-data-types-72006242?next_slideshow=1
+ */
 
 
 //import org.scalatest.funspec.AnyFunSpec

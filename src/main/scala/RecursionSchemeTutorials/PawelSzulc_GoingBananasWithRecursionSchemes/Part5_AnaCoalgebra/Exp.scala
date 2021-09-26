@@ -1,7 +1,7 @@
 package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.Part5_AnaCoalgebra
 
 /**
- *
+ * Tutorial source = https://www.slideshare.net/paulszulc/going-bananas-with-recursion-schemes-for-fixed-point-data-types-72006242?next_slideshow=1
  */
 
 //import slamdata.Predef._
