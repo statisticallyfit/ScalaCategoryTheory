@@ -97,7 +97,7 @@ object ListF{
 			case ConsF(head: A, tail: A) => Monoid[A].combine(head, tail)
 		}
 
-	
+
 }
 
 
