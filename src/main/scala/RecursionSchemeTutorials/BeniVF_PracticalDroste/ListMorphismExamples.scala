@@ -53,10 +53,14 @@ object ListF{
 		}
 	}
 
-
-	// Catamorphism operations: F[A] => A ----------------------------------------------------------------
-
-
+	/**
+	 * Catamorphism operations
+	 *
+	 * PROP: `type Algebra[F[_], A] = F[A] => A`
+	 *
+	 * PROP: `def cata[F[_]: Functor, R, B](algebra: Algebra[F, B])(implicit project: Project[F, R]): R => B`
+	 */
+	// ----------------------------------------------------------------------------------------------
 
 	// Algebra[F, B] = Algebra[ListF[A, ?], List[A]]
 	// Project[F, R]
@@ -75,6 +79,7 @@ object ListF{
 
 
 	// NOTE: need the implicit Basis because otherwise ERROR: no implicits for Project[F, R]
+
 	def toList[A, B](b: B)(implicit B: Basis[ListF[A, ?], B]): List[A] = {
 		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(b)
 		//scheme.cata[F[_]: Functor, R, B]
@@ -85,7 +90,7 @@ object ListF{
 		// ---> B_ := List[A]
 	}
 
-
+	// ----------------------------------------------------------------------------------------------
 	def algebraLength[A]: Algebra[ListF[A, ?], Int] = // ListF[A, Int] => Int
 		Algebra {
 			case NilF() => 0
@@ -117,6 +122,71 @@ object ListF{
 		// ---> B := (A, String)
 	}
 
+	// ----------------------------------------------------------------------------------------------
+
+	/**
+	 * Anamorphism operations
+	 *
+	 * PROP: `type Coalgebra[F[_], A] = A => F[A]`
+	 *
+	 * PROP: `def ana[F[_]: Functor, A, R](coalgebra: Coalgebra[F, A])(implicit embed: Embed[F, R]): A => R`
+	 */
+	def coalgebraFromList[A]: Coalgebra[ListF[A, ?], List[A]] = // List[A] => ListF[A, List[A]]
+		Coalgebra {
+			case Nil => NilF()
+			case x :: xs => ConsF(x, xs)
+		}
+
+	// Embed[F[_], R]
+	// ---> F[_] := ListF[A, ?]
+	// ---> R := B
+	// scheme.ana[F, A, R] : A => R
+	// apply: A => R
+	// ---> A := List[A]
+	// ---> R := B
+	def fromList[A, B](list: List[A])(implicit B: Embed[ListF[A, ?], B]): B =
+		scheme.ana[ListF[A, ?], List[A], B](coalgebraFromList[A]).apply(list)
+
+	// NOTE: compare with scheme.cata[ListF[A, ?], B, List[A]]
+
+
+
+	// ----------------------------------------------------------------------------------------------
+
+	def coalgebraFactorial[A]: Coalgebra[ListF[Int, ?], Int] = // Int => ListF[Int, Int]
+		Coalgebra {
+			case 0 => NilF()
+			case n => ConsF(n, n - 1) 	// TODO meaning? how does this create the factorial?
+		}
+
+	def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, ?], R]): R = {
+		scheme.ana[ListF[Int, ?], Int, R](coalgebraFactorial).apply(n)
+		// Embed[F, A, R]
+		// apply: A => R
+		// ---> F[_] := ListF[Int, ?]
+		// ---> R := R
+		// ---> A := Int
+	}
+
+
+	// ----------------------------------------------------------------------------------------------
+
+
+	def coalgebraRepeat(givenInt: Int): Coalgebra[ListF[Int, ?], Int] = // Int => ListF[Int, ?]
+		Coalgebra {
+			case 0 => NilF()
+			case n => ConsF(givenInt, n - 1) // TODO meaning of this?
+		}
+
+	// Embed[F, R] = Embed[ListF[Int, ?], R]
+	// apply: A => R
+	// Coalgebra[F, A]
+	// ---> F[_] := ListF[Int, ?]
+	// ---> R := R := Int
+	// ---> A := Int
+	def fillByRepeat[R](numberToFillWith: Int, timesRepeat: Int)(implicit ev: Embed[ListF[Int, ?], R]): R =
+		scheme.ana[ListF[Int, ?], Int, R](coalgebraRepeat(numberToFillWith)).apply(timesRepeat)
 }
+
 
 
