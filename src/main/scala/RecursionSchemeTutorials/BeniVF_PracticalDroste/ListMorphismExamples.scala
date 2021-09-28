@@ -2,20 +2,19 @@ package RecursionSchemeTutorials.BeniVF_PracticalDroste
 
 
 import higherkindness.droste._
+import higherkindness.droste.data._
 import higherkindness.droste.data.Fix
-import higherkindness.droste.data.Mu.drosteBasisForMu
-import higherkindness.droste.data.Nu.drosteBasisForNu
 //import higherkindness.droste.syntax.FixSyntax._
 import higherkindness.droste.syntax.all._
 import higherkindness.droste.syntax._
 
-import higherkindness.droste.data._
-import list._
-import Basis._ // must import drostebasisforfix (implicit)
+
+
+//import Basis._ // must import drostebasisforfix (implicit)
 
 import cats._
 import cats.implicits._
-import cats.syntax.all._
+//import cats.syntax.all._
 
 /**
  * Tutorial source = https://github.com/BeniVF/practical-droste/blob/master/src/main/scala/list.scala#L20-L21
@@ -130,7 +129,7 @@ object ListF{
 	 * PROP: `type Coalgebra[F[_], A] = A => F[A]`
 	 *
 	 * PROP: `def ana[F[_]: Functor, A, R](coalgebra: Coalgebra[F, A])(implicit embed: Embed[F, R]): A => R`
-	 */
+	*/
 	def coalgebraFromList[A]: Coalgebra[ListF[A, ?], List[A]] = // List[A] => ListF[A, List[A]]
 		Coalgebra {
 			case Nil => NilF()
