@@ -59,23 +59,31 @@ object ListF{
 
 
 	// Algebra[F, B] = Algebra[ListF[A, ?], List[A]]
+	// Project[F, R]
 	// ---> F == ListF[A, ?]
 	// ---> B == List[A]
+	// ---> R == B
+	// apply(R) => B
+	// ---> apply(B) => List[A]
+	// ---> Basis[F, R] ---> Basis[ListF[A, ?], B]
+	// ---> Project[F, R] ---> Project[ListF[A, ?], B]
 	def algebraToList[A]: Algebra[ListF[A, ?], List[A]] = // ListF[A, List[A]] => List[A]
 		Algebra {
 			case NilF() => Nil
 			case ConsF(head : A, tail : List[A]) => head :: tail
 		}
 
-	// Project[F, R]
-	// ---> R == B
-	// apply(R) => B
-	// ---> apply(B) => List[A]
-	// ---> Basis[F, R] ---> Basis[ListF[A, ?], B]
-	// ---> Project[F, R] ---> Project[ListF[A, ?], B]
-	def toList[A, B](b: B)(implicit B: Basis[ListF[A, ?], B]): List[A] =
-		scheme.cata(algebraToList[A]).apply(b)
 
+	// NOTE: need the implicit Basis because otherwise ERROR: no implicits for Project[F, R]
+	def toList[A, B](b: B)(implicit B: Basis[ListF[A, ?], B]): List[A] = {
+		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(b)
+		//scheme.cata[F[_]: Functor, R, B]
+		// Basis[F[_], R]
+		// Project[F[_], R]
+		// apply: R_ => B_
+		// ---> R_ := B
+		// ---> B_ := List[A]
+	}
 
 
 	def algebraLength[A]: Algebra[ListF[A, ?], Int] = // ListF[A, Int] => Int
@@ -97,6 +105,17 @@ object ListF{
 			case ConsF(head: A, tail: A) => Monoid[A].combine(head, tail)
 		}
 
+
+	def combineAndShowAlgebras[A: Show : Monoid, B](b: B)(implicit B: Basis[ListF[A, ?], B]): (A, String) = {
+		scheme.cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(b)
+		// scheme.cata[F[_]: Functor, R, B]
+		// Basis[F[_]: Functor, R]
+		// Project[F[_]: Functor, R]
+		// apply: R => B
+		// ---> F[_] := ListF[A, ?]
+		// ---> R := B
+		// ---> B := (A, String)
+	}
 
 }
 
