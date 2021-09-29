@@ -440,12 +440,15 @@ object ListF{
 	def cvalgebraOdds[A]: CVAlgebra[ListF[A, ?], List[A]] =
 		CVAlgebra {
 			case NilF() => Nil
-			case ConsF(a: A, _ :< NilF() ) => Nil
-			case ConsF(a: A, _ :< ConsF(h, t :< _)) => h :: t // TODO meaning here? of :< ?? what comes after the `t`?
+			case ConsF(a: A, _ :< NilF() ) => List(a)
+			case ConsF(a1: A, _ :< ConsF(a2, t :< _)) => a1 :: t
+
+			// TODO meaning here? of :< ?? what comes after the `t`?
+			// TODO meaning of `t`?
 		}
 
 	def odds[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
-		scheme.zoo.histo(cvalgebraOdds[A]).apply(r)
+		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraOdds[A]).apply(r)
 		// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
 		// Attr[F, A] = (A, F[Attr[F, A]])
 		// ----> F[Attr[F, A]] => A
@@ -462,11 +465,38 @@ object ListF{
 
 	// ----------------------------------------------------------------------------------------------
 
-	//
+	// ListF[A, Attr[F, List[A]]] => List[A]
 	def cvalgebraEvens[A]: CVAlgebra[ListF[A, ?], List[A]] =
 		CVAlgebra {
-
+			case NilF() => Nil
+			case ConsF(a: A,  _ :< NilF() ) => Nil
+			case ConsF(a1: A,  _ :< ConsF(a2, t :< _)) => a2 :: t
 		}
+
+	def evens[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] =
+		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraEvens[A]).apply(r)
+
+	// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
+	// Attr[F, A] = (A, F[Attr[F, A]])
+	// ----> F[Attr[F, A]] => A
+	// ----> F[ (A, F[Attr[F, A]]) ] => A
+	// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
+	// Basis[F, R]
+	// histo.apply: R => A
+	// histo[F, R, A]
+	// ---> F[_]: ListF[A, ?]
+	// ---> R := B
+	// ---> A := List[A]
+
+
+}
+
+
+object Example {
+	import ListF._
+	import Fixed._
+
+
 }
 
 
