@@ -295,7 +295,7 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 	// ListF[A, (List[A], List[List[A]])] => List[List[A]]
-	def algebraSliding[A](n: Int): RAlgebra[List[A], ListF[A, ?], List[List[A]]] =
+	def ralgebraSliding[A](n: Int): RAlgebra[List[A], ListF[A, ?], List[List[A]]] =
 		RAlgebra {
 			case NilF() => Nil
 			case ConsF(a: A, (as: List[A], aas: List[List[A]])) => (a :: as).take(n) :: aas
@@ -303,7 +303,7 @@ object ListF{
 		}
 
 	def sliding[A](n: Int)(as: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[List[A]] = {
-		scheme.zoo.para(algebraSliding[A](n)).apply(as)
+		scheme.zoo.para(ralgebraSliding[A](n)).apply(as)
 		// RAlgebra[R, F[_], A]:   F[(R, A) => A
 		// Project[F, R]
 		// apply: R => A
@@ -318,7 +318,7 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 	/**
-	 * Apomorphism: A => F[Either[R, A]]
+	 * Apomorphism: `A => F[Either[R, A]]`
 	 * - A variation of an anamorphism that lets you terminate any point of the recursion using a value of the original input type.
 	 * - One use case is to return cached/precomputed results during an unfold
 	 *
@@ -330,8 +330,9 @@ object ListF{
 	 *
 	 * NOTE: `class GAlgebra[F[_], S, A](val run: F[S] => A)`
 	 *
-	 * PROP: `type RCoalgebra[R, F[_], A] = GCoalgebra[F, A, Either[R, A]]`
-	 * `A => F[Either[R, A]]`
+	 * PROP: `type RCoalgebra[R, F[_], A]
+	 * 			= GCoalgebra[F, A, Either[R, A]]
+	 * 			= A => F[Either[R, A]]`
 	 *
 	 * PROP: `class GCoalgebra[F[_], A, S](val run: A => F[S])`
 	 *
@@ -346,12 +347,126 @@ object ListF{
 		}
 
 	def mapHead[A](f: A => A)(as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
-		scheme.zoo.apo(rcoalgebraMapHead[A](f)).apply(as)
+		scheme.zoo.apo[ListF[A, ?], List[A], List[A]](rcoalgebraMapHead[A](f)).apply(as)
 		// RCoalgebra[R, F[_], A]: A => F[Either[R, A]]
 		// Embed[F, R]
 		// apply: A => R
 		// apo[F, A, R]
+		// ---> F[_]: ListF[A, ?]
+		// ---> A := List[A]
+		// ---> R := List[A]
 	}
+
+
+	// ----------------------------------------------------------------------------------------------
+
+	// A => F[Either[R, A]]
+	// RCoalgebra[R, F, A]
+	// ----> List[A] => ListF[A, List[A]]
+	def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, ?], List[A]] =
+		RCoalgebra {
+			case Nil => NilF()
+
+			// TODO why not `Right(Nil)`? since Nil is the last and should be "correct" by default?
+			case a :: Nil => ConsF(a, Left(Nil))
+
+			// NOTE: Reordered the `a`, so put it at front, then have Leftover y :: as so put it in the "wrong" or `Left` constructor
+			case a :: y :: as if a <= y => ConsF(a, Left(y :: as))
+
+			// TODO why is this Right if the above was Left and since now are both ordered???
+			case a :: y :: as => 	ConsF(y, Right(a :: as))
+		}
+
+
+	def knockback[A: Order](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] =
+		scheme.zoo.apo[ListF[A, ?], List[A], List[A]](rcoalgebraInsertElement[A]).apply(as)
+
+	// RCoalgebra[R, F[_], A]: A => F[Either[R, A]]
+	// Embed[F, R]
+	// apply: A => R
+	// apo[F, A, R]
+	// ---> F[_]: ListF[A, ?]
+	// ---> A := List[A]
+	// ---> R := List[A]
+
+
+	// TODO: can an algebra be defined with this implicit Embed hanging about? Usually only used for the
+	//  morphism-applying functions?
+
+	// ListF[A, List[A]] => List[A]
+	def algebraInsertionSort[A: Order](implicit ev: Embed[ListF[A, ?], List[A]]): Algebra[ListF[A, ?], List[A]] =
+		Algebra {
+			case NilF() => Nil
+			case ConsF(a: A, as: List[A]) => knockback(a :: as)
+		}
+
+	// PROP: `def hylo[F[_]: Functor, A, B](algebra: Algebra[F, B],coalgebra: Coalgebra[F, A]): A => B`
+
+	def insertionSort[A: Order, B](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
+		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraInsertionSort[A], coalgebraFromList[A]).apply(as)
+
+		// Algebra[F, B]: F[B] => B
+		// Coalgebra[F, A]: A => F[A]
+		// hylo.apply: A => B
+		// hylo[F, A, B]
+		// ---> F[_]: ListF[A, ?]
+		// ---> A := List[A]
+		// ---> B := List[A]
+	}
+
+
+
+	// ----------------------------------------------------------------------------------------------
+
+	/**
+	 * Histomorphism: `F[Attr[F, A]] => A`
+	 * - A variation of an catamorphism (tears down a structure) with previous answers it has given
+	 * TODO
+	 *
+	 * PROP: `type CVAlgebra[F[_], A]
+	 * 			= GAlgebra[F, Attr[F, A], A]
+	 * 			= F[Attr[F, A]] => A`
+	 *
+	 * PROP: `class GAlgebra[F[_], S, A](val run: F[S] => A)`
+	 *
+	 * PROP: `type Attr[F[_], A] = (A,  F[Attr[F, A]])`
+	 * `Attr` is a fix point function for types that adds an additional attribute to each node in
+	 * the resulting data structure. This is a cofree comonad. Implemented as an obscured alias
+	 *
+	 * PROP: `def histo[F[_]: Functor, R, A](cvalgebra: CVAlgebra[F, A])(implicit project: Project[F, R]): R => A`
+	 */
+
+		// ListF[A, Attr[F, List[A]]] => List[A]
+	def cvalgebraOdds[A]: CVAlgebra[ListF[A, ?], List[A]] =
+		CVAlgebra {
+			case NilF() => Nil
+			case ConsF(a: A, _ :< NilF() ) => Nil
+			case ConsF(a: A, _ :< ConsF(h, t :< _)) => h :: t // TODO meaning here? of :< ?? what comes after the `t`?
+		}
+
+	def odds[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
+		scheme.zoo.histo(cvalgebraOdds[A]).apply(r)
+		// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
+		// Attr[F, A] = (A, F[Attr[F, A]])
+		// ----> F[Attr[F, A]] => A
+		// ----> F[ (A, F[Attr[F, A]]) ] => A
+		// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
+		// Basis[F, R]
+		// histo.apply: R => A
+		// histo[F, R, A]
+		// ---> F[_]: ListF[A, ?]
+		// ---> R := B
+		// ---> A := List[A]
+	}
+
+
+	// ----------------------------------------------------------------------------------------------
+
+	//
+	def cvalgebraEvens[A]: CVAlgebra[ListF[A, ?], List[A]] =
+		CVAlgebra {
+
+		}
 }
 
 
