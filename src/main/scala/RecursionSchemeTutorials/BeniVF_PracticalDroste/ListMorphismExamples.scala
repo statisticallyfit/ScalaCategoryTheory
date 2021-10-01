@@ -126,7 +126,7 @@ object ListF{
 	 * PROP: `type Coalgebra[F[_], A] = A => F[A]`
 	 *
 	 * PROP: `def ana[F[_]: Functor, A, R](coalgebra: Coalgebra[F, A])(implicit embed: Embed[F, R]): A => R`
-	*/
+	 */
 	def coalgebraFromList[A]: Coalgebra[ListF[A, ?], List[A]] = // List[A] => ListF[A, List[A]]
 		Coalgebra {
 			case Nil => NilF()
@@ -169,16 +169,17 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 
-	def coalgebraRepeat(t: Int): Coalgebra[ListF[Int, ?], Int] = // Int => ListF[Int, Int]
+	def coalgebraRepeat[T](t: T): Coalgebra[ListF[T, ?], Int] = // Int => ListF[T, Int]
 		Coalgebra {
 			case 0 => NilF()
-			case n => ConsF(t: Int, (n - 1): Int) // NOTE: meaning: repeat givenInt now by n-1 since we used up
-			// the first repeat (n)
+			case n => ConsF(t: T, (n - 1): Int)
+
+			// NOTE: meaning: repeat givenInt now by n-1 since we used up the first repeat (n)
 		}
 
 
-	def fillByRepeat[R](numberToFillWith: Int, timesRepeat: Int)(implicit ev: Embed[ListF[Int, ?], R]): R =
-		scheme.ana[ListF[Int, ?], Int, R](coalgebraRepeat(numberToFillWith)).apply(timesRepeat)
+	def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, ?], R]): R =
+		scheme.ana[ListF[T, ?], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
 	// Coalgebra[F, A]:    A => F[A]
 	// Embed[F, R]
 	// ana[F, A, R].apply: A => R
@@ -331,7 +332,7 @@ object ListF{
 	 * PROP: `def apo[F[_]: Functor, A, R](rcoalgebra: RCoalgebra[R, F, A])(implicit embed: Embed[F, R]): A => R`
 	 */
 
-		// List[A] => ListF[A, Either[List[A], List[A]]]
+	// List[A] => ListF[A, Either[List[A], List[A]]]
 	def rcoalgebraMapHead[A](f: A => A): RCoalgebra[List[A], ListF[A, ?], List[A]] =
 		RCoalgebra {
 			case Nil => NilF()
@@ -351,10 +352,19 @@ object ListF{
 
 	// ----------------------------------------------------------------------------------------------
 
-	// A => F[Either[R, A]]
 	// RCoalgebra[R, F, A]
-	// ----> List[A] => ListF[A, List[A]]
+	// 		= A => F[Either[R, A]]
+	// ----> List[A] => ListF[A, Either[R, List[A]]
+
+
 	def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, ?], List[A]] =
+		RCoalgebra {
+			case Nil => 					NilF()
+			case a :: Nil => 				ConsF(a, Left(Nil))
+			case a :: y :: as if a <= y =>	ConsF(a, Left(y :: as))
+			case a :: y :: as => 			ConsF(y, Right(a :: as))
+		}
+	/*def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, ?], List[A]] =
 		RCoalgebra {
 			case Nil => NilF()
 
@@ -366,29 +376,32 @@ object ListF{
 
 			// TODO why is this Right if the above was Left and since now are both ordered???
 			case a :: y :: as => 	ConsF(y, Right(a :: as))
-		}
+		}*/
 
 
 	def knockback[A: Order](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] =
 		scheme.zoo.apo[ListF[A, ?], List[A], List[A]](rcoalgebraInsertElement[A]).apply(as)
+
+
 
 	// RCoalgebra[R, F[_], A]: A => F[Either[R, A]]
 	// Embed[F, R]
 	// apo[F, A, R].apply: A => R
 	// ---> F[_]: ListF[A, ?]
 	// ---> A := List[A]
-	// ---> R := List[A]
+	// ---> R := List[A] or just B
 
 
 	// TODO: can an algebra be defined with this implicit Embed hanging about? Usually only used for the
 	//  morphism-applying functions?
 
 	// ListF[A, List[A]] => List[A]
-	def algebraInsertionSort[A: Order](implicit ev: Embed[ListF[A, ?], List[A]]): Algebra[ListF[A, ?], List[A]] =
+	def algebraInsertionSort[A: Order](implicit ev: Embed[ListF[A, ?], List[A]]): Algebra[ListF[A, ?],	List[A]] =
 		Algebra {
 			case NilF() => Nil
 			case ConsF(a: A, as: List[A]) => knockback(a :: as)
 		}
+
 
 	// PROP: `def hylo[F[_]: Functor, A, B](algebra: Algebra[F, B],coalgebra: Coalgebra[F, A]): A => B`
 
@@ -396,15 +409,20 @@ object ListF{
 	// NOTE: need the extra embed implicit here to satisfy the corresponding extra Embed implicit
 	//  from  algebraInsertionSort
 
-	def insertionSort[A: Order/*, B*/](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
-		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraInsertionSort[A], coalgebraFromList[A]).apply(as)
+	def insertionSort[A: Order](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]],
+									 ev2: Basis[ListF[A, ?], List[A]]): List[A]
+	= {
+		scheme.hylo[ListF[A, ?], List[A], List[A]](
+			algebraInsertionSort[A],
+			coalgebraFromList[A]
+		).apply(as)
 
 		// Algebra[F, B]: F[B] => B
 		// Coalgebra[F, A]: A => F[A]
 		// hylo[F, A, B].apply: A => B
 		// ---> F[_]: ListF[A, ?]
 		// ---> A := List[A]
-		// ---> B := List[A]
+		// ---> B := List[A] or FixList[A] ... TODO
 	}
 
 
@@ -429,7 +447,7 @@ object ListF{
 	 * PROP: `def histo[F[_]: Functor, R, A](cvalgebra: CVAlgebra[F, A])(implicit project: Project[F, R]): R => A`
 	 */
 
-		// ListF[A, Attr[F, List[A]]] => List[A]
+	// ListF[A, Attr[F, List[A]]] => List[A]
 	def cvalgebraOdds[A]: CVAlgebra[ListF[A, ?], List[A]] =
 		CVAlgebra {
 			case NilF() => Nil
@@ -483,7 +501,9 @@ object ListF{
 }
 
 
-object Example {
+object Example extends App {
+
+
 	import ListF._
 	import FixList._
 
@@ -497,11 +517,14 @@ object Example {
 	val to: FixList[Int] = listF_4321
 	val from: List[Int] = List(3,1,2,2,4,3,5,1,6,2,1)
 
+
+
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfToList: List[Int] = toList[Int, List[Int]](from)
-	
+
 	val resultOfToListFix: List[Int] = toList[Int, FixList[Int]](to)
+	println("resultOfToListFix: " + resultOfToListFix)
 
 	/*def toList[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
 		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)
@@ -531,10 +554,12 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfCombineAlgebras: (Int, String) = combineAndShowAlgebras[Int, List[Int]](from)
+	println("resultOfCombineAlgebras: " + resultOfCombineAlgebras)
 	// combine[A, B]
 	// ---> B := List[Int]
 
 	val resultOfCombineAlgebrasFix: (Int, String) = combineAndShowAlgebras[Int, FixList[Int]](to)
+	Console.println("resultOfCombineAlgebrasFix: " + resultOfCombineAlgebrasFix)
 
 
 	/*def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit B: Basis[ListF[A, ?], B]): (A, String) = {
@@ -567,6 +592,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfFactorial: List[Int] = factorial(10) //factorial[FixList[Int]](10)
+	Console.println("resultOfFactorial: " + resultOfFactorial)
 
 	/*def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, ?], R]): R = {
 		scheme.ana[ListF[Int, ?], Int, R](coalgebraFactorial).apply(n)
@@ -594,6 +620,7 @@ object Example {
 	}*/
 
 	val resultFactorialFix: FixList[Int] = factorial[FixList[Int]](7)
+	Console.println("resultFactorialFix: " + resultFactorialFix)
 	// factorial[R]
 	// factorial[FixList[Int]]
 	// return type: R
@@ -601,11 +628,11 @@ object Example {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfFill: List[Int] = fillByRepeat[List[Int]](numberToFillWith = 3, timesRepeat = 10)
+	val resultOfFill: List[String] = fillByRepeat[String, List[String]]("panda", 10)
+	Console.println("resultOfFill: " + resultOfFill)
 
-
-	/*def fillByRepeat[R](numberToFillWith: Int, timesRepeat: Int)(implicit ev: Embed[ListF[Int, ?], R]): R =
-		scheme.ana[ListF[Int, ?], Int, R](coalgebraRepeat(numberToFillWith)).apply(timesRepeat)
+	/*def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, ?], R]): R =
+		scheme.ana[ListF[T, ?], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
 
 	// Coalgebra[F, A]:    A => F[A]
 	// Embed[F, R]
@@ -623,7 +650,8 @@ object Example {
 	TODO HELP same problem as for factorial: how to figure out runtime type of R?
 	*/
 
-	val resultOfFillFixList: FixList[Int] = fillByRepeat[FixList[Int]](3, 10)
+	val resultOfFillFix: FixList[Int] = fillByRepeat[Int, FixList[Int]](3, 10)
+	Console.println("resultOfFillFix: " + resultOfFillFix)
 	// fillByRepeat[R]
 	// fillByRepeat[FixList[Int]]
 	// return type: R
@@ -633,6 +661,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfFromList: List[Int] = fromList(from)
+	Console.println("resultOfFromList: " + resultOfFromList)
 
 	/*def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, ?], B]): B = {
 		scheme.ana[ListF[A, ?], List[A], B](coalgebraFromList[A]).apply(as)
@@ -655,7 +684,8 @@ object Example {
 
 	}*/
 
-	val resultFixListToList: FixList[Int] = fromList[Int, FixList[Int]](from)
+	val resultOfFromListFix: FixList[Int] = fromList[Int, FixList[Int]](from)
+	Console.println("resultOfFromListFix: " + resultOfFromListFix)
 	// fromList[A, B]
 	// fromList[Int, FixList[Int]]
 	// Embed[ListF[A, ?], B)
@@ -665,6 +695,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfSame: List[Int] = same[Int](List(1,2,3))
+	Console.println("resultOfSame: " + resultOfSame)
 
 	/*def same[A]: List[A] => List[A] =
 		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraToList[A], coalgebraFromList[A])
@@ -688,6 +719,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfLength: Int = length[Int](List(1,2,3,4,5))
+	Console.println("resultOfLength: " + resultOfLength)
 
 	/*def length[A]: List[A] => Int =
 		scheme.hylo[ListF[A, ?], List[A], Int](algebraLength[A], coalgebraFromList[A])
@@ -711,6 +743,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfCombineAll: Int = combineAll[Int].apply((1 to 1000).toList)
+	Console.println("resultOfCombineAll: " + resultOfCombineAll)
 
 	/*
 	def combineAll[A: Monoid]: List[A] => A =
@@ -730,11 +763,14 @@ object Example {
 	----> combineAll[Int].apply(...)
 	*/
 
+	val resultOfCombineAllString: String = combineAll[String].apply(List("cats", " ", "meow"))
+	Console.println("resultOfCombineAllString: " + resultOfCombineAllString)
+
 
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfReverseFactorial: List[Int] = factorialHylo(10)
-
+	Console.println("resultOfReverseFactorial: " + resultOfReverseFactorial)
 
 	/*def factorialHylo: Int => List[Int] =
 		scheme.hylo[ListF[Int, ?], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
@@ -749,6 +785,7 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfTail: List[Int] = tail[Int](List(1,2,3,4,5,6,7,8))
+	Console.println("resultOfTail: " + resultOfTail)
 
 	/*def tail[A](list: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[A] = {
 		scheme.zoo.para[ListF[A, ?], List[A], List[A]](ralgebraTail).apply(list)
@@ -767,9 +804,13 @@ object Example {
 		----> tail[Int]
 	}*/
 
+	val resultOfTailString: List[String] = tail[String](List("a", "b", "c", "d", "e"))
+	Console.println("resultOfTailString: " + resultOfTailString)
+
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfSlide: List[List[Int]] = sliding[Int](3)((1 to 5).toList)
+	Console.println("resultOfSlide: " + resultOfSlide)
 
 	/*def sliding[A](n: Int)(as: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[List[A]] = {
 		scheme.zoo.para(ralgebraSliding[A](n)).apply(as)
@@ -794,10 +835,19 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfMapHead: List[Int] = mapHead[Int](x => x + 1)(List(1,2,3,4))
+	Console.println("resultOfMapHead: " + resultOfMapHead)
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfSorted: List[Int] = insertionSort[Int](from)
+	//val resultOfSorted: List[String] = insertionSort[String, List[String]](List("b", "f", "g", "a", "x"))
+	val resultOfSorted: List[String] = insertionSort[String](List("b", "f", "g", "a", "x"))
+	Console.println("resultOfSorted: " + resultOfSorted)
+
+	//val resultOfSortedFix: FixList[Int] = insertionSort[Int, FixList[Int]](from)
+	// NOTE: not possible here to make it Fix because the algebra must be written with either Nil or
+	//  Fix(Nil) and that will give it away (cannot cement a value while having abstract type)
+	//  val resultOfSortedFix =  insertionSort[Int](from)
+	//Console.println("resultOfSortedFix: " + resultOfSortedFix)
 
 	/*def insertionSort[A: Order, B](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
 		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraInsertionSort[A], coalgebraFromList[A]).apply(as)
@@ -824,9 +874,14 @@ object Example {
 	// ------------------------------------------------------------------------------------------
 
 
-	val oddPosition: List[Int] = odds[Int, List[Int]]((1 to 10).toList)
+	val resultOfOdds: List[Int] = odds[Int, List[Int]]((1 to 10).toList)
+	Console.println("resultOfOdds: " + resultOfOdds)
 
-	val oddsFixResult: List[Int] = odds[Int, FixList[Int]](listF_4321)
+	val listF_10: FixList[Int] = cons(1, cons(2, cons(3, cons(4, cons(5, cons(6, cons(7, cons(8, cons(9, wrap(10))))
+	))))))
+
+	val resultOfOddsFix: List[Int] = odds[Int, FixList[Int]](listF_10)
+	Console.println("resultOfOddsFix: " + resultOfOddsFix)
 
 	/*def odds[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
 		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraOdds[A]).apply(r)
@@ -856,7 +911,8 @@ object Example {
 
 	// ------------------------------------------------------------------------------------------
 
-	val evenPosition: List[Int] = evens((1 to 10).toList)
+	val resultEvensFix: List[Int] = evens[Int, FixList[Int]](listF_10)
+	Console.println("resultEvensFix: " + resultEvensFix)
 
 	/*def evens[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] =
 		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraEvens[A]).apply(r)
