@@ -16,6 +16,11 @@ import cats._
 import cats.implicits._
 //import cats.syntax.all._
 
+
+import scala.reflect.runtime.universe._
+import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.util.TypeGetter
+
+
 /**
  * Tutorial source = https://github.com/BeniVF/practical-droste/blob/master/src/main/scala/list.scala#L20-L21
  */
@@ -44,10 +49,45 @@ object ListF{
 	}
 	//Functor
 	// :kind ListF[A, B] is * -> * -> * so need to keep type A const to fit in with Functor's kind * -> *
-	implicit def listFFunctor[A]: Functor[ListF[A, ?]] = new Functor[ListF[A, ?]] {
+	/*implicit def listFFunctor[A]: Functor[ListF[A, ?]] = new Functor[ListF[A, ?]] {
 		def map[B, C](fa: ListF[A, B])(f: B => C): ListF[A, C] = fa match {
 			case NilF()            => NilF()
 			case ConsF(head, tail) => ConsF(head, f(tail))
+		}
+	}*/
+
+	implicit def debug_listFFunctor[A/*: TypeTag*/]: Functor[ListF[A, ?]] = new Functor[ListF[A, ?]] {
+
+		def map[B/*: TypeTag*/, C/*: TypeTag*/](fa: ListF[A, B])(f: B => C): ListF[A, C] = {
+
+			// operation 1 (print state)
+			/*val A_TYPE = typeOf[A]
+			val B_TYPE = typeOf[B]
+			val C_TYPE = typeOf[C]*/
+
+
+
+			// operation 2 (of the functor)
+			fa match {
+				case NilF() => {
+					Console.println(s"listFFunctor[A]")
+					Console.println(s"\t | fa := $fa")
+
+					Console.println(s"\t | case NilF() | => NilF()")
+
+					NilF()
+				}
+				case ConsF(head, tail) => {
+					Console.println(s"listFFunctor[A]")
+					Console.println(s"\t | fa := $fa")
+
+					Console.println(s"\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
+						s"| => ConsF(head, f(tail)) " +
+						s"=> ConsF($head, ${f(tail)})")
+
+					ConsF(head, f(tail))
+				}
+			}
 		}
 	}
 
@@ -71,6 +111,33 @@ object ListF{
 		// ---> F[_]: ListF[A, ?]
 		// ---> B := List[A]
 	}
+	// ListF[A, List[A]] => List[A]
+	def debug_algebraToList[A: TypeTag]: Algebra[ListF[A, ?], List[A]] = Algebra { listFAlist =>
+
+		val AT = typeOf[A]
+
+		// operation 1 (show state)
+		Console.println(s"algebraToList[$AT]")
+		Console.println(s"\t | x0 := $listFAlist ")
+
+		// operation 2 (output)
+		listFAlist match {
+			case NilF() => {
+				Console.println(s"\t | case NilF() | => Nil ")
+
+				Nil
+			}
+			case ConsF(head : A, tail : List[A]) => {
+				Console.println(s"\t | case ConsF(head: A, tail: List[A]) " +
+					s"=> case ConsF($head: $AT, $tail: List[$AT]) " +
+					s"| => $head :: $tail")
+
+				head :: tail
+			}
+		}
+
+	}
+
 
 
 	// NOTE: need the implicit Basis because otherwise ERROR: no implicits for Project[F, R]
@@ -84,6 +151,19 @@ object ListF{
 		// ---> R := B
 		// ---> B := List[A]
 	}
+
+	def debug_toList[A: TypeTag, B/*: TypeTag*/](r: B)(implicit ev: Project[ListF[A, ?], B]): List[A] = {
+
+		val AT = typeOf[A]
+		//val BT = typeTag[B].tpe.dealias // TODO fix hack - how to check it is a type alias?
+
+		Console.println(s"cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)")
+		Console.println(s"cata[ListF[$AT, ?], B, List[$AT]](algebraToList[$AT]).apply($r)")
+		Console.println(s"\t | r := $r")
+
+		scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r)
+	}
+
 
 	// ----------------------------------------------------------------------------------------------
 	def algebraLength[A]: Algebra[ListF[A, ?], Int] = // ListF[A, Int] => Int
@@ -106,7 +186,79 @@ object ListF{
 		}
 
 
+	// ListF[A, A] => A
+	def debug_algebraMonoid[A: Monoid : TypeTag]: Algebra[ListF[A, ?], A] = Algebra { listfAA =>
+
+		// operation 1 (show state)
+		val A_TYPE = typeOf[A]
+
+		Console.println(s"algebraMonoid[$A_TYPE]")
+		Console.println(s"\t | x0 := $listfAA")
+
+
+		// operation 2
+		listfAA match {
+			case NilF() => {
+				Console.println(s"\t | case NilF() => " +
+					s"Monoid[$A_TYPE].empty | => ${Monoid[A].empty}")
+
+				Monoid[A].empty
+			}
+			case ConsF(head: A, tail: A) => {
+
+				Console.println(s"\t | case ConsF($head: $A_TYPE, $tail: $A_TYPE) " +
+					s"=> Monoid[$A_TYPE].combine($head, $tail) " +
+					s"| => ${Monoid[A].combine(head, tail)}")
+
+				Monoid[A].combine(head, tail)
+			}
+		}
+	}
+
+
+	// ListF[A, String] => String
+	def debug_algebraShow[A: Show: TypeTag]: Algebra[ListF[A, ?], String] = Algebra { listfAStr =>
+
+		// operation 1 (show state)
+		val A_TYPE = typeOf[A]
+
+
+		Console.println(s"algebraShow[$A_TYPE]")
+		Console.println(s"\t | x0 := $listfAStr")
+
+		// operation 2
+		listfAStr match {
+			case NilF() => {
+				Console.println(s"\t | case NilF() | => '.' ")
+				"."
+			}
+			case ConsF(head: A, accStr: String) => {
+				Console.println(s"\t | case ConsF($head: $A_TYPE, $accStr: String) " +
+					s"| => ${head.show} :: $accStr")
+
+				s"${head.show} :: $accStr"
+			}
+		}
+	}
+
+
+
+
 	// TODO changed this to be Project instead of Basis
+
+	def debug_combineAndShowAlgebras[A: Show : Monoid: TypeTag, B/*: TypeTag*/](r: B)(implicit ev: Project[ListF[A, ?], B])
+	: (A,	String)	= {
+
+		val AT = typeOf[A]
+		//val BT = typeOf[B]
+
+		Console.println(s"cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)")
+		Console.println(s"cata[ListF[$AT, ?], B, ($AT, String)](algebraMonoid[$AT].zip(algebraShow[$AT])).apply" +
+			s"($r)")
+		Console.println(s"\t | r := $r")
+
+		scheme.cata[ListF[A, ?], B, (A, String)](debug_algebraMonoid[A].zip(debug_algebraShow[A])).apply(r)
+	}
 
 	def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit ev: Project[ListF[A, ?], B]): (A, String) = {
 		scheme.cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)
@@ -507,7 +659,7 @@ object Example extends App {
 	import ListF._
 	import FixList._
 
-	// TODO what does this do? does it convert from ListF[A, ?] to List[A]   ????
+
 	implicit def basis[A]: Basis[ListF[A, ?], List[A]] =
 		Basis.Default(algebraToList[A], coalgebraFromList[A])
 
@@ -521,10 +673,15 @@ object Example extends App {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfToList: List[Int] = toList[Int, List[Int]](from)
+	Console.println("================================================================================================")
+	Console.print("resultOfToList: ")
+	val resultOfToList: List[Int] = debug_toList[Int, List[Int]](from)
+	Console.println(resultOfToList)
 
-	val resultOfToListFix: List[Int] = toList[Int, FixList[Int]](to)
-	println("resultOfToListFix: " + resultOfToListFix)
+	Console.println("------------------------------------------------------------------------------------------------")
+	Console.print("resultOfToListFix: ")
+	val resultOfToListFix: List[Int] = debug_toList[Int, FixList[Int]](to)
+	Console.println(resultOfToListFix)
 
 	/*def toList[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
 		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)
@@ -553,13 +710,17 @@ object Example extends App {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfCombineAlgebras: (Int, String) = combineAndShowAlgebras[Int, List[Int]](from)
-	println("resultOfCombineAlgebras: " + resultOfCombineAlgebras)
+	Console.println("================================================================================================")
+	Console.print("resultOfCombineAlgebras: ")
+	val resultOfCombineAlgebras: (Int, String) = debug_combineAndShowAlgebras[Int, List[Int]](from)
+	Console.println(resultOfCombineAlgebras)
 	// combine[A, B]
 	// ---> B := List[Int]
 
-	val resultOfCombineAlgebrasFix: (Int, String) = combineAndShowAlgebras[Int, FixList[Int]](to)
-	Console.println("resultOfCombineAlgebrasFix: " + resultOfCombineAlgebrasFix)
+	Console.println("------------------------------------------------------------------------------------------")
+	Console.print("resultOfCombineAlgebrasFix: ")
+	val resultOfCombineAlgebrasFix: (Int, String) = debug_combineAndShowAlgebras[Int, FixList[Int]](to)
+	Console.println(resultOfCombineAlgebrasFix)
 
 
 	/*def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit B: Basis[ListF[A, ?], B]): (A, String) = {

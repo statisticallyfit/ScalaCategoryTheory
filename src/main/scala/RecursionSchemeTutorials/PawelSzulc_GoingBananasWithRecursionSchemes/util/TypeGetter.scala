@@ -1,6 +1,6 @@
 package RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.util
 
-import slamdata.Predef.String
+//import slamdata.Predef.String
 
 import scala.reflect.runtime.universe._
 /**
@@ -9,6 +9,7 @@ import scala.reflect.runtime.universe._
 
 object TypeGetter {
 
+	def tpe[T: TypeTag] = typeOf[T]
 
 	def typeof[T: TypeTag](obj: T) = typeOf[T]
 
