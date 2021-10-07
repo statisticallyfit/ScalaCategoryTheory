@@ -4,6 +4,8 @@ package RecursionSchemeTutorials.BeniVF_PracticalDroste
 import higherkindness.droste._
 import higherkindness.droste.data._
 import higherkindness.droste.data.Fix
+
+import scala.collection.mutable.ListBuffer
 //import higherkindness.droste.syntax.FixSyntax._
 import higherkindness.droste.syntax.all._
 //import higherkindness.droste.syntax._
@@ -61,35 +63,31 @@ object ListF{
 		def map[B/*: TypeTag*/, C/*: TypeTag*/](fa: ListF[A, B])(f: B => C): ListF[A, C] = {
 
 			// operation 1 (print state)
-			/*val A_TYPE = typeOf[A]
-			val B_TYPE = typeOf[B]
-			val C_TYPE = typeOf[C]*/
-
-
+			/*Console.println(s"listFFunctor[A]")
+			Console.println(s"\t | fa := $fa")*/ // TODO why doesn't this print out????
 
 			// operation 2 (of the functor)
 			fa match {
 				case NilF() => {
-					Console.println(s"listFFunctor[A]")
-					Console.println(s"\t | fa := $fa")
-
-					Console.println(s"\t | case NilF() | => NilF()")
-
+					Console.println(s"listFFunctor[A]\n\t | fa := $fa \n\t | case NilF() | => NilF()")
 					NilF()
 				}
 				case ConsF(head, tail) => {
-					Console.println(s"listFFunctor[A]")
-					Console.println(s"\t | fa := $fa")
-
-					Console.println(s"\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
+					Console.println(s"listFFunctor[A]\n\t | fa := $fa " +
+						s"\n\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
 						s"| => ConsF(head, f(tail)) " +
 						s"=> ConsF($head, ${f(tail)})")
-
 					ConsF(head, f(tail))
 				}
 			}
 		}
 	}
+
+
+	def debug[V](value: sourcecode.Text[V])(implicit name: sourcecode.Name) = {
+		println(name.value + " [" + value.source + "]: " + value.value)
+	}
+
 
 	/**
 	 * Catamorphism operations
@@ -111,26 +109,56 @@ object ListF{
 		// ---> F[_]: ListF[A, ?]
 		// ---> B := List[A]
 	}
+
+
+
+	def accum[A, B](newX0: ListF[A, B]): ListBuffer[ListF[A, B]] = {
+		acc += newX0
+	}
+	def acc[A, B]: ListBuffer[ListF[A, B]] = ListBuffer()
+
+	def decidePrint[A, B](currX0: ListF[A, B]): Boolean = {
+		// Decide whether to print (to not repeat)
+		val prevX0Exists = if(acc.length >= 2) true else false
+		val isNilCase: Boolean = currX0 == NilF() && prevX0Exists
+		val isNotNilCase: Boolean = currX0 != NilF() && acc.contains(currX0)
+		val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
+
+		return IS_PRINT
+	}
+
+
 	// ListF[A, List[A]] => List[A]
-	def debug_algebraToList[A: TypeTag]: Algebra[ListF[A, ?], List[A]] = Algebra { listFAlist =>
+	def debug_algebraToList[A: TypeTag]: Algebra[ListF[A, ?], List[A]] = Algebra { listFAList =>
 
 		val AT = typeOf[A]
 
 		// operation 1 (show state)
 		Console.println(s"algebraToList[$AT]")
-		Console.println(s"\t | x0 := $listFAlist ")
+		Console.println(s"\t | x0 := $listFAList ")
+
+		// Add this current x0 to the global state accumulator
+		accum(listFAList)
+
+		val IS_PRINT: Boolean = decidePrint(listFAList)
 
 		// operation 2 (output)
-		listFAlist match {
+		listFAList match {
 			case NilF() => {
-				Console.println(s"\t | case NilF() | => Nil ")
+
+				if(IS_PRINT){ //only if allowed to print can you print
+					Console.println(s"\t | case NilF() | => Nil ")
+				}
 
 				Nil
 			}
 			case ConsF(head : A, tail : List[A]) => {
-				Console.println(s"\t | case ConsF(head: A, tail: List[A]) " +
-					s"=> case ConsF($head: $AT, $tail: List[$AT]) " +
-					s"| => $head :: $tail")
+
+				if(IS_PRINT){
+					Console.println(s"\t | case ConsF(head: A, tail: List[A]) " +
+						s"=> case ConsF($head: $AT, $tail: List[$AT]) " +
+						s"| => $head :: $tail")
+				}
 
 				head :: tail
 			}
@@ -160,6 +188,8 @@ object ListF{
 		Console.println(s"cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)")
 		Console.println(s"cata[ListF[$AT, ?], B, List[$AT]](algebraToList[$AT]).apply($r)")
 		Console.println(s"\t | r := $r")
+
+		debug(scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r))
 
 		scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r)
 	}
@@ -284,6 +314,29 @@ object ListF{
 			case Nil => NilF()
 			case x :: xs => ConsF(x, xs)
 		}
+
+	// List[A] => ListF[A, List[A]]
+	def debug_coalgebraFromList[A: TypeTag]: Coalgebra[ListF[A, ?], List[A]] = Coalgebra { listA =>
+
+		// operation 1 (show state)
+		val AT = typeOf[A]
+
+		Console.println(s"coalgebraFromList[$AT]")
+		Console.println(s"\t | x0 := $listA")
+
+		listA match {
+			case Nil => {
+				Console.println(s"\t | case Nil | => NilF()")
+				NilF()
+			}
+			case x :: xs => {
+				Console.println(s"\t | case x :: xs = case $x :: $xs " +
+					s"| => ConsF(x, xs) = ConsF($x, $xs)")
+
+				ConsF(x, xs)
+			}
+		}
+	}
 
 	def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, ?], B]): B = {
 		scheme.ana[ListF[A, ?], List[A], B](coalgebraFromList[A]).apply(as)
@@ -660,8 +713,8 @@ object Example extends App {
 	import FixList._
 
 
-	implicit def basis[A]: Basis[ListF[A, ?], List[A]] =
-		Basis.Default(algebraToList[A], coalgebraFromList[A])
+	implicit def basis[A: TypeTag]: Basis[ListF[A, ?], List[A]] =
+		Basis.Default(debug_algebraToList[A], debug_coalgebraFromList[A])
 
 
 	val listF_12: FixList[Int] = cons(1, wrap(2))
@@ -670,16 +723,21 @@ object Example extends App {
 	val from: List[Int] = List(3,1,2,2,4,3,5,1,6,2,1)
 
 
+	// TODO testing debug sourcecode
+
+
+
+
 
 	// ------------------------------------------------------------------------------------------
 
 	Console.println("================================================================================================")
-	Console.print("resultOfToList: ")
-	val resultOfToList: List[Int] = debug_toList[Int, List[Int]](from)
-	Console.println(resultOfToList)
+	Console.println("resultOfToList: ")
+	//val resultOfToList: List[Int] = debug_toList[Int, List[Int]](from)
+	//Console.println(resultOfToList)
 
 	Console.println("------------------------------------------------------------------------------------------------")
-	Console.print("resultOfToListFix: ")
+	Console.println("resultOfToListFix: ")
 	val resultOfToListFix: List[Int] = debug_toList[Int, FixList[Int]](to)
 	Console.println(resultOfToListFix)
 
@@ -711,14 +769,14 @@ object Example extends App {
 	// ------------------------------------------------------------------------------------------
 
 	Console.println("================================================================================================")
-	Console.print("resultOfCombineAlgebras: ")
+	Console.println("resultOfCombineAlgebras: ")
 	val resultOfCombineAlgebras: (Int, String) = debug_combineAndShowAlgebras[Int, List[Int]](from)
 	Console.println(resultOfCombineAlgebras)
 	// combine[A, B]
 	// ---> B := List[Int]
 
 	Console.println("------------------------------------------------------------------------------------------")
-	Console.print("resultOfCombineAlgebrasFix: ")
+	Console.println("resultOfCombineAlgebrasFix: ")
 	val resultOfCombineAlgebrasFix: (Int, String) = debug_combineAndShowAlgebras[Int, FixList[Int]](to)
 	Console.println(resultOfCombineAlgebrasFix)
 
