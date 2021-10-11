@@ -28,13 +28,51 @@ import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.util
  */
 
 
+object AccumulatorDebug {
+
+	case class Acc(){
+		//type B = List[A]
+
+		//val acc: ListBuffer[ListF[A, List[A]]] = ListBuffer()
+		val acc: ListBuffer[Any] = ListBuffer()
+
+		def set[A, B](newX0: ListF[A, B]) = acc += newX0
+		def get = acc
+
+		def reset(): Unit = acc.clear()
+	}
+
+	//implicit def accObj[A]: Acc[A, List[A]] = Acc()
+	//type T <: Any
+	val accAlgObj = Acc()
+	val accAlgObj2 = Acc()
+	val accFunctorObj = Acc()
+
+
+	def decidePrint[A, B](accObj: Acc, currX0: ListF[A, B]): Boolean = {
+		// Decide whether to print (to not repeat)
+		val prevX0Exists = if(accObj.acc.length >= 2) true else false
+		val isNilCase: Boolean = currX0 == NilF() && prevX0Exists
+		val isNotNilCase: Boolean = currX0 != NilF() && accObj.acc.contains(currX0)
+		val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
+
+		return IS_PRINT
+	}
+}
+import AccumulatorDebug._
+
+
+
 sealed trait ListF[A, B]
 
-object ListF{
 
-	// The data structure
-	final case class ConsF[A, B](head: A, tail: B) extends ListF[A, B]
-	final case class NilF[A, B]() extends ListF[A, B]
+// The data structure
+final case class ConsF[A, B](head: A, tail: B) extends ListF[A, B]
+final case class NilF[A, B]() extends ListF[A, B]
+
+
+
+object ListF{
 
 	// Fixed points (to kill the recursion)
 	type FixList[A] = Fix[ListF[A, ?]]
@@ -66,17 +104,36 @@ object ListF{
 			/*Console.println(s"listFFunctor[A]")
 			Console.println(s"\t | fa := $fa")*/ // TODO why doesn't this print out????
 
+
+
 			// operation 2 (of the functor)
 			fa match {
+
 				case NilF() => {
-					Console.println(s"listFFunctor[A]\n\t | fa := $fa \n\t | case NilF() | => NilF()")
+
+					val IS_PRINT: Boolean = decidePrint(accFunctorObj, fa)
+
+					accFunctorObj.set[A, B](fa)
+					//Console.println(s"PRINTING ACC FUNCTOR OBJ: ${accFunctorObj.acc}")
+
+					if(IS_PRINT){
+						Console.println(s"listFFunctor[A]\n\t | fa := $fa \n\t | case NilF() | => NilF()")
+					}
 					NilF()
 				}
 				case ConsF(head, tail) => {
-					Console.println(s"listFFunctor[A]\n\t | fa := $fa " +
-						s"\n\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
-						s"| => ConsF(head, f(tail)) " +
-						s"=> ConsF($head, ${f(tail)})")
+
+					val IS_PRINT: Boolean = decidePrint(accFunctorObj, fa)
+
+					accFunctorObj.set[A, B](fa)
+					//Console.println(s"PRINTING ACC FUNCTOR OBJ: ${accFunctorObj.acc}")
+
+					if(IS_PRINT){
+						Console.println(s"listFFunctor[A]\n\t | fa := $fa " +
+							s"\n\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
+							s"| => ConsF(head, f(tail)) " +
+							s"=> ConsF($head, ${f(tail)})")
+					}
 					ConsF(head, f(tail))
 				}
 			}
@@ -84,9 +141,9 @@ object ListF{
 	}
 
 
-	def debug[V](value: sourcecode.Text[V])(implicit name: sourcecode.Name) = {
+	/*def debug[V](value: sourcecode.Text[V])(implicit name: sourcecode.Name) = {
 		println(name.value + " [" + value.source + "]: " + value.value)
-	}
+	}*/
 
 
 	/**
@@ -112,41 +169,29 @@ object ListF{
 
 
 
-	def accum[A, B](newX0: ListF[A, B]): ListBuffer[ListF[A, B]] = {
-		acc += newX0
-	}
-	def acc[A, B]: ListBuffer[ListF[A, B]] = ListBuffer()
-
-	def decidePrint[A, B](currX0: ListF[A, B]): Boolean = {
-		// Decide whether to print (to not repeat)
-		val prevX0Exists = if(acc.length >= 2) true else false
-		val isNilCase: Boolean = currX0 == NilF() && prevX0Exists
-		val isNotNilCase: Boolean = currX0 != NilF() && acc.contains(currX0)
-		val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
-
-		return IS_PRINT
-	}
-
 
 	// ListF[A, List[A]] => List[A]
-	def debug_algebraToList[A: TypeTag]: Algebra[ListF[A, ?], List[A]] = Algebra { listFAList =>
+	def debug_algebraToList[A: TypeTag]/*(accObj: Acc[A, List[A]])*/: Algebra[ListF[A, ?], List[A]] = Algebra {
+		(listFAList: ListF[A, List[A]]) =>
 
 		val AT = typeOf[A]
 
-		// operation 1 (show state)
-		Console.println(s"algebraToList[$AT]")
-		Console.println(s"\t | x0 := $listFAList ")
+
+		val IS_PRINT: Boolean = decidePrint(accAlgObj,listFAList)
 
 		// Add this current x0 to the global state accumulator
-		accum(listFAList)
+		accAlgObj.set[A, List[A]](listFAList)
 
-		val IS_PRINT: Boolean = decidePrint(listFAList)
 
 		// operation 2 (output)
 		listFAList match {
 			case NilF() => {
 
+				//Console.println(s"PRINTING ACC ALG OBJ: ${accAlgObj.acc}")
+
 				if(IS_PRINT){ //only if allowed to print can you print
+					Console.println(s"algebraToList[$AT]")
+					Console.println(s"\t | x0 := $listFAList ")
 					Console.println(s"\t | case NilF() | => Nil ")
 				}
 
@@ -154,7 +199,11 @@ object ListF{
 			}
 			case ConsF(head : A, tail : List[A]) => {
 
+				//Console.println(s"PRINTING ACC ALG OBJ: ${accAlgObj.acc}")
+
 				if(IS_PRINT){
+					Console.println(s"algebraToList[$AT]")
+					Console.println(s"\t | x0 := $listFAList ")
 					Console.println(s"\t | case ConsF(head: A, tail: List[A]) " +
 						s"=> case ConsF($head: $AT, $tail: List[$AT]) " +
 						s"| => $head :: $tail")
@@ -180,6 +229,8 @@ object ListF{
 		// ---> B := List[A]
 	}
 
+
+
 	def debug_toList[A: TypeTag, B/*: TypeTag*/](r: B)(implicit ev: Project[ListF[A, ?], B]): List[A] = {
 
 		val AT = typeOf[A]
@@ -189,9 +240,11 @@ object ListF{
 		Console.println(s"cata[ListF[$AT, ?], B, List[$AT]](algebraToList[$AT]).apply($r)")
 		Console.println(s"\t | r := $r")
 
-		debug(scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r))
+		//debug(scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r))
 
-		scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r)
+
+
+		scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]/*(accObj)*/).apply(r)
 	}
 
 
@@ -220,25 +273,43 @@ object ListF{
 	def debug_algebraMonoid[A: Monoid : TypeTag]: Algebra[ListF[A, ?], A] = Algebra { listfAA =>
 
 		// operation 1 (show state)
-		val A_TYPE = typeOf[A]
+		val AT = typeOf[A]
 
-		Console.println(s"algebraMonoid[$A_TYPE]")
-		Console.println(s"\t | x0 := $listfAA")
 
+
+		// Decide whether to print this new current value (if not duplicate of the previous one)
+		val IS_PRINT: Boolean = decidePrint(accAlgObj, listfAA)
+		// Add this current x0 to the global state accumulator
+		accAlgObj.set[A, A](listfAA)
 
 		// operation 2
 		listfAA match {
 			case NilF() => {
-				Console.println(s"\t | case NilF() => " +
-					s"Monoid[$A_TYPE].empty | => ${Monoid[A].empty}")
+
+				//Console.println(s"PRINTING ACC OBJ ALG-MONOID: ${accAlgObj.acc}")
+
+				if(IS_PRINT){
+					Console.println(s"algebraMonoid[$AT]")
+					Console.println(s"\t | x0 := $listfAA")
+
+					Console.println(s"\t | case NilF() => " +
+						s"Monoid[$AT].empty | => ${Monoid[A].empty}")
+				}
 
 				Monoid[A].empty
 			}
 			case ConsF(head: A, tail: A) => {
 
-				Console.println(s"\t | case ConsF($head: $A_TYPE, $tail: $A_TYPE) " +
-					s"=> Monoid[$A_TYPE].combine($head, $tail) " +
-					s"| => ${Monoid[A].combine(head, tail)}")
+				//Console.println(s"PRINTING ACC OBJ ALG-MONOID: ${accAlgObj.acc}")
+
+				if(IS_PRINT){
+					Console.println(s"algebraMonoid[$AT]")
+					Console.println(s"\t | x0 := $listfAA")
+
+					Console.println(s"\t | case ConsF($head: $AT, $tail: $AT) " +
+						s"=> Monoid[$AT].combine($head, $tail) " +
+						s"| => ${Monoid[A].combine(head, tail)}")
+				}
 
 				Monoid[A].combine(head, tail)
 			}
@@ -250,21 +321,42 @@ object ListF{
 	def debug_algebraShow[A: Show: TypeTag]: Algebra[ListF[A, ?], String] = Algebra { listfAStr =>
 
 		// operation 1 (show state)
-		val A_TYPE = typeOf[A]
+		val AT = typeOf[A]
 
 
-		Console.println(s"algebraShow[$A_TYPE]")
-		Console.println(s"\t | x0 := $listfAStr")
+
+
+
+		// Decide whether to print this new current value (if not duplicate of the previous one)
+		val IS_PRINT: Boolean = decidePrint(accAlgObj2, listfAStr)
+		// Add this current x0 to the global state accumulator
+		accAlgObj2.set[A, String](listfAStr)
+
 
 		// operation 2
 		listfAStr match {
 			case NilF() => {
-				Console.println(s"\t | case NilF() | => '.' ")
+				//Console.println(s"PRINTING ACC OBJ ALG-SHOW: ${accAlgObj2.acc}")
+
+				if(IS_PRINT){
+					Console.println(s"algebraShow[$AT]")
+					Console.println(s"\t | x0 := $listfAStr")
+
+					Console.println(s"\t | case NilF() | => '.' ")
+				}
+
 				"."
 			}
 			case ConsF(head: A, accStr: String) => {
-				Console.println(s"\t | case ConsF($head: $A_TYPE, $accStr: String) " +
-					s"| => ${head.show} :: $accStr")
+				//Console.println(s"PRINTING ACC OBJ ALG-SHOW: ${accAlgObj2.acc}")
+
+				if(IS_PRINT){
+					Console.println(s"algebraShow[$AT]")
+					Console.println(s"\t | x0 := $listfAStr")
+
+					Console.println(s"\t | case ConsF($head: $AT, $accStr: String) " +
+						s"| => ${head.show} :: $accStr")
+				}
 
 				s"${head.show} :: $accStr"
 			}
@@ -713,9 +805,6 @@ object Example extends App {
 	import FixList._
 
 
-	implicit def basis[A: TypeTag]: Basis[ListF[A, ?], List[A]] =
-		Basis.Default(debug_algebraToList[A], debug_coalgebraFromList[A])
-
 
 	val listF_12: FixList[Int] = cons(1, wrap(2))
 	val listF_4321: FixList[Int] = cons(4, cons(3, cons(2, wrap(1))))
@@ -723,7 +812,14 @@ object Example extends App {
 	val from: List[Int] = List(3,1,2,2,4,3,5,1,6,2,1)
 
 
-	// TODO testing debug sourcecode
+	//val accObj
+
+
+	implicit def basis[A: TypeTag]: Basis[ListF[A, ?], List[A]] =
+		Basis.Default(algebraToList[A], coalgebraFromList[A])
+
+
+
 
 
 
@@ -737,7 +833,11 @@ object Example extends App {
 	//Console.println(resultOfToList)
 
 	Console.println("------------------------------------------------------------------------------------------------")
+
 	Console.println("resultOfToListFix: ")
+	accAlgObj.reset()
+	accAlgObj2.reset()
+	accFunctorObj.reset()
 	val resultOfToListFix: List[Int] = debug_toList[Int, FixList[Int]](to)
 	Console.println(resultOfToListFix)
 
@@ -770,6 +870,9 @@ object Example extends App {
 
 	Console.println("================================================================================================")
 	Console.println("resultOfCombineAlgebras: ")
+	accAlgObj.reset()
+	accAlgObj2.reset()
+	accFunctorObj.reset()
 	val resultOfCombineAlgebras: (Int, String) = debug_combineAndShowAlgebras[Int, List[Int]](from)
 	Console.println(resultOfCombineAlgebras)
 	// combine[A, B]
@@ -777,6 +880,9 @@ object Example extends App {
 
 	Console.println("------------------------------------------------------------------------------------------")
 	Console.println("resultOfCombineAlgebrasFix: ")
+	accAlgObj.reset()
+	accAlgObj2.reset()
+	accFunctorObj.reset()
 	val resultOfCombineAlgebrasFix: (Int, String) = debug_combineAndShowAlgebras[Int, FixList[Int]](to)
 	Console.println(resultOfCombineAlgebrasFix)
 
