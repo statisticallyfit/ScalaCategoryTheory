@@ -28,40 +28,6 @@ import RecursionSchemeTutorials.PawelSzulc_GoingBananasWithRecursionSchemes.util
  */
 
 
-object AccumulatorDebug {
-
-	case class Acc(){
-		//type B = List[A]
-
-		//val acc: ListBuffer[ListF[A, List[A]]] = ListBuffer()
-		val acc: ListBuffer[Any] = ListBuffer()
-
-		def set[A, B](newX0: ListF[A, B]) = acc += newX0
-		def get = acc
-
-		def reset(): Unit = acc.clear()
-	}
-
-	//implicit def accObj[A]: Acc[A, List[A]] = Acc()
-	//type T <: Any
-	val accAlgObj = Acc()
-	val accAlgObj2 = Acc()
-	val accFunctorObj = Acc()
-
-
-	def decidePrint[A, B](accObj: Acc, currX0: ListF[A, B]): Boolean = {
-		// Decide whether to print (to not repeat)
-		val prevX0Exists = if(accObj.acc.length >= 2) true else false
-		val isNilCase: Boolean = currX0 == NilF() && prevX0Exists
-		val isNotNilCase: Boolean = currX0 != NilF() && accObj.acc.contains(currX0)
-		val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
-
-		return IS_PRINT
-	}
-}
-import AccumulatorDebug._
-
-
 
 sealed trait ListF[A, B]
 
@@ -75,28 +41,28 @@ final case class NilF[A, B]() extends ListF[A, B]
 object ListF{
 
 	// Fixed points (to kill the recursion)
-	type FixList[A] = Fix[ListF[A, ?]]
+	type FixList[A] = Fix[ListF[A, *]]
 
 	object FixList {
 
 		def wrap[A](a: A): FixList[A]                    = {
 			// TODO source code uses .fix - cannot get this loaded?
-			Fix[ListF[A, ?]](ConsF(a, Fix[ListF[A, ?]](NilF())))
+			Fix[ListF[A, *]](ConsF(a, Fix[ListF[A, *]](NilF())))
 		}
 		def cons[A](head: A, tail: FixList[A]): FixList[A] = {
-			Fix[ListF[A, ?]](ConsF(head, tail))
+			Fix[ListF[A, *]](ConsF(head, tail))
 		}
 	}
 	//Functor
 	// :kind ListF[A, B] is * -> * -> * so need to keep type A const to fit in with Functor's kind * -> *
-	/*implicit def listFFunctor[A]: Functor[ListF[A, ?]] = new Functor[ListF[A, ?]] {
+	/*implicit def listFFunctor[A]: Functor[ListF[A, *]] = new Functor[ListF[A, *]] {
 		def map[B, C](fa: ListF[A, B])(f: B => C): ListF[A, C] = fa match {
 			case NilF()            => NilF()
 			case ConsF(head, tail) => ConsF(head, f(tail))
 		}
 	}*/
 
-	implicit def debug_listFFunctor[A/*: TypeTag*/]: Functor[ListF[A, ?]] = new Functor[ListF[A, ?]] {
+	implicit def listFFunctor[A/*: TypeTag*/]: Functor[ListF[A, *]] = new Functor[ListF[A, *]] {
 
 		def map[B/*: TypeTag*/, C/*: TypeTag*/](fa: ListF[A, B])(f: B => C): ListF[A, C] = {
 
@@ -109,33 +75,8 @@ object ListF{
 			// operation 2 (of the functor)
 			fa match {
 
-				case NilF() => {
-
-					val IS_PRINT: Boolean = decidePrint(accFunctorObj, fa)
-
-					accFunctorObj.set[A, B](fa)
-					//Console.println(s"PRINTING ACC FUNCTOR OBJ: ${accFunctorObj.acc}")
-
-					if(IS_PRINT){
-						Console.println(s"listFFunctor[A]\n\t | fa := $fa \n\t | case NilF() | => NilF()")
-					}
-					NilF()
-				}
-				case ConsF(head, tail) => {
-
-					val IS_PRINT: Boolean = decidePrint(accFunctorObj, fa)
-
-					accFunctorObj.set[A, B](fa)
-					//Console.println(s"PRINTING ACC FUNCTOR OBJ: ${accFunctorObj.acc}")
-
-					if(IS_PRINT){
-						Console.println(s"listFFunctor[A]\n\t | fa := $fa " +
-							s"\n\t | case ConsF(head: A, tail: B) => case ConsF($head, $tail) " +
-							s"| => ConsF(head, f(tail)) " +
-							s"=> ConsF($head, ${f(tail)})")
-					}
-					ConsF(head, f(tail))
-				}
+				case NilF() => NilF()
+				case ConsF(head, tail) => ConsF(head, f(tail))
 			}
 		}
 	}
@@ -156,238 +97,58 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 
-	def algebraToList[A]: Algebra[ListF[A, ?], List[A]] = { // ListF[A, List[A]] => List[A]
+	def algebraToList[A]: Algebra[ListF[A, *], List[A]] = { // ListF[A, List[A]] => List[A]
 		Algebra {
 			case NilF() => Nil
 			case ConsF(head : A, tail : List[A]) => head :: tail
 		}
 		// Algebra[F, B]: F[B] => B
 		// cata[F, R, B]
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> B := List[A]
 	}
 
 
-
-
-	// ListF[A, List[A]] => List[A]
-	def debug_algebraToList[A: TypeTag]/*(accObj: Acc[A, List[A]])*/: Algebra[ListF[A, ?], List[A]] = Algebra {
-		(listFAList: ListF[A, List[A]]) =>
-
-		val AT = typeOf[A]
-
-
-		val IS_PRINT: Boolean = decidePrint(accAlgObj,listFAList)
-
-		// Add this current x0 to the global state accumulator
-		accAlgObj.set[A, List[A]](listFAList)
-
-
-		// operation 2 (output)
-		listFAList match {
-			case NilF() => {
-
-				//Console.println(s"PRINTING ACC ALG OBJ: ${accAlgObj.acc}")
-
-				if(IS_PRINT){ //only if allowed to print can you print
-					Console.println(s"algebraToList[$AT]")
-					Console.println(s"\t | x0 := $listFAList ")
-					Console.println(s"\t | case NilF() | => Nil ")
-				}
-
-				Nil
-			}
-			case ConsF(head : A, tail : List[A]) => {
-
-				//Console.println(s"PRINTING ACC ALG OBJ: ${accAlgObj.acc}")
-
-				if(IS_PRINT){
-					Console.println(s"algebraToList[$AT]")
-					Console.println(s"\t | x0 := $listFAList ")
-					Console.println(s"\t | case ConsF(head: A, tail: List[A]) " +
-						s"=> case ConsF($head: $AT, $tail: List[$AT]) " +
-						s"| => $head :: $tail")
-				}
-
-				head :: tail
-			}
-		}
-
-	}
-
-
-
 	// NOTE: need the implicit Basis because otherwise ERROR: no implicits for Project[F, R]
 	// TODO changed this to be Project not Basis
-	def toList[A, B](r: B)(implicit ev: Project[ListF[A, ?], B]): List[A] = {
-		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)
+	def toList[A, B](r: B)(implicit ev: Project[ListF[A, *], B]): List[A] = {
+		scheme.cata[ListF[A, *], B, List[A]](algebraToList[A]).apply(r)
 		// Algebra[F, B]: F[B] => B
 		// Project[F, R],   Basis[F, R]
 		// cata[F, R, B].apply: R => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> B := List[A]
 	}
 
 
-
-	def debug_toList[A: TypeTag, B/*: TypeTag*/](r: B)(implicit ev: Project[ListF[A, ?], B]): List[A] = {
-
-		val AT = typeOf[A]
-		//val BT = typeTag[B].tpe.dealias // TODO fix hack - how to check it is a type alias?
-
-		Console.println(s"cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)")
-		Console.println(s"cata[ListF[$AT, ?], B, List[$AT]](algebraToList[$AT]).apply($r)")
-		Console.println(s"\t | r := $r")
-
-		//debug(scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]).apply(r))
-
-
-
-		scheme.cata[ListF[A, ?], B, List[A]](debug_algebraToList[A]/*(accObj)*/).apply(r)
-	}
-
-
 	// ----------------------------------------------------------------------------------------------
-	def algebraLength[A]: Algebra[ListF[A, ?], Int] = // ListF[A, Int] => Int
+	def algebraLength[A]: Algebra[ListF[A, *], Int] = // ListF[A, Int] => Int
 		Algebra {
 			case NilF() => 0
 			case ConsF(head : A, accLen: Int) => 1 + accLen
 		}
 
 
-	def algebraShow[A: Show]: Algebra[ListF[A, ?], String] = // ListF[A, String] => String
+	def algebraShow[A: Show]: Algebra[ListF[A, *], String] = // ListF[A, String] => String
 		Algebra {
 			case NilF() => "."
 			case ConsF(head: A, accStr: String) => s"${head.show} :: $accStr"
 		}
 
-	def algebraMonoid[A: Monoid]: Algebra[ListF[A, ?], A] = // ListF[A, A] => A
+	def algebraMonoid[A: Monoid]: Algebra[ListF[A, *], A] = // ListF[A, A] => A
 		Algebra {
 			case NilF() => Monoid[A].empty
 			case ConsF(head: A, tail: A) => Monoid[A].combine(head, tail)
 		}
 
 
-	// ListF[A, A] => A
-	def debug_algebraMonoid[A: Monoid : TypeTag]: Algebra[ListF[A, ?], A] = Algebra { listfAA =>
-
-		// operation 1 (show state)
-		val AT = typeOf[A]
-
-
-
-		// Decide whether to print this new current value (if not duplicate of the previous one)
-		val IS_PRINT: Boolean = decidePrint(accAlgObj, listfAA)
-		// Add this current x0 to the global state accumulator
-		accAlgObj.set[A, A](listfAA)
-
-		// operation 2
-		listfAA match {
-			case NilF() => {
-
-				//Console.println(s"PRINTING ACC OBJ ALG-MONOID: ${accAlgObj.acc}")
-
-				if(IS_PRINT){
-					Console.println(s"algebraMonoid[$AT]")
-					Console.println(s"\t | x0 := $listfAA")
-
-					Console.println(s"\t | case NilF() => " +
-						s"Monoid[$AT].empty | => ${Monoid[A].empty}")
-				}
-
-				Monoid[A].empty
-			}
-			case ConsF(head: A, tail: A) => {
-
-				//Console.println(s"PRINTING ACC OBJ ALG-MONOID: ${accAlgObj.acc}")
-
-				if(IS_PRINT){
-					Console.println(s"algebraMonoid[$AT]")
-					Console.println(s"\t | x0 := $listfAA")
-
-					Console.println(s"\t | case ConsF($head: $AT, $tail: $AT) " +
-						s"=> Monoid[$AT].combine($head, $tail) " +
-						s"| => ${Monoid[A].combine(head, tail)}")
-				}
-
-				Monoid[A].combine(head, tail)
-			}
-		}
-	}
-
-
-	// ListF[A, String] => String
-	def debug_algebraShow[A: Show: TypeTag]: Algebra[ListF[A, ?], String] = Algebra { listfAStr =>
-
-		// operation 1 (show state)
-		val AT = typeOf[A]
-
-
-
-
-
-		// Decide whether to print this new current value (if not duplicate of the previous one)
-		val IS_PRINT: Boolean = decidePrint(accAlgObj2, listfAStr)
-		// Add this current x0 to the global state accumulator
-		accAlgObj2.set[A, String](listfAStr)
-
-
-		// operation 2
-		listfAStr match {
-			case NilF() => {
-				//Console.println(s"PRINTING ACC OBJ ALG-SHOW: ${accAlgObj2.acc}")
-
-				if(IS_PRINT){
-					Console.println(s"algebraShow[$AT]")
-					Console.println(s"\t | x0 := $listfAStr")
-
-					Console.println(s"\t | case NilF() | => '.' ")
-				}
-
-				"."
-			}
-			case ConsF(head: A, accStr: String) => {
-				//Console.println(s"PRINTING ACC OBJ ALG-SHOW: ${accAlgObj2.acc}")
-
-				if(IS_PRINT){
-					Console.println(s"algebraShow[$AT]")
-					Console.println(s"\t | x0 := $listfAStr")
-
-					Console.println(s"\t | case ConsF($head: $AT, $accStr: String) " +
-						s"| => ${head.show} :: $accStr")
-				}
-
-				s"${head.show} :: $accStr"
-			}
-		}
-	}
-
-
-
-
-	// TODO changed this to be Project instead of Basis
-
-	def debug_combineAndShowAlgebras[A: Show : Monoid: TypeTag, B/*: TypeTag*/](r: B)(implicit ev: Project[ListF[A, ?], B])
-	: (A,	String)	= {
-
-		val AT = typeOf[A]
-		//val BT = typeOf[B]
-
-		Console.println(s"cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)")
-		Console.println(s"cata[ListF[$AT, ?], B, ($AT, String)](algebraMonoid[$AT].zip(algebraShow[$AT])).apply" +
-			s"($r)")
-		Console.println(s"\t | r := $r")
-
-		scheme.cata[ListF[A, ?], B, (A, String)](debug_algebraMonoid[A].zip(debug_algebraShow[A])).apply(r)
-	}
-
-	def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit ev: Project[ListF[A, ?], B]): (A, String) = {
-		scheme.cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)
+	def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit ev: Project[ListF[A, *], B]): (A, String) = {
+		scheme.cata[ListF[A, *], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)
 		// Algebra[F, B]: F[B] => B
 		// Project[F, R],   Basis[F, R]
 		// cata[F, R, B].apply: R => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> B := (A, String)
 	}
@@ -401,63 +162,41 @@ object ListF{
 	 *
 	 * PROP: `def ana[F[_]: Functor, A, R](coalgebra: Coalgebra[F, A])(implicit embed: Embed[F, R]): A => R`
 	 */
-	def coalgebraFromList[A]: Coalgebra[ListF[A, ?], List[A]] = // List[A] => ListF[A, List[A]]
+	def coalgebraFromList[A]: Coalgebra[ListF[A, *], List[A]] = // List[A] => ListF[A, List[A]]
 		Coalgebra {
 			case Nil => NilF()
 			case x :: xs => ConsF(x, xs)
 		}
 
-	// List[A] => ListF[A, List[A]]
-	def debug_coalgebraFromList[A: TypeTag]: Coalgebra[ListF[A, ?], List[A]] = Coalgebra { listA =>
 
-		// operation 1 (show state)
-		val AT = typeOf[A]
-
-		Console.println(s"coalgebraFromList[$AT]")
-		Console.println(s"\t | x0 := $listA")
-
-		listA match {
-			case Nil => {
-				Console.println(s"\t | case Nil | => NilF()")
-				NilF()
-			}
-			case x :: xs => {
-				Console.println(s"\t | case x :: xs = case $x :: $xs " +
-					s"| => ConsF(x, xs) = ConsF($x, $xs)")
-
-				ConsF(x, xs)
-			}
-		}
-	}
-
-	def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, ?], B]): B = {
-		scheme.ana[ListF[A, ?], List[A], B](coalgebraFromList[A]).apply(as)
+	def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, *], B]): B = {
+		scheme.ana[ListF[A, *], List[A], B](coalgebraFromList[A]).apply(as)
 		// Coalgebra[F, A]: A => F[A]
 		// Embed[F, R]
 		// ana[F, A, R].apply: A => R
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := List[A]
 		// ---> R := B
 	}
 
-	// NOTE: compare with scheme.cata[ListF[A, ?], B, List[A]]
+	// NOTE: compare with scheme.cata[ListF[A, *], B, List[A]]
 
 
 
 	// ----------------------------------------------------------------------------------------------
 
-	def coalgebraFactorial: Coalgebra[ListF[Int, ?], Int] = // Int => ListF[Int, Int]
+	def coalgebraFactorial: Coalgebra[ListF[Int, *], Int] = // Int => ListF[Int, Int]
 		Coalgebra {
 			case 0 => NilF()
 			case n => ConsF(n, n - 1) 	// TODO meaning? how does this create the factorial?
 		}
 
-	def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, ?], R]): R = {
-		scheme.ana[ListF[Int, ?], Int, R](coalgebraFactorial).apply(n)
+	def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, *], R]): R = {
+		scheme.ana[ListF[Int, *], Int, R](coalgebraFactorial).apply(n)
 		// Coalgebra[F, A]:    A => F[A]
 		// Embed[F, R]
 		// ana[F, A, R].apply: A => R
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := Int
 		// ---> R := R
 	}
@@ -466,7 +205,7 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 
-	def coalgebraRepeat[T](t: T): Coalgebra[ListF[T, ?], Int] = // Int => ListF[T, Int]
+	def coalgebraRepeat[T](t: T): Coalgebra[ListF[T, *], Int] = // Int => ListF[T, Int]
 		Coalgebra {
 			case 0 => NilF()
 			case n => ConsF(t: T, (n - 1): Int)
@@ -475,12 +214,12 @@ object ListF{
 		}
 
 
-	def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, ?], R]): R =
-		scheme.ana[ListF[T, ?], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
+	def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, *], R]): R =
+		scheme.ana[ListF[T, *], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
 	// Coalgebra[F, A]:    A => F[A]
 	// Embed[F, R]
 	// ana[F, A, R].apply: A => R
-	// ---> F[_]: ListF[A, ?]
+	// ---> F[_]: ListF[A, *]
 	// ---> A := Int
 	// ---> R := R
 
@@ -499,7 +238,7 @@ object ListF{
 	 * PROP: `def hylo[F[_]: Functor, A, B](algebra: Algebra[F, B], coalgebra: Coalgebra[F, A]): A => B`
 	 */
 	def same[A]: List[A] => List[A] =
-		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraToList[A], coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], List[A]](algebraToList[A], coalgebraFromList[A])
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -507,7 +246,7 @@ object ListF{
 	// ---> B := List[A]
 
 	def length[A]: List[A] => Int =
-		scheme.hylo[ListF[A, ?], List[A], Int](algebraLength[A], coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], Int](algebraLength[A], coalgebraFromList[A])
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -515,7 +254,7 @@ object ListF{
 	// ---> B := Int
 
 	def combineAll[A: Monoid]: List[A] => A =
-		scheme.hylo[ListF[A, ?], List[A], A](algebraMonoid[A],coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], A](algebraMonoid[A],coalgebraFromList[A])
 	// Algebra[F, B]:   F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -526,7 +265,7 @@ object ListF{
 
 	// ----------------------------------------------------------------------------------------------
 
-	def algebraReverse[A]: Algebra[ListF[A, ?], List[A]] = // ListF[A, List[A]] => List[A}
+	def algebraReverse[A]: Algebra[ListF[A, *], List[A]] = // ListF[A, List[A]] => List[A}
 		Algebra {
 			case NilF() => Nil
 			case ConsF(head: A, tail: List[A]) => tail :+ head
@@ -534,7 +273,7 @@ object ListF{
 		}
 
 	def factorialHylo: Int => List[Int] =
-		scheme.hylo[ListF[Int, ?], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
+		scheme.hylo[ListF[Int, *], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -564,7 +303,7 @@ object ListF{
 	 * PROP: `def para[F[_]: Functor, R, A](algebra: RAlgebra[R, F, A])(implicit project: Project[F, R]): R => A`
 	 */
 
-	def ralgebraTail[A]: RAlgebra[List[A], ListF[A, ?], List[A]] = // ListF[A, (List[A], List[A])] => List[A]
+	def ralgebraTail[A]: RAlgebra[List[A], ListF[A, *], List[A]] = // ListF[A, (List[A], List[A])] => List[A]
 		RAlgebra {
 			case NilF() => Nil
 			case ConsF(head: A, tail@(xs: List[A], ys: List[A])) => xs
@@ -574,8 +313,8 @@ object ListF{
 	// ---> R := List[A]
 	// ---> A := List[A]
 
-	def tail[A](rs: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[A] = {
-		scheme.zoo.para[ListF[A, ?], List[A], List[A]](ralgebraTail[A]).apply(rs)
+	def tail[A](rs: List[A])(implicit ev: Project[ListF[A, *], List[A]]): List[A] = {
+		scheme.zoo.para[ListF[A, *], List[A], List[A]](ralgebraTail[A]).apply(rs)
 		// RAlgebra[R, F[_], A]:   F[(R, A)] => A
 		// Project[F, R]
 		// para[F, R, A].apply: R => A
@@ -586,19 +325,19 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 	// ListF[A, (List[A], List[List[A]])] => List[List[A]]
-	def ralgebraSliding[A](n: Int): RAlgebra[List[A], ListF[A, ?], List[List[A]]] =
+	def ralgebraSliding[A](n: Int): RAlgebra[List[A], ListF[A, *], List[List[A]]] =
 		RAlgebra {
 			case NilF() => Nil
 			case ConsF(a: A, (rs: List[A], aas: List[List[A]])) => (a :: rs).take(n) :: aas
 			// NOTE: meaning: adding the new list (a :: rs) on top of the lsit of lists `aas`
 		}
 
-	def sliding[A](n: Int)(rs: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[List[A]] = {
-		scheme.zoo.para[ListF[A, ?], List[A], List[List[A]]](ralgebraSliding[A](n)).apply(rs)
+	def sliding[A](n: Int)(rs: List[A])(implicit ev: Project[ListF[A, *], List[A]]): List[List[A]] = {
+		scheme.zoo.para[ListF[A, *], List[A], List[List[A]]](ralgebraSliding[A](n)).apply(rs)
 		// RAlgebra[R, F[_], A]:   F[(R, A) => A
 		// Project[F, R]
 		// para[F, R, A].apply: R => A
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := List[A]
 		// ---> A := List[List[A]]
 	}
@@ -630,18 +369,18 @@ object ListF{
 	 */
 
 	// List[A] => ListF[A, Either[List[A], List[A]]]
-	def rcoalgebraMapHead[A](f: A => A): RCoalgebra[List[A], ListF[A, ?], List[A]] =
+	def rcoalgebraMapHead[A](f: A => A): RCoalgebra[List[A], ListF[A, *], List[A]] =
 		RCoalgebra {
 			case Nil => NilF()
 			case a :: as => ConsF(f(a), Left(as))
 		}
 
-	def mapHead[A](f: A => A)(as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
-		scheme.zoo.apo[ListF[A, ?], List[A], List[A]](rcoalgebraMapHead[A](f)).apply(as)
+	def mapHead[A](f: A => A)(as: List[A])(implicit ev: Embed[ListF[A, *], List[A]]): List[A] = {
+		scheme.zoo.apo[ListF[A, *], List[A], List[A]](rcoalgebraMapHead[A](f)).apply(as)
 		// RCoalgebra[R, F[_], A]:   A => F[Either[R, A]]
 		// Embed[F, R]
 		// apo[F, A, R].apply: A => R
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := List[A]
 		// ---> R := List[A]
 	}
@@ -654,14 +393,14 @@ object ListF{
 	// ----> List[A] => ListF[A, Either[R, List[A]]
 
 
-	def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, ?], List[A]] =
+	def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, *], List[A]] =
 		RCoalgebra {
 			case Nil => 					NilF()
 			case a :: Nil => 				ConsF(a, Left(Nil))
 			case a :: y :: as if a <= y =>	ConsF(a, Left(y :: as))
 			case a :: y :: as => 			ConsF(y, Right(a :: as))
 		}
-	/*def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, ?], List[A]] =
+	/*def rcoalgebraInsertElement[A: Order]: RCoalgebra[List[A], ListF[A, *], List[A]] =
 		RCoalgebra {
 			case Nil => NilF()
 
@@ -676,15 +415,15 @@ object ListF{
 		}*/
 
 
-	def knockback[A: Order](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] =
-		scheme.zoo.apo[ListF[A, ?], List[A], List[A]](rcoalgebraInsertElement[A]).apply(as)
+	def knockback[A: Order](as: List[A])(implicit ev: Embed[ListF[A, *], List[A]]): List[A] =
+		scheme.zoo.apo[ListF[A, *], List[A], List[A]](rcoalgebraInsertElement[A]).apply(as)
 
 
 
 	// RCoalgebra[R, F[_], A]: A => F[Either[R, A]]
 	// Embed[F, R]
 	// apo[F, A, R].apply: A => R
-	// ---> F[_]: ListF[A, ?]
+	// ---> F[_]: ListF[A, *]
 	// ---> A := List[A]
 	// ---> R := List[A] or just B
 
@@ -693,7 +432,7 @@ object ListF{
 	//  morphism-applying functions?
 
 	// ListF[A, List[A]] => List[A]
-	def algebraInsertionSort[A: Order](implicit ev: Embed[ListF[A, ?], List[A]]): Algebra[ListF[A, ?],	List[A]] =
+	def algebraInsertionSort[A: Order](implicit ev: Embed[ListF[A, *], List[A]]): Algebra[ListF[A, *],	List[A]] =
 		Algebra {
 			case NilF() => Nil
 			case ConsF(a: A, as: List[A]) => knockback(a :: as)
@@ -706,10 +445,10 @@ object ListF{
 	// NOTE: need the extra embed implicit here to satisfy the corresponding extra Embed implicit
 	//  from  algebraInsertionSort
 
-	def insertionSort[A: Order](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]],
-									 ev2: Basis[ListF[A, ?], List[A]]): List[A]
+	def insertionSort[A: Order](as: List[A])(implicit ev: Embed[ListF[A, *], List[A]],
+									 ev2: Basis[ListF[A, *], List[A]]): List[A]
 	= {
-		scheme.hylo[ListF[A, ?], List[A], List[A]](
+		scheme.hylo[ListF[A, *], List[A], List[A]](
 			algebraInsertionSort[A],
 			coalgebraFromList[A]
 		).apply(as)
@@ -717,7 +456,7 @@ object ListF{
 		// Algebra[F, B]: F[B] => B
 		// Coalgebra[F, A]: A => F[A]
 		// hylo[F, A, B].apply: A => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := List[A]
 		// ---> B := List[A] or FixList[A] ... TODO
 	}
@@ -745,7 +484,7 @@ object ListF{
 	 */
 
 	// ListF[A, Attr[F, List[A]]] => List[A]
-	def cvalgebraOdds[A]: CVAlgebra[ListF[A, ?], List[A]] =
+	def cvalgebraOdds[A]: CVAlgebra[ListF[A, *], List[A]] =
 		CVAlgebra {
 			case NilF() => Nil
 			case ConsF(a: A, _ :< NilF() ) => List(a)
@@ -755,8 +494,8 @@ object ListF{
 			// TODO meaning of `t`?
 		}
 
-	def odds[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
-		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraOdds[A]).apply(r)
+	def odds[A, B](r: B)(implicit ev: Basis[ListF[A, *], B]): List[A] = {
+		scheme.zoo.histo[ListF[A, *], B, List[A]](cvalgebraOdds[A]).apply(r)
 		// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
 		// Attr[F, A] = (A, F[Attr[F, A]])
 		// ----> F[Attr[F, A]] => A
@@ -764,7 +503,7 @@ object ListF{
 		// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
 		// Basis[F, R]
 		// histo[F, R, A].apply: R => A
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> A := List[A]
 	}
@@ -773,15 +512,15 @@ object ListF{
 	// ----------------------------------------------------------------------------------------------
 
 	// ListF[A, Attr[F, List[A]]] => List[A]
-	def cvalgebraEvens[A]: CVAlgebra[ListF[A, ?], List[A]] =
+	def cvalgebraEvens[A]: CVAlgebra[ListF[A, *], List[A]] =
 		CVAlgebra {
 			case NilF() => Nil
 			case ConsF(a: A,  _ :< NilF() ) => Nil
 			case ConsF(a1: A,  _ :< ConsF(a2, t :< _)) => a2 :: t
 		}
 
-	def evens[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] =
-		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraEvens[A]).apply(r)
+	def evens[A, B](r: B)(implicit ev: Basis[ListF[A, *], B]): List[A] =
+		scheme.zoo.histo[ListF[A, *], B, List[A]](cvalgebraEvens[A]).apply(r)
 
 	// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
 	// Attr[F, A] = (A, F[Attr[F, A]])
@@ -790,7 +529,7 @@ object ListF{
 	// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
 	// Basis[F, R]
 	// histo[F, R, A].apply: R => A
-	// ---> F[_]: ListF[A, ?]
+	// ---> F[_]: ListF[A, *]
 	// ---> R := B
 	// ---> A := List[A]
 
@@ -798,7 +537,7 @@ object ListF{
 }
 
 
-object Example extends App {
+object ListMorphisms_Runner extends App {
 
 
 	import ListF._
@@ -815,14 +554,8 @@ object Example extends App {
 	//val accObj
 
 
-	implicit def basis[A: TypeTag]: Basis[ListF[A, ?], List[A]] =
+	implicit def basis[A]: Basis[ListF[A, *], List[A]] =
 		Basis.Default(algebraToList[A], coalgebraFromList[A])
-
-
-
-
-
-
 
 
 	// ------------------------------------------------------------------------------------------
@@ -835,18 +568,15 @@ object Example extends App {
 	Console.println("------------------------------------------------------------------------------------------------")
 
 	Console.println("resultOfToListFix: ")
-	accAlgObj.reset()
-	accAlgObj2.reset()
-	accFunctorObj.reset()
-	val resultOfToListFix: List[Int] = debug_toList[Int, FixList[Int]](to)
+	val resultOfToListFix: List[Int] = toList[Int, FixList[Int]](to)
 	Console.println(resultOfToListFix)
 
-	/*def toList[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
-		scheme.cata[ListF[A, ?], B, List[A]](algebraToList[A]).apply(r)
+	/*def toList[A, B](r: B)(implicit ev: Basis[ListF[A, *], B]): List[A] = {
+		scheme.cata[ListF[A, *], B, List[A]](algebraToList[A]).apply(r)
 		// Algebra[F, B]: F[B] => B
 		// Project[F, R],   Basis[F, R]
 		// cata[F, R, B].apply: R => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> B := List[A]
 
@@ -856,7 +586,7 @@ object Example extends App {
 
 		// GIVEN:
 		// argument      | r := to
-		// argument type | r : B, to: B, to: Fix[ListF[A, ?]] = FixList[A] := FixList[Int]
+		// argument type | r : B, to: B, to: Fix[ListF[A, *]] = FixList[A] := FixList[Int]
 		// THEN:
 		// ---> A := Int
 		// ---> B := FixList[Int]
@@ -870,29 +600,23 @@ object Example extends App {
 
 	Console.println("================================================================================================")
 	Console.println("resultOfCombineAlgebras: ")
-	accAlgObj.reset()
-	accAlgObj2.reset()
-	accFunctorObj.reset()
-	val resultOfCombineAlgebras: (Int, String) = debug_combineAndShowAlgebras[Int, List[Int]](from)
+	val resultOfCombineAlgebras: (Int, String) = combineAndShowAlgebras[Int, List[Int]](from)
 	Console.println(resultOfCombineAlgebras)
 	// combine[A, B]
 	// ---> B := List[Int]
 
 	Console.println("------------------------------------------------------------------------------------------")
 	Console.println("resultOfCombineAlgebrasFix: ")
-	accAlgObj.reset()
-	accAlgObj2.reset()
-	accFunctorObj.reset()
-	val resultOfCombineAlgebrasFix: (Int, String) = debug_combineAndShowAlgebras[Int, FixList[Int]](to)
+	val resultOfCombineAlgebrasFix: (Int, String) = combineAndShowAlgebras[Int, FixList[Int]](to)
 	Console.println(resultOfCombineAlgebrasFix)
 
 
-	/*def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit B: Basis[ListF[A, ?], B]): (A, String) = {
-		scheme.cata[ListF[A, ?], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)
+	/*def combineAndShowAlgebras[A: Show : Monoid, B](r: B)(implicit B: Basis[ListF[A, *], B]): (A, String) = {
+		scheme.cata[ListF[A, *], B, (A, String)](algebraMonoid[A].zip(algebraShow[A])).apply(r)
 		// Algebra[F, B]: F[B] => B
 		// Project[F, R],   Basis[F, R]
 		// cata[F, R, B].apply: R => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> B := (A, String)
 
@@ -903,7 +627,7 @@ object Example extends App {
 
 		// GIVEN:
 		// argument      |   r := to
-		// argument type |   r: B, to: Fix[ListF[A, ?]] = FixList[A] = FixList[Int]
+		// argument type |   r: B, to: Fix[ListF[A, *]] = FixList[A] = FixList[Int]
 		// THEN:
 		// ---> A := Int
 		// ---> B := FixList[Int]
@@ -919,13 +643,13 @@ object Example extends App {
 	val resultOfFactorial: List[Int] = factorial(10) //factorial[FixList[Int]](10)
 	Console.println("resultOfFactorial: " + resultOfFactorial)
 
-	/*def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, ?], R]): R = {
-		scheme.ana[ListF[Int, ?], Int, R](coalgebraFactorial).apply(n)
+	/*def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, *], R]): R = {
+		scheme.ana[ListF[Int, *], Int, R](coalgebraFactorial).apply(n)
 
 		// Coalgebra[F, A]: A => F[A]
 		// Embed[F, R]
 		// ana[F, A, R].apply: A => R
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := Int
 		// ---> R := R
 		// ---> R := R
@@ -939,7 +663,7 @@ object Example extends App {
 		// GIVEN:
 		// Coalgebra[F[_], A]
 		// A := Int
-		// F := ListF[A, ?]
+		// F := ListF[A, *]
 		// ana[F, A, R].apply: A => R
 		// ---> R := HELP ????
 	}*/
@@ -956,13 +680,13 @@ object Example extends App {
 	val resultOfFill: List[String] = fillByRepeat[String, List[String]]("panda", 10)
 	Console.println("resultOfFill: " + resultOfFill)
 
-	/*def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, ?], R]): R =
-		scheme.ana[ListF[T, ?], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
+	/*def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, *], R]): R =
+		scheme.ana[ListF[T, *], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
 
 	// Coalgebra[F, A]:    A => F[A]
 	// Embed[F, R]
 	// ana[F, A, R].apply: A => R
-	// ---> F[_]: ListF[A, ?]
+	// ---> F[_]: ListF[A, *]
 	// ---> A := Int
 	// ---> R := R
 
@@ -988,12 +712,12 @@ object Example extends App {
 	val resultOfFromList: List[Int] = fromList(from)
 	Console.println("resultOfFromList: " + resultOfFromList)
 
-	/*def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, ?], B]): B = {
-		scheme.ana[ListF[A, ?], List[A], B](coalgebraFromList[A]).apply(as)
+	/*def fromList[A, B](as: List[A])(implicit ev: Embed[ListF[A, *], B]): B = {
+		scheme.ana[ListF[A, *], List[A], B](coalgebraFromList[A]).apply(as)
 		// Coalgebra[F, A]: A => F[A]
 		// Embed[F, R]
 		// ana[F, A, R].apply: A => R
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := List[A]
 		// ---> R := B
 
@@ -1013,17 +737,17 @@ object Example extends App {
 	Console.println("resultOfFromListFix: " + resultOfFromListFix)
 	// fromList[A, B]
 	// fromList[Int, FixList[Int]]
-	// Embed[ListF[A, ?], B)
+	// Embed[ListF[A, *], B)
 	// return type: B
 	// ----> B := FixList[Int]
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfSame: List[Int] = same[Int](List(1,2,3))
+	val resultOfSame: List[Int] = same[Int].apply(List(1,2,3))
 	Console.println("resultOfSame: " + resultOfSame)
 
 	/*def same[A]: List[A] => List[A] =
-		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraToList[A], coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], List[A]](algebraToList[A], coalgebraFromList[A])
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -1043,11 +767,11 @@ object Example extends App {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfLength: Int = length[Int](List(1,2,3,4,5))
+	val resultOfLength: Int = length[Int].apply(List(1,2,3,4,5))
 	Console.println("resultOfLength: " + resultOfLength)
 
 	/*def length[A]: List[A] => Int =
-		scheme.hylo[ListF[A, ?], List[A], Int](algebraLength[A], coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], Int](algebraLength[A], coalgebraFromList[A])
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -1072,7 +796,7 @@ object Example extends App {
 
 	/*
 	def combineAll[A: Monoid]: List[A] => A =
-		scheme.hylo[ListF[A, ?], List[A], A](algebraMonoid[A],coalgebraFromList[A])
+		scheme.hylo[ListF[A, *], List[A], A](algebraMonoid[A],coalgebraFromList[A])
 	// Algebra[F, B]:   F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -1098,7 +822,7 @@ object Example extends App {
 	Console.println("resultOfReverseFactorial: " + resultOfReverseFactorial)
 
 	/*def factorialHylo: Int => List[Int] =
-		scheme.hylo[ListF[Int, ?], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
+		scheme.hylo[ListF[Int, *], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
 	// Algebra[F, B]:    F[B] => B
 	// Coalgebra[F, A]: A => F[A]
 	// hylo[F, A, B].apply: A => B
@@ -1112,8 +836,8 @@ object Example extends App {
 	val resultOfTail: List[Int] = tail[Int](List(1,2,3,4,5,6,7,8))
 	Console.println("resultOfTail: " + resultOfTail)
 
-	/*def tail[A](list: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[A] = {
-		scheme.zoo.para[ListF[A, ?], List[A], List[A]](ralgebraTail).apply(list)
+	/*def tail[A](list: List[A])(implicit ev: Project[ListF[A, *], List[A]]): List[A] = {
+		scheme.zoo.para[ListF[A, *], List[A], List[A]](ralgebraTail).apply(list)
 		// RAlgebra[R, F[_], A]:   F[(R, A)] => A
 		// Project[F, R]
 		// para[F, R, A].apply: R => A
@@ -1137,12 +861,12 @@ object Example extends App {
 	val resultOfSlide: List[List[Int]] = sliding[Int](3)((1 to 5).toList)
 	Console.println("resultOfSlide: " + resultOfSlide)
 
-	/*def sliding[A](n: Int)(as: List[A])(implicit ev: Project[ListF[A, ?], List[A]]): List[List[A]] = {
+	/*def sliding[A](n: Int)(as: List[A])(implicit ev: Project[ListF[A, *], List[A]]): List[List[A]] = {
 		scheme.zoo.para(ralgebraSliding[A](n)).apply(as)
 		// RAlgebra[R, F[_], A]:   F[(R, A) => A
 		// Project[F, R]
 		// para[F, R, A].apply: R => A
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := List[A]
 		// ---> A := List[List[A]]
 	}
@@ -1174,13 +898,13 @@ object Example extends App {
 	//  val resultOfSortedFix =  insertionSort[Int](from)
 	//Console.println("resultOfSortedFix: " + resultOfSortedFix)
 
-	/*def insertionSort[A: Order, B](as: List[A])(implicit ev: Embed[ListF[A, ?], List[A]]): List[A] = {
-		scheme.hylo[ListF[A, ?], List[A], List[A]](algebraInsertionSort[A], coalgebraFromList[A]).apply(as)
+	/*def insertionSort[A: Order, B](as: List[A])(implicit ev: Embed[ListF[A, *], List[A]]): List[A] = {
+		scheme.hylo[ListF[A, *], List[A], List[A]](algebraInsertionSort[A], coalgebraFromList[A]).apply(as)
 
 		// Algebra[F, B]: F[B] => B
 		// Coalgebra[F, A]: A => F[A]
 		// hylo[F, A, B].apply: A => B
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> A := List[A]
 		// ---> B := List[A]
 
@@ -1208,8 +932,8 @@ object Example extends App {
 	val resultOfOddsFix: List[Int] = odds[Int, FixList[Int]](listF_10)
 	Console.println("resultOfOddsFix: " + resultOfOddsFix)
 
-	/*def odds[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] = {
-		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraOdds[A]).apply(r)
+	/*def odds[A, B](r: B)(implicit ev: Basis[ListF[A, *], B]): List[A] = {
+		scheme.zoo.histo[ListF[A, *], B, List[A]](cvalgebraOdds[A]).apply(r)
 		// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
 		// Attr[F, A] = (A, F[Attr[F, A]])
 		// ----> F[Attr[F, A]] => A
@@ -1217,7 +941,7 @@ object Example extends App {
 		// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
 		// Basis[F, R]
 		// histo[F, R, A].apply: R => A
-		// ---> F[_]: ListF[A, ?]
+		// ---> F[_]: ListF[A, *]
 		// ---> R := B
 		// ---> A := List[A]
 
@@ -1229,7 +953,7 @@ object Example extends App {
 		---> R := B := List[Int]
 		GIVEN:
 		* histo[F,R,A], histo[ListF, B, List[A]]
-		* CVAlgebra[ListF[Int(?), ?]]
+		* CVAlgebra[ListF[Int(?), *]]
 		---> A := Int TODO figure out a better way to calculate what is the type (A)
 
 	}*/
@@ -1239,8 +963,8 @@ object Example extends App {
 	val resultEvensFix: List[Int] = evens[Int, FixList[Int]](listF_10)
 	Console.println("resultEvensFix: " + resultEvensFix)
 
-	/*def evens[A, B](r: B)(implicit ev: Basis[ListF[A, ?], B]): List[A] =
-		scheme.zoo.histo[ListF[A, ?], B, List[A]](cvalgebraEvens[A]).apply(r)
+	/*def evens[A, B](r: B)(implicit ev: Basis[ListF[A, *], B]): List[A] =
+		scheme.zoo.histo[ListF[A, *], B, List[A]](cvalgebraEvens[A]).apply(r)
 
 	// CVAlgebra[F, A] = GAlgebra[F, Attr[F, A], A]
 	// Attr[F, A] = (A, F[Attr[F, A]])
@@ -1249,7 +973,7 @@ object Example extends App {
 	// ----> F[ (A, F[(A, F[(A, F[(A, F[(A, F[(A, F[Attr[F, A]])])])])])]) ] => A
 	// Basis[F, R]
 	// histo[F, R, A].apply: R => A
-	// ---> F[_]: ListF[A, ?]
+	// ---> F[_]: ListF[A, *]
 	// ---> R := B
 	// ---> A := List[A]
 
