@@ -45,8 +45,12 @@ object ListMorphisms_Debug {
 			// for the alg e.g ListF[A, List[A]] => List[A]
 			def set[A, B](newX0: ListF[A, B]) = acc += newX0
 
-			// for the coalg e.g (List[A] => ListF[A, List[A]]
+			// for the coalg e.g (List[A] => ListF[A, List[A]])
 			def set[A](newX0: List[A]) = acc += newX0
+
+			// for the coalg e.g. (Int => ListF[A, Int])
+			def set[V](newValue: V) = acc += newValue
+
 			def get = acc
 
 			def reset(): Unit = acc.clear()
@@ -74,8 +78,20 @@ object ListMorphisms_Debug {
 		def decidePrint[A](accObj: Acc, currX0: List[A]): Boolean = {
 			// Decide whether to print (to not repeat)
 			val prevX0Exists = if(accObj.acc.length >= 1) true else false
-			val isNilCase: Boolean = currX0 == NilF && prevX0Exists
-			val isNotNilCase: Boolean = currX0 != NilF && accObj.acc.contains(currX0)
+			val isNilCase: Boolean = currX0 == Nil && prevX0Exists
+			val isNotNilCase: Boolean = currX0 != Nil && accObj.acc.contains(currX0)
+			val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
+
+			return IS_PRINT
+		}
+
+		// for the coalg e.g. (Int => ListF[A, Int])
+		def decidePrint[V](accObj: Acc, currValue: V): Boolean = {
+			// Decide whether to print (to not repeat)
+			val prevX0Exists = if(accObj.acc.length >= 1) true else false
+
+			val isNilCase: Boolean = currValue == 0 && prevX0Exists
+			val isNotNilCase: Boolean = currValue != 0 && accObj.acc.contains(currValue)
 			val IS_PRINT: Boolean = ! (isNilCase || isNotNilCase)
 
 			return IS_PRINT
@@ -393,16 +409,17 @@ object ListMorphisms_Debug {
 		 */
 
 		// List[A] => ListF[A, List[A]]
-		def debug_coalgebraFromList[A: TypeTag]: Coalgebra[ListF[A, *], List[A]] = Coalgebra { listA =>
+		def debug_coalgebraFromList[A: TypeTag]: Coalgebra[ListF[A, *], List[A]] = Coalgebra { (listA: List[A]) =>
 
 			// operation 1 (show state)
 			val AT = typeOf[A]
 
+
+			val IS_PRINT = decidePrint(accCoalgObj, listA)
+			accCoalgObj.set[A](listA)
+
 			listA match {
 				case Nil => {
-
-					val IS_PRINT = decidePrint(accCoalgObj, listA)
-					accCoalgObj.set[A](listA)
 
 					//Console.println(s"PRINTING coalg acc: ${accCoalgObj.acc}")
 
@@ -415,8 +432,8 @@ object ListMorphisms_Debug {
 				}
 				case x :: xs => {
 
-					val IS_PRINT = decidePrint(accCoalgObj, listA)
-					accCoalgObj.set[A](listA)
+					/*val IS_PRINT = decidePrint(accCoalgObj, listA)
+					accCoalgObj.set[A](listA)*/
 
 					//Console.println(s"PRINTING coalg acc: ${accCoalgObj.acc}")
 
@@ -449,14 +466,42 @@ object ListMorphisms_Debug {
 
 		// ----------------------------------------------------------------------------------------------
 
-		def coalgebraFactorial: Coalgebra[ListF[Int, *], Int] = // Int => ListF[Int, Int]
-			Coalgebra {
-				case 0 => NilF()
-				case n => ConsF(n, n - 1) 	// TODO meaning? how does this create the factorial?
+		// Int => ListF[Int, Int]
+		def debug_coalgebraFactorial: Coalgebra[ListF[Int, *], Int] = Coalgebra { (number: Int) =>
+
+			val IS_PRINT = decidePrint(accCoalgObj, number)
+			accCoalgObj.set[Int](number)
+
+			Console.println(s"PRINTING coalg acc: ${accCoalgObj.acc}")
+
+			number match {
+				case 0 => {
+					if(IS_PRINT) {
+						Console.println(s"coalgebraFactorial")
+						Console.println(s"\t | x0 := $number")
+						Console.println(s"\t | case 0 | => NilF()")
+					}
+
+					NilF()
+				}
+
+				case n => {
+
+					if(IS_PRINT) {
+						Console.println(s"coalgebraFromList")
+						Console.println(s"\t | x0 := $number")
+						Console.println(s"\t | case n = case $n: Int => ConsF(n = $n, n - 1 = ${n-1}")
+					}
+
+					// TODO meaning? how does this create the factorial?
+					ConsF(n, n - 1)
+				}
 			}
 
-		def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, *], R]): R = {
-			scheme.ana[ListF[Int, *], Int, R](coalgebraFactorial).apply(n)
+		}
+
+		def debug_factorial[R](n: Int)(implicit ev: Embed[ListF[Int, *], R]): R = {
+			scheme.ana[ListF[Int, *], Int, R](debug_coalgebraFactorial).apply(n)
 			// Coalgebra[F, A]:    A => F[A]
 			// Embed[F, R]
 			// ana[F, A, R].apply: A => R
@@ -469,17 +514,47 @@ object ListMorphisms_Debug {
 		// ----------------------------------------------------------------------------------------------
 
 
-		def coalgebraRepeat[T](t: T): Coalgebra[ListF[T, *], Int] = // Int => ListF[T, Int]
-			Coalgebra {
-				case 0 => NilF()
-				case n => ConsF(t: T, (n - 1): Int)
+		// Int => ListF[T, Int]
+		def debug_coalgebraRepeat[T: TypeTag](t: T): Coalgebra[ListF[T, *], Int] =
+			Coalgebra { (number: Int) =>
+
+				val TT = typeOf[T]
+
+				val IS_PRINT = decidePrint(accCoalgObj, number)
+				accCoalgObj.set[Int](number)
+
+				Console.println(s"PRINTING coalg acc: ${accCoalgObj.acc}")
+
+				number match {
+					case 0 => {
+						if(IS_PRINT) {
+							Console.println(s"coalgebraRepeat[$TT]")
+							Console.println(s"\t | x0 := $number")
+							Console.println(s"\t | case 0 | => NilF()")
+						}
+
+						NilF()
+					}
+					case n => {
+
+						if(IS_PRINT) {
+							Console.println(s"coalgebraRepeat[$TT]")
+							Console.println(s"\t | x0 := $number")
+							Console.println(s"\t | case n = case $n: Int " +
+								s"=> ConsF(t = $t: $TT, (n-1) = ${n-1}: Int")
+						}
+
+						ConsF(t: T, (n - 1): Int)
+					}
+				}
+
 
 				// NOTE: meaning: repeat givenInt now by n-1 since we used up the first repeat (n)
 			}
 
 
-		def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, *], R]): R =
-			scheme.ana[ListF[T, *], Int, R](coalgebraRepeat[T](t)).apply(timesRepeat)
+		def debug_fillByRepeat[T: TypeTag, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, *], R]): R =
+			scheme.ana[ListF[T, *], Int, R](debug_coalgebraRepeat[T](t)).apply(timesRepeat)
 		// Coalgebra[F, A]:    A => F[A]
 		// Embed[F, R]
 		// ana[F, A, R].apply: A => R
@@ -552,7 +627,7 @@ object ListMorphisms_Debug {
 			}
 
 		def factorialHylo: Int => List[Int] =
-			scheme.hylo[ListF[Int, *], Int, List[Int]](algebraReverse[Int], coalgebraFactorial)
+			scheme.hylo[ListF[Int, *], Int, List[Int]](algebraReverse[Int], debug_coalgebraFactorial)
 		// Algebra[F, B]:    F[B] => B
 		// Coalgebra[F, A]: A => F[A]
 		// hylo[F, A, B].apply: A => B
@@ -932,8 +1007,13 @@ object ListMorphisms_Debug_Runner extends App {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfFactorial: List[Int] = factorial(10) //factorial[FixList[Int]](10)
-	Console.println("resultOfFactorial: " + resultOfFactorial)
+	Console.println("================================================================================================")
+	Console.println("resultOfFactorial: ")
+
+	resetAll(accAlgObj, accAlgObj2, accFunctorObj, accCoalgObj)
+
+	val resultOfFactorial: List[Int] = debug_factorial(10) //factorial[FixList[Int]](10)
+	Console.println(resultOfFactorial)
 
 	/*def factorial[R](n: Int)(implicit ev: Embed[ListF[Int, *], R]): R = {
 		scheme.ana[ListF[Int, *], Int, R](coalgebraFactorial).apply(n)
@@ -960,7 +1040,14 @@ object ListMorphisms_Debug_Runner extends App {
 		// ---> R := HELP ????
 	}*/
 
-	val resultFactorialFix: FixList[Int] = factorial[FixList[Int]](7)
+
+	Console.println("------------------------------------------------------------------------------------------")
+	Console.println("resultFactorialFix: ")
+
+	resetAll(accAlgObj, accAlgObj2, accFunctorObj, accCoalgObj)
+
+	val resultFactorialFix: FixList[Int] = debug_factorial[FixList[Int]](7)
+
 	Console.println("resultFactorialFix: " + resultFactorialFix)
 	// factorial[R]
 	// factorial[FixList[Int]]
@@ -969,7 +1056,13 @@ object ListMorphisms_Debug_Runner extends App {
 
 	// ------------------------------------------------------------------------------------------
 
-	val resultOfFill: List[String] = fillByRepeat[String, List[String]]("panda", 10)
+
+	Console.println("================================================================================================")
+	Console.println("resultOfFill: ")
+
+	resetAll(accAlgObj, accAlgObj2, accFunctorObj, accCoalgObj)
+
+	val resultOfFill: List[String] = debug_fillByRepeat[String, List[String]]("panda", 10)
 	Console.println("resultOfFill: " + resultOfFill)
 
 	/*def fillByRepeat[T, R](t: T, timesRepeat: Int)(implicit ev: Embed[ListF[T, *], R]): R =
@@ -991,7 +1084,12 @@ object ListMorphisms_Debug_Runner extends App {
 	TODO HELP same problem as for factorial: how to figure out runtime type of R?
 	*/
 
-	val resultOfFillFix: FixList[Int] = fillByRepeat[Int, FixList[Int]](3, 10)
+	Console.println("------------------------------------------------------------------------------------------")
+	Console.println("resultOfFillFix: ")
+
+	resetAll(accAlgObj, accAlgObj2, accFunctorObj, accCoalgObj)
+
+	val resultOfFillFix: FixList[Int] = debug_fillByRepeat[Int, FixList[Int]](3, 10)
 	Console.println("resultOfFillFix: " + resultOfFillFix)
 	// fillByRepeat[R]
 	// fillByRepeat[FixList[Int]]
@@ -999,6 +1097,7 @@ object ListMorphisms_Debug_Runner extends App {
 	// ---> R := FixList[Int]
 
 
+	// TODO left off here
 	// ------------------------------------------------------------------------------------------
 
 	val resultOfFromList: List[Int] = debug_fromList(from)
